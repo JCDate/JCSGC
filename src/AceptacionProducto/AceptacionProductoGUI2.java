@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package AceptacionProducto;
 
 import Modelos.AceptacionPc1;
@@ -13,44 +8,49 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.JFrame;
 
 /**
  *
  * @author JC
  */
-public class AceptacionProducto extends javax.swing.JFrame {
+public class AceptacionProductoGUI2 extends javax.swing.JFrame {
 
-    Usuarios usr;
-    AceptacionPc1 apc1;
-    AceptacionProductoServicio aps = new AceptacionProductoServicio();
-    Connection conexion;
+    // Atributos 
+    private Usuarios usr; // La instancia del usuario actual del sistema
+    private Connection conexion; // Conexión a la BD
+    private AceptacionPc1 apc1; // Se crea la instancia de la clase AceptacionPc1
+    private AceptacionProductoServicio aps = new AceptacionProductoServicio(); // Se crea la instancia de la clase AceptacionProductoServicio
+
     /**
      * Creates new form AceptacionProducto
      */
-    public AceptacionProducto() {
-        initComponents();
-        
+    public AceptacionProductoGUI2() {
+        try {
+            inicializarVentanaYComponentes(); // Inicialización de componentes
+        } catch (SQLException | ClassNotFoundException ex) {
+            aps.manejarExcepcion("Surgio un error al abrir ACEPTACION PRODUCTO", ex); // Se muestra el mensaje de la excepción al usuario
+        }
     }
 
-    public AceptacionProducto(Usuarios usr) throws SQLException, ClassNotFoundException {
-        initComponents();
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-        this.usr = usr;
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setDefaultCloseOperation(0); // Se deshabilita el boton de cerrar de la ventana
-        this.apc1 = new AceptacionPc1();
-        List<String> rollos = this.aps.obtenerNoRollos(conexion);
-        // No. Rollos
-        rollos.forEach((rollo) -> {
-            cbxNoRollo.addItem(rollo);
-        });
-        
-        datosPrueba();
+    public AceptacionProductoGUI2(Usuarios usr) throws SQLException, ClassNotFoundException {
+        try {
+            inicializarVentanaYComponentes(); // Inicialización de componentes
+            this.usr = usr; // Se define a el usuario actual del sistema
+            this.apc1 = new AceptacionPc1(); // Se crea la instancia de AceptacionPc1
+            
+            aps.cargarNoRollos(conexion, cbxNoRollo); // Se obtienen los rollos previamente registrados en Inspección/Recibo 
+
+            Date fechaActual = new Date(); // Se obtiene la fecha actual
+
+            // Se definen datos por default en los componentes de texto y en el JDateChooser
+            dchFechaLiberacion.setDate(fechaActual);
+            txtInspeccionVisual.setText("OK");
+            txtObservaciones.setText("INSPECCIÓN 100%");
+        } catch (SQLException | ClassNotFoundException ex) {
+            aps.manejarExcepcion("Surgio un error al abrir la ventana ACEPTACION PRODUCTO", ex); // Se muestra el mensaje de la excepción al usuario
+        }
     }
 
     @Override
@@ -149,34 +149,35 @@ public class AceptacionProducto extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        AceptacionProducto.this.dispose();
-        try {
-            AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr); // Se crea la instancia de la clase
-            apGUI.setVisible(true); // Se muestra la ventana visible 
-            apGUI.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(AceptacionProducto.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana(); // Cierra la ventana actual
+        aps.abrirAceptacionProductoGUI(usr); // Se vuelve a abrir la ventana actual
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnContinuarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContinuarActionPerformed
-        Date selectedDate = dchFechaLiberacion.getDate(); // Obtén la fecha seleccionada
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Crea un objeto SimpleDateFormat para el formato deseado
-        String fechaLiberacion = dateFormat.format(selectedDate); // Formatea la fecha y guárdala en una variable String
-        
+        Date fechaSeleccionada = dchFechaLiberacion.getDate(); // Se captura la fecha seleccionada en el componente JDateChooser
+        String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // Se define el formato específico "dd/mm/aaaa" 
+
+        // Se captura información requerida y se guarda en el objeto apc1
         apc1.setFecha(fechaLiberacion);
         apc1.setNoRollo(cbxNoRollo.getSelectedItem().toString());
         apc1.setInspVisual(txtInspeccionVisual.getText());
         apc1.setObservacion(txtObservaciones.getText());
-        
-        AceptacionProducto.this.dispose();
-        try {
-            RetencionDimensional rdGUI = new RetencionDimensional(usr, apc1);
-            rdGUI.setVisible(true);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(AceptacionProducto.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+        cerrarVentana(); // Se cierra la ventana actual
+        aps.abrirRetencionDimensionalGUI(usr, apc1); // Se abre la ventana principal de Retención Dimensional 
     }//GEN-LAST:event_btnContinuarActionPerformed
+
+    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        initComponents(); // Inicialización de Componentes
+        this.setResizable(false); // Se define que no se puede redimensionar
+        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Se deshabilita el boton de cerrar de la ventana
+        this.conexion = Conexion.getInstance().getConnection(); // Inicialización de la conexión a la BD
+    }
+
+    private void cerrarVentana() {
+        AceptacionProductoGUI2.this.dispose(); // Se liberan los recursos de la ventana actual
+    }
 
     /**
      * @param args the command line arguments
@@ -195,26 +196,16 @@ public class AceptacionProducto extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(AceptacionProducto.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            new AceptacionProducto().setVisible(true);
+            new AceptacionProductoGUI2().setVisible(true);
         });
     }
-    
-    public void datosPrueba(){
-        // Establece la fecha por defecto
-        java.util.Date defaultDate = new java.util.Date(); // Puedes cambiar esto a la fecha que desees
-        dchFechaLiberacion.setDate(defaultDate);
-        txtInspeccionVisual.setText("OK");
-        txtObservaciones.setText("INSPECCIÓN 100%");
-    }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnContinuar;
     private javax.swing.JButton btnRegresar;

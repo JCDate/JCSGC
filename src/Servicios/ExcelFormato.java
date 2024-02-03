@@ -6,8 +6,13 @@
 package Servicios;
 
 import java.awt.Color;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
@@ -79,7 +84,7 @@ public class ExcelFormato {
         return estiloCelda;
     }
 
-    public XSSFCellStyle estiloEstatus(XSSFWorkbook workbook, HorizontalAlignment alineacionHorizontal, VerticalAlignment alineacionVertical,Color color) {
+    public XSSFCellStyle estiloEstatus(XSSFWorkbook workbook, HorizontalAlignment alineacionHorizontal, VerticalAlignment alineacionVertical, Color color) {
         // Se crea un estilo para la celda de Estatus
         XSSFCellStyle estiloCeldaEstatus = workbook.createCellStyle();
         XSSFColor xssfColor = new XSSFColor(color);
@@ -103,4 +108,82 @@ public class ExcelFormato {
         estiloTbl.cloneStyleFrom(bordeSencillo(workbook));
         return estiloTbl;
     }
+
+    public void estiloCeldasRD(XSSFWorkbook workbook, int tamFuente, int anguloRotacion, boolean saltoLinea) {
+        CellStyle cellStyle = workbook.createCellStyle(); // Crear un estilo con formato de texto que permita saltos de línea
+
+        Font font = workbook.createFont();
+        font.setFontHeightInPoints((short) tamFuente); // Cambia el tamaño del texto aquí 
+
+        cellStyle.setRotation((short) 90); // Cambia el ángulo de rotación aquí (90 grados en este caso)
+        cellStyle.setFont(font);
+        cellStyle.setWrapText(saltoLinea); // Permite saltos de línea
+
+        // Crear un margen en la parte superior
+        cellStyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        cellStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+        cellStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
+        cellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+    }
+
+    public XSSFCellStyle estiloTablaAnchoLargoHI(XSSFWorkbook workbook) {
+        XSSFCellStyle estiloCheckmark = (XSSFCellStyle) workbook.createCellStyle(); // Crear estilo de celda con fuente Wingdings
+        Font font = workbook.createFont();
+        font.setFontName("Wingdings 2"); // Fuente que contiene el ícono de checkmark
+        estiloCheckmark.setFont(font);
+        estiloCheckmark.setAlignment(HorizontalAlignment.CENTER); // Establecer la alineación horizontal
+        estiloCheckmark.setVerticalAlignment(VerticalAlignment.CENTER); // Establecer la alineación vertical
+        estiloCheckmark.setBorderTop(HSSFCellStyle.BORDER_MEDIUM);
+        estiloCheckmark.setBorderLeft(HSSFCellStyle.BORDER_MEDIUM);
+
+        return estiloCheckmark;
+    }
+
+    public String formatoFecha(String fechaString) {
+        String fechaFormateada = "";
+        SimpleDateFormat formatoEntrada = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat formatoSalida = new SimpleDateFormat("d 'de' MMMM 'de' yyyy");
+
+        try {
+            Date fecha = formatoEntrada.parse(fechaString);
+            fechaFormateada = formatoSalida.format(fecha);
+            System.out.println(fechaFormateada);
+        } catch (ParseException e) {
+        }
+        return fechaFormateada;
+    }
+
+    public String eliminarSeparadores(String fechaInspeccion) {
+        String fechaSinSeparadores = "";
+        String formatoEntrada = "dd/MM/yyyy";
+        String formatoSalida = "ddMMyy";
+        SimpleDateFormat sdfEntrada = new SimpleDateFormat(formatoEntrada);
+        SimpleDateFormat sdfSalida = new SimpleDateFormat(formatoSalida);
+        try {
+            Date fecha = sdfEntrada.parse(fechaInspeccion);
+            fechaSinSeparadores = sdfSalida.format(fecha);
+        } catch (ParseException e) {
+        }
+        return fechaSinSeparadores;
+    }
+
+    public XSSFCellStyle estiloCeldasRD(XSSFWorkbook workbook) {
+      
+        XSSFCellStyle estilo = (XSSFCellStyle) workbook.createCellStyle();
+        estilo.setWrapText(true); // Esto permite que el texto se ajuste automáticamente
+        Font font = workbook.createFont();
+        font.setFontHeightInPoints((short) 6); // Cambia el tamaño del texto aquí (14 puntos en este caso)
+        estilo.setFont(font);
+
+        // Aplica el estilo a la celda
+        estilo.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        estilo.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        estilo.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+        estilo.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        estilo.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+        estilo.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
+        
+        return estilo;
+    }
+
 }

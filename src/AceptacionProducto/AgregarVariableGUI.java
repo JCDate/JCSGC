@@ -1,12 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package AceptacionProducto;
 
-import InspeccionRecibo.InspeccionReciboGUI;
 import Modelos.AceptacionPc1;
+import Modelos.AceptacionPc2;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
@@ -15,39 +10,38 @@ import java.awt.Toolkit;
 import java.awt.Color;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 /**
  *
  * @author JC
  */
-public class AgregarVariable extends javax.swing.JFrame {
+public class AgregarVariableGUI extends javax.swing.JFrame {
 
-    Usuarios usr;
-    Connection conexion;
-    AceptacionPc1 apc1;
-    AceptacionProductoServicio aps = new AceptacionProductoServicio();
+    // Atributos
+    private Usuarios usr; // La instancia del usuario actual del sistema
+    private Connection conexion; // Conexión a la BD
+    private AceptacionPc1 apc1; // Se crea la instancia de la clase AceptacionPc1
+    private AceptacionPc2 apc2; // Se crea la instancia de la clase AceptacionPc2
+    private AceptacionProductoServicio aps = new AceptacionProductoServicio(); // Se crea la instancia de la clase AceptacionProductoServicio
 
     /**
      * Creates new form AgregarVariable
      *
      */
-
-    public AgregarVariable() {
-        initComponents();
-        this.setDefaultCloseOperation(0); // Deshabilita el botón de cerrar de la ventana
-        this.setResizable(false);
+    public AgregarVariableGUI() {
+        inicializarVentanaYComponentes(); // Inicialización de componentes
     }
 
-    public AgregarVariable(Usuarios usr, AceptacionPc1 apc1) {
-        initComponents();
-        this.setDefaultCloseOperation(0); // Deshabilita el botón de cerrar de la ventana
-        this.setResizable(false);
-        this.apc1 = apc1;
+    public AgregarVariableGUI(Usuarios usr, AceptacionPc1 apc1, AceptacionPc2 apc2) {
+        inicializarVentanaYComponentes(); // Inicialización de componentes
+
+        // Definición de los atributos
         this.usr = usr;
-        this.conexion = Conexion.getInstance().getConnection();
+        this.apc1 = apc1;
+        this.apc2 = apc2;
+
     }
 
     @Override
@@ -122,34 +116,37 @@ public class AgregarVariable extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
-        AgregarVariable.this.dispose(); // Se liberan los recursos de la interfaz
-        try {
-            RetencionDimensional apGUI = new RetencionDimensional(usr, apc1); // Se crea una instancia de la interfaz gráfica
-            apGUI.setVisible(true); // Se hace visible la ventana
-            apGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana(); // Se cierra la ventana actual
+        this.aps.abrirRetencionDimensionalGUI(usr, apc1, apc2); // Se abre la ventana principal de Retención Dimensional
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        String nuevaVariable = txtNuevaVariable.getText();
-        try {
-            aps.agregarNuevaVariable(conexion, nuevaVariable);
-            JOptionPane.showMessageDialog(this, "NUEVA VARIABLE AGREGADA CORRECTAMENTE");
-            AgregarVariable.this.dispose(); // Se liberan los recursos de la interfaz
-        try {
-            RetencionDimensional apGUI = new RetencionDimensional(usr, apc1); // Se crea una instancia de la interfaz gráfica
-            apGUI.setVisible(true); // Se hace visible la ventana
-            apGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
-        }
-            
-        } catch (SQLException ex) {
-            Logger.getLogger(AgregarVariable.class.getName()).log(Level.SEVERE, null, ex);
+        String nuevaVariable = txtNuevaVariable.getText(); // Se obtiene el texto del campo para agregar nueva variable
+        if (nuevaVariable.isEmpty()) { // Si no hay nada en el campo...
+            JOptionPane.showMessageDialog(this, "El campo para agregar una nueva variable esta vacío");
+        } else {
+            try {
+                aps.agregarNuevaVariable(conexion, nuevaVariable); // Se inserta la nueva variable
+                JOptionPane.showMessageDialog(this, "NUEVA VARIABLE AGREGADA CORRECTAMENTE");
+                cerrarVentana(); // Se cierra la ventana actual
+                aps.abrirRetencionDimensionalGUI(usr, apc1, apc2); // Se abre la ventana principal de Retención Dimensional
+            } catch (SQLException ex) {
+                aps.manejarExcepcion("Surgio un error al abrir la Ventana AGREGAR VARIABLES", ex); // Se muestra el mensaje de la excepción al usuario
+            }
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
+
+    private void inicializarVentanaYComponentes() {
+        initComponents(); // Inicialización de Componentes
+        this.setResizable(false); // Se define que no se puede redimensionar
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Se deshabilita el boton de cerrar de la ventana
+        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
+        this.conexion = Conexion.getInstance().getConnection(); // Inicialización de la conexión a la BD
+    }
+
+    private void cerrarVentana() {
+        AgregarVariableGUI.this.dispose(); // Se liberan los recursos de la interfaz
+    }
 
     /**
      * @param args the command line arguments
@@ -167,21 +164,14 @@ public class AgregarVariable extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(AgregarVariable.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(AgregarVariable.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(AgregarVariable.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(AgregarVariable.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(AgregarVariableGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            new AgregarVariable().setVisible(true);
-
+            new AgregarVariableGUI().setVisible(true);
         });
     }
 

@@ -1,24 +1,21 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Servicios;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author JC
  */
-public class sql {
-    Connection conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos
-    ContadorAnual contador = new ContadorAnual();
+public class SQL {
 
-    public int auto_increment(String sql) {
+    Connection conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos
+    ContadorAnual contador = new ContadorAnual(); // Contador de reportes de inspección
+
+    public int autoIncremento(String sql) {
         int id = 1;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -41,26 +38,19 @@ public class sql {
         return id;
     }
 
-    public String getCodigoHoja(String sql) {
+    public String getCodigoHoja(String sql, int year) {
         String numHoja = "";
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conexion.prepareStatement(sql);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                numHoja = rs.getString(1);
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setString(1, String.valueOf(year) + "%");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    numHoja = rs.getString(1);
+                }
             }
         } catch (SQLException ex) {
-            System.out.println("idmaximo" + ex.getMessage());
+            JOptionPane.showMessageDialog(null, "Error al obtener el código de la hoja: " + ex.getMessage());
             numHoja = "";
-        } finally {
-            try {
-                ps.close();
-                rs.close();
-                //Conexion.cerrar();
-            } catch (SQLException ex) {
-            }
         }
         return numHoja;
     }
@@ -77,5 +67,4 @@ public class sql {
         String nuevoNumeroStr = String.format("%03d", siguienteNumero); // Formatear el número con ceros a la izquierda
         return prefijo + "/" + nuevoNumeroStr; // Generar el nuevo código
     }
-
 }

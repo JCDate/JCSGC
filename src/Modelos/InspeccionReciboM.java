@@ -25,8 +25,11 @@ public class InspeccionReciboM {
     private byte[] certificadopdf;
     private byte[] facturapdf;
     private byte[] hojaIns;
+    private String nombreHJ;
+    private String nombreFact;
+    private String nombreCert;
 
-    public InspeccionReciboM(int id, String fechaFactura, String proveedor, String noFactura, String noPedido, String calibre, String pLamina, String noRollo, String pzKg, String estatus, String noHoja, byte[] facturapdf, byte[] certificadopdf, byte[] hojaIns) {
+    public InspeccionReciboM(int id, String fechaFactura, String proveedor, String noFactura, String noPedido, String calibre, String pLamina, String noRollo, String pzKg, String estatus, String noHoja, byte[] facturapdf, byte[] certificadopdf, byte[] hojaIns, String nombreHJ, String nombreFact, String nombreCert) {
         this.id = id;
         this.fechaFactura = fechaFactura;
         this.proveedor = proveedor;
@@ -41,6 +44,9 @@ public class InspeccionReciboM {
         this.facturapdf = facturapdf;
         this.certificadopdf = certificadopdf;
         this.hojaIns = hojaIns;
+        this.nombreHJ = nombreHJ;
+        this.nombreFact = nombreFact;
+        this.nombreCert = nombreCert;
     }
 
     public InspeccionReciboM() {
@@ -56,6 +62,9 @@ public class InspeccionReciboM {
         this.estatus = null;
         this.noHoja = null;
         this.hojaIns = null;
+        this.nombreHJ = null;
+        this.nombreFact = null;
+        this.nombreCert = null;
     }
 
     public String getNoHoja() {
@@ -170,4 +179,27 @@ public class InspeccionReciboM {
         this.id = id;
     }
 
+    public String getNombreHJ() {
+        return nombreHJ;
+    }
+
+    public void setNombreHJ(String nombreHJ) {
+        this.nombreHJ = nombreHJ;
+    }
+
+    public String getNombreFact() {
+        return nombreFact;
+    }
+
+    public void setNombreFact(String nombreFact) {
+        this.nombreFact = nombreFact;
+    }
+
+    public String getNombreCert() {
+        return nombreCert;
+    }
+
+    public void setNombreCert(String nombreCert) {
+        this.nombreCert = nombreCert;
+    }
 }

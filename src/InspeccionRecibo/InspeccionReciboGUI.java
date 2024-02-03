@@ -1,12 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package InspeccionRecibo;
 
 import Servicios.imgTabla;
-import HojaInstruccion.HojaInstruccion;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
@@ -204,6 +198,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         btnEliminar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
         lblJCIcono = new javax.swing.JLabel();
+        btnAgregarCalibre = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         jScrollPane1 = new javax.swing.JScrollPane();
         tblInspeccionRecibo = new javax.swing.JTable();
         btnToExcel = new swing.Button(new Color(107, 240, 105),new Color(75, 212, 73));
@@ -288,6 +283,17 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         getContentPane().add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
+
+        btnAgregarCalibre.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnAgregarCalibre.setForeground(new java.awt.Color(255, 255, 255));
+        btnAgregarCalibre.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/1004733.png"))); // NOI18N
+        btnAgregarCalibre.setText("AGREGAR CALIBRE");
+        btnAgregarCalibre.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAgregarCalibreActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnAgregarCalibre, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 100, 180, -1));
 
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
@@ -429,7 +435,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                     case "Realizar":
                         InspeccionReciboGUI.this.dispose(); // Se liberan los recursos del sistema
                         try {
-                            HojaInstruccion hj = new HojaInstruccion(usr, this.irm.get(posicion)); // Se crea la instancia para ir a la ventana de HojaInstruccion
+                            HojaInstruccionGUI hj = new HojaInstruccionGUI(usr, this.irm.get(posicion)); // Se crea la instancia para ir a la ventana de HojaInstruccionGUI
                             hj.setVisible(true); // Se pone en visible la ventana
                             hj.setLocationRelativeTo(null);   // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema
                         } catch (SQLException | ClassNotFoundException ex) {
@@ -464,7 +470,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
         txtBuscador.addKeyListener(new KeyAdapter() {
-            //@Override
+            @Override
             public void keyReleased(final KeyEvent ke) {
                 String cadena = (txtBuscador.getText());
                 txtBuscador.setText(cadena);
@@ -474,6 +480,16 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         trs = new TableRowSorter(tblInspeccionRecibo.getModel());
         tblInspeccionRecibo.setRowSorter(trs);
     }//GEN-LAST:event_txtBuscadorKeyTyped
+
+    private void btnAgregarCalibreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCalibreActionPerformed
+        try {
+            AgregarCalibreHIGUI irGUI = new AgregarCalibreHIGUI(usr); // Se crea una instancia de la interfaz gráfica
+            irGUI.setVisible(true); // Se hace visible la ventana
+            irGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnAgregarCalibreActionPerformed
 
     /**
      * @param args the command line arguments
@@ -508,87 +524,10 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         });
     }
     
-    
-    
-    /*
-    
-    run:
-Asignar CÁLCULO DIFERENCIAL P a HUERTA DÍAZ ALBERTO
-Asignar imagenesP a GARCIA GIL GERARDO
-Asignar REDES III P a RAMIREZ MOLINA SANTIAGO EZEQUIEL
-Asignar ESTRUCTURADA P a HERRERA GOMEZ BRUNO DAVID
-Asignar optimizaciónP a MARTINEZ BLANCO RAUL ALFREDO
-Asignar proyecto IP a CAZARES LEON SERGIO ARISTEO
-Asignar WEB II P a ORTEGA TIRADO MARIA GUADALUPE
-Asignar iotP a MEDINA GARCIA FRANCISCO JAVIER
-Asignar GRAFICAS P a VILLANUEVA LARIOS CARLOS EDUARDO
-Asignar OBJETOS P a SALAZAR VALENZUELA JORGE HUMBERTO 
-Asignar ARQUITECTURA softP a MARTINEZ BLANCO RAUL ALFREDO
-Asignar software seguroP a CAZARES LEON SERGIO ARISTEO
-Asignar MATEMÁTICAS DISCRETAS P a ALGERÍA URIBE ROBERTO SEBASTIÁN
-Asignar ARQUITECTURA compusP a VILLANUEVA LARIOS CARLOS EDUARDO
-Asignar EVENTOS P a CAZARES LEON SERGIO ARISTEO
-Asignar hackingP a SALAZAR VALENZUELA JORGE HUMBERTO 
-Asignar PARALELA P a RAMIREZ MOLINA SANTIAGO EZEQUIEL
-Asignar REDES I P a LOPEZ HERNANDEZ LUIS MANUEL
-Asignar AutomatasP a VILLANUEVA LARIOS CARLOS EDUARDO
-Asignar TALLER P a SANDOVAL ÁLVAREZ BLANCA RUTH
-Asignar BD II P a SALAZAR VALENZUELA JORGE HUMBERTO 
-Asignar administracion tiP a LOPEZ HERNANDEZ LUIS MANUEL
-Asignar IA P a VILLANUEVA LARIOS CARLOS EDUARDO
-Asignar VIRTUA P a RAMIREZ MOLINA SANTIAGO EZEQUIEL
-Asignar ARQUITECTURA SO'SP a SANTANA VAZQUEZ ROSA MARÍA
-Asignar ANÁLISIS P a GARCIA GIL GERARDO
-Asignar BD I P a ROBLES RAMIREZ IGNACIO
-Asignar tecnologíasP a LOPEZ HERNANDEZ LUIS MANUEL
-Asignar PRECÁLCULO P a ROJAS DE LA CRUZ VERONICA ADRIANA
-Asignar ELECTRÓNICA P a HERRERA GOMEZ BRUNO DAVID
-Asignar CULTURA P a ORENDAIN CAMACHO CARMEN LUZ
-Asignar WEB I P a GARCIA GIL GERARDO
-Asignar calidadP a MEDINA GARCIA FRANCISCO JAVIER
-Asignar MEDIO AMBIENTE P a BAÑUELOS CALVO SILVIA MAGALI
-Asignar ia probabilidadP a HERRERA GOMEZ BRUNO DAVID
-Asignar CÁLCULO VARIAS P a HUERTA DÍAZ ALBERTO
-Asignar machine learningP a GARCIA GIL GERARDO
-Asignar DINÁMICA P a HUERTA DÍAZ ALBERTO
-Asignar MÓVILES I P a LOPEZ HERNANDEZ LUIS MANUEL
-Asignar INGLÉS IV P a HIDALGO NEVAREZ RODRIGO DAVID
-Asignar INGLÉS III P a HARO ACEVES MATEO VLADIMIR
-Asignar ARQUITECTURA softP a SANTANA VAZQUEZ ROSA MARÍA
-Asignar PROBABILIDAD P a ROJAS DE LA CRUZ VERONICA ADRIANA
-Asignar comercioP a RAMIREZ MOLINA SANTIAGO EZEQUIEL
-Asignar deep learningP a MEDINA GARCIA FRANCISCO JAVIER
-Asignar proyecto IIP a ORTEGA TIRADO MARIA GUADALUPE
-Asignar MÓVILES II P a MARTINEZ BLANCO RAUL ALFREDO
-Asignar info forenseP a ORTEGA TIRADO MARIA GUADALUPE
-Asignar PLANEACIÓN P a ORENDAIN CAMACHO CARMEN LUZ
-Asignar ESTÁTICA P a HUERTA DÍAZ ALBERTO
-Asignar INNOVACIÓN P a NUÑEZ MORENO CARMEN ANGELICA
-Asignar MÉTODOS P a HUERTA DÍAZ ALBERTO
-Asignar inversaP a ROBLES RAMIREZ IGNACIO
-Asignar INGLÉS VII P a HARO ACEVES MATEO VLADIMIR
-Asignar HABILIDADES P a BAÑUELOS CALVO SILVIA MAGALI
-Asignar ÉTICA P a NUÑEZ MORENO CARMEN ANGELICA
-Asignar REDES II P a MEDINA GARCIA FRANCISCO JAVIER
-Asignar INGLÉS II P a HIDALGO NEVAREZ RODRIGO DAVID
-Asignar INGLÉS V P a CAMARENA AGUILAR CLAUDIA ALEJANDRA
-Asignar INGLÉS VI P a HARO ACEVES MATEO VLADIMIR
-Asignar ALGEBRA P a ALGERÍA URIBE ROBERTO SEBASTIÁN
-Asignar ADMINISTRACIÓN P a ORENDAIN CAMACHO CARMEN LUZ
-Asignar INTRODUCCIÓN AL DESARROLLO DE SOFTWARE P a ROBLES RAMIREZ IGNACIO
-Asignar algoritmiaP a SANTANA VAZQUEZ ROSA MARÍA
-Asignar INGLÉS I P a CAMARENA AGUILAR CLAUDIA ALEJANDRA
-Asignar ECONÓMIA P a BAÑUELOS CALVO SILVIA MAGALI
-Asignar gestion tiP a ROBLES RAMIREZ IGNACIO
-Asignar ECUACIONES P a ROJAS DE LA CRUZ VERONICA ADRIANA
-    
-    
-    
-    */
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnActualizar;
     private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnAgregarCalibre;
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnModificar;
@@ -600,5 +539,4 @@ Asignar ECUACIONES P a ROJAS DE LA CRUZ VERONICA ADRIANA
     private javax.swing.JTable tblInspeccionRecibo;
     private swing.TextField txtBuscador;
     // End of variables declaration//GEN-END:variables
-
 }

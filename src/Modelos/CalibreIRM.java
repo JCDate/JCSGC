@@ -14,15 +14,17 @@ public class CalibreIRM {
     private String calibre;
     private String medidas;
     private String especificacion;
+    private String descripcionMP;
 
-    public CalibreIRM(String calibre, String medidas, String especificacion) {
+    public CalibreIRM(String calibre, String medidas, String especificacion, String descripcionMP) {
         this.calibre = calibre;
         this.medidas = medidas;
         this.especificacion = especificacion;
+        this.descripcionMP = descripcionMP;
     }
-    
+
     public CalibreIRM() {
-    
+
     }
 
     public String getCalibre() {
@@ -49,6 +51,14 @@ public class CalibreIRM {
         this.especificacion = especificacion;
     }
 
+    public String getDescripcionMP() {
+        return descripcionMP;
+    }
+
+    public void setDescripcionMP(String descripcionMP) {
+        this.descripcionMP = descripcionMP;
+    }
+    
     
 
 }

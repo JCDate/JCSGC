@@ -18,6 +18,7 @@ public class AceptacionPc3 {
     String variable;
     String especificacion;
     String valor;
+    int procesoCritico;
 
     public AceptacionPc3() {
         this.id = "";
@@ -27,9 +28,10 @@ public class AceptacionPc3 {
         this.variable = "";
         this.especificacion = "";
         this.valor = "";
+        this.procesoCritico = 0;
     }
 
-    public AceptacionPc3(String id, String componente, String noOp, String fecha, String variable, String especificacion, String valor) {
+    public AceptacionPc3(String id, String componente, String noOp, String fecha, String variable, String especificacion, String valor, int procesoCritico) {
         this.id = id;
         this.componente = componente;
         this.noOp = noOp;
@@ -37,6 +39,7 @@ public class AceptacionPc3 {
         this.variable = variable;
         this.especificacion = especificacion;
         this.valor = valor;
+        this.procesoCritico = procesoCritico;
     }
 
     public String getId() {
@@ -94,5 +97,15 @@ public class AceptacionPc3 {
     public void setValor(String valor) {
         this.valor = valor;
     }
+
+    public int getProcesoCritico() {
+        return procesoCritico;
+    }
+
+    public void setProcesoCritico(int procesoCritico) {
+        this.procesoCritico = procesoCritico;
+    }
+    
+    
 
 }

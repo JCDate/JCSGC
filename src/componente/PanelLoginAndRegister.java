@@ -143,6 +143,10 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
         String pass = null;
         pass = pref.get("passwordJC", pass);
         txtContrasena.setText(pass);
+        
+        txtUsuario.addActionListener(e -> {
+            iniciarSesion(txtUsuario.getText(), txtContrasena.getPassword());
+        });
 
         txtContrasena.addActionListener(e -> {
             iniciarSesion(txtUsuario.getText(), txtContrasena.getPassword());

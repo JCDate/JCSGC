@@ -1,11 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package AceptacionProducto;
 
-import InspeccionRecibo.ModificarIr;
+import Modelos.AceptacionPc1;
+import Modelos.AceptacionPc2;
 import Modelos.AceptacionPc3;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
@@ -18,45 +14,62 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 /**
  *
  * @author JC
  */
-public class ModificarRD extends javax.swing.JFrame {
+public class ModificarRDGUI extends javax.swing.JFrame {
 
-    Usuarios usr;
-    Connection conexion;
-    AceptacionProductoServicio aps = new AceptacionProductoServicio();
-    AceptacionPc3 apc3, apc32;
+    // Atributos 
+    private Usuarios usr; // La instancia del usuario actual del sistema
+    private Connection conexion; // Conexión a la BD
+
+    private AceptacionPc1 apc1; // Se crea la instancia de la clase AceptacionPc1
+    private AceptacionPc2 apc2; // Se crea la instancia de la clase AceptacionPc2
+    private AceptacionPc3 apc3, apc3Auxiliar; // Se crean instancias de la clase AceptacionPc3
+    private AceptacionProductoServicio aps = new AceptacionProductoServicio(); // Se crea la instancia de la clase AceptacionProductoServicio
 
     /**
      * Creates new form ModificarRD
      */
-    public ModificarRD() {
-        initComponents();
+    public ModificarRDGUI() {
+        try {
+            inicializarVentanaYComponentes(); // Inicialización de componentes
+        } catch (SQLException | ClassNotFoundException ex) {
+            this.aps.manejarExcepcion("Surgio un error al abrir el apartado MODIFICAR", ex); // Se muestra el mensaje de la excepción al usuario  
+        }
     }
 
-    public ModificarRD(AceptacionPc3 apc3, Usuarios usr) {
-        initComponents();
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-        this.usr = usr;
-        this.apc3 = apc3;
-        this.apc32 = new AceptacionPc3(this.apc3.getId(), this.apc3.getComponente(), this.apc3.getNoOp(), this.apc3.getFecha(), this.apc3.getVariable(), this.apc3.getEspecificacion(), this.apc3.getValor());
-
+    public ModificarRDGUI(AceptacionPc3 apc3, Usuarios usr, AceptacionPc1 apc1, AceptacionPc2 apc2) {
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Crear un objeto SimpleDateFormat para analizar la cadena de fecha
-            Date fecha = dateFormat.parse(this.apc3.getFecha()); // Parsear la cadena de fecha en un objeto Date
-            dchFecha.setDate(fecha); // Establecer la fecha en el JDateChooser
-        } catch (ParseException e) {
+            inicializarVentanaYComponentes(); // Inicialización de componentes
+
+            // Se definen los atributos de la clase
+            this.usr = usr;
+            this.apc1 = apc1;
+            this.apc2 = apc2;
+            this.apc3 = apc3;
+            this.apc3Auxiliar = new AceptacionPc3(apc3.getId(), apc3.getComponente(), apc3.getNoOp(), apc3.getFecha(), apc3.getVariable(), apc3.getEspecificacion(), apc3.getValor(), 0);
+
+            try { // Se obtiene la fecha de la fila de información requerida
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                Date fecha = dateFormat.parse(apc3.getFecha());
+                dchFecha.setDate(fecha);
+            } catch (ParseException e) {
+                aps.manejarExcepcion("Error al parsear la fecha", e); // Se muestra el mensaje de la excepción al usuario  
+            }
+
+            // Se muestra la información previamente seleccionada 
+            txtValor.setText(apc3.getValor());
+            txtVariable.setText(apc3.getVariable());
+            txtNoOperacion.setText(apc3.getNoOp());
+            txtEspecificacion.setText(apc3.getEspecificacion());
+        } catch (SQLException | ClassNotFoundException ex) {
+            aps.manejarExcepcion("Error al inicializar la ventana y componentes", ex); // Se muestra el mensaje de la excepción al usuario 
         }
-        txtNoOperacion.setText(apc3.getNoOp());
-        txtVariable.setText(apc3.getVariable());
-        txtEspecificacion.setText(apc3.getEspecificacion());
-        txtValor.setText(apc3.getValor());
     }
 
     @Override
@@ -176,41 +189,59 @@ public class ModificarRD extends javax.swing.JFrame {
     }//GEN-LAST:event_txtEspecificacionActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // Obtén la fecha seleccionada
-        Date selectedDate = dchFecha.getDate();
-        // Crea un objeto SimpleDateFormat para el formato deseado
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        // Se almacenan los datos capturados en las variable
-        String fecha = dateFormat.format(selectedDate); // Formatea la fecha y guárdala en una variable String
-        String noOp = txtNoOperacion.getText();
-        String variable = txtVariable.getText();
-        String especificacion = txtEspecificacion.getText();
-        String valor = txtValor.getText();
+        if (aps.verificarRango(txtEspecificacion.getText(), txtValor.getText())) { // Si los valores estan dentro del rango definido...
+            Date fechaSeleccionada = dchFecha.getDate(); // Obtén la fecha seleccionada
+            String fecha = aps.formatearFecha(fechaSeleccionada); // Se define el formato específico "dd/mm/aaaa" 
 
-        // Si los campos no estan vacios
-        if (!fecha.isEmpty() || !noOp.isEmpty() || !variable.isEmpty() || !especificacion.isEmpty() || !valor.isEmpty()) {
-            this.apc3.setFecha(fecha);
-            this.apc3.setNoOp(noOp);
-            this.apc3.setVariable(variable);
-            this.apc3.setEspecificacion(especificacion);
-            this.apc3.setValor(valor);
-            modificarDatos(); // Se realiza la modificación
+            // Se captura el resto de la información de los campos 
+            String valor = txtValor.getText();
+            String noOp = txtNoOperacion.getText();
+            String variable = txtVariable.getText();
+            String especificacion = txtEspecificacion.getText();
+
+            // Si los campos no estan vacios...
+            if (!fecha.isEmpty() && !noOp.isEmpty() && !variable.isEmpty() && !especificacion.isEmpty() && !valor.isEmpty()) {
+                this.apc3.setFecha(fecha);
+                this.apc3.setNoOp(noOp);
+                this.apc3.setVariable(variable);
+                this.apc3.setEspecificacion(especificacion);
+                this.apc3.setValor(valor);
+                modificarDatos(); // Se realiza la modificación
+            } else {
+                JOptionPane.showMessageDialog(this, "HAY CAMPOS INCOMPLETOS", "ERROR", JOptionPane.ERROR_MESSAGE); // En el caso de que haya alguno vacío se notifica al usuario
+            }
         } else {
-            JOptionPane.showMessageDialog(this, "HAY CAMPOS INCOMPLETOS.");
+            txtValor.setText(""); // Si el valor ingresado no esta dentro del rango, se borra
         }
-
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
-        ModificarRD.this.dispose(); // Se liberan los recursos de la interfaz
-        try {
-            RetencionDimensional apGUI = new RetencionDimensional(usr); // Se crea una instancia de la interfaz gráfica
-            apGUI.setVisible(true); // Se hace visible la ventana
-            apGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana(); // Se cierra la ventana actual
+        this.aps.abrirRetencionDimensionalGUI(usr, apc1, apc2); // Se abre la ventana principal de Retención Dimensional 
     }//GEN-LAST:event_btnCancelarActionPerformed
+
+    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        initComponents(); // Inicialización de Componentes
+        this.setResizable(false); // Se define que no se puede redimensionar
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Se deshabilita el boton de cerrar de la ventana
+        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
+        this.conexion = Conexion.getInstance().getConnection(); // Inicialización de la conexión a la BD
+    }
+
+    private void cerrarVentana() {
+        ModificarRDGUI.this.dispose(); // Se liberan los recursos de la interfaz
+    }
+
+    private void modificarDatos() {
+        try {
+            aps.modificar(conexion, this.apc3, this.apc3Auxiliar); // Se realiza la consulta de modificación 
+            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
+            cerrarVentana(); // Se cierra la ventana Actual
+            aps.abrirRetencionDimensionalGUI(usr, apc1, apc2); // Se abre la ventana principal de Retención Dimensional 
+        } catch (SQLException ex) {
+            aps.manejarExcepcion("Ha surgido un error y no se ha podido guardar el registro.", ex); // Se muestra el mensaje de la excepción al usuario
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -228,22 +259,14 @@ public class ModificarRD extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ModificarRD.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ModificarRD.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ModificarRD.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(ModificarRD.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(ModificarRDGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ModificarRD().setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new ModificarRDGUI().setVisible(true);
         });
     }
 
@@ -264,23 +287,4 @@ public class ModificarRD extends javax.swing.JFrame {
     private javax.swing.JTextField txtValor;
     private javax.swing.JTextField txtVariable;
     // End of variables declaration//GEN-END:variables
-
-    private void modificarDatos() {
-        try {
-            this.aps.modificar(conexion, this.apc3, this.apc32);
-            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
-
-            ModificarRD.this.dispose(); // Se liberan los recursos de la interfaz
-            try {
-                RetencionDimensional apGUI = new RetencionDimensional(usr); // Se crea una instancia de la interfaz gráfica
-                apGUI.setVisible(true); // Se hace visible la ventana
-                apGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-            } catch (SQLException | ClassNotFoundException ex) {
-                Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(ModificarIr.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Ha surgido un error y no se ha podido guardar el registro.");
-        }
-    }
 }

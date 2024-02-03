@@ -38,9 +38,9 @@ public class Menu extends javax.swing.JFrame {
         // Se habilitan/deshabilitan los botones del menú
         btnInspeccionRecibo.setEnabled(true);
         btnAceptacionProducto.setEnabled(true);
-        jButton3.setEnabled(false);
-        jButton4.setEnabled(false);
-        jButton5.setEnabled(false);
+        btnInspeccionFinal.setEnabled(false);
+        btnAnalisisSistemasMedicion.setEnabled(false);
+        btnCtrlDocumentosYRegistros.setEnabled(true);
         jButton6.setEnabled(false);
         jButton7.setEnabled(false);
         jButton8.setEnabled(false);
@@ -49,6 +49,7 @@ public class Menu extends javax.swing.JFrame {
         //Color de los Botones
         setColores(btnInspeccionRecibo);
         setColores(btnAceptacionProducto);
+        setColores(btnCtrlDocumentosYRegistros);
     }
     
     public final void setColores(JButton btn) {
@@ -85,9 +86,9 @@ public class Menu extends javax.swing.JFrame {
         btnLogOut = new swing.Button(new Color(255, 202, 102), new Color(255, 166, 0));
         btnInspeccionRecibo = new swing.Button();
         btnAceptacionProducto = new swing.Button();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
+        btnInspeccionFinal = new javax.swing.JButton();
+        btnAnalisisSistemasMedicion = new javax.swing.JButton();
+        btnCtrlDocumentosYRegistros = new swing.Button();
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
@@ -149,26 +150,26 @@ public class Menu extends javax.swing.JFrame {
         });
         pnlMenu.add(btnAceptacionProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 150, 290, -1));
 
-        jButton3.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
-        jButton3.setText("Proceso 3");
-        jButton3.setMaximumSize(new java.awt.Dimension(270, 36));
-        jButton3.setMinimumSize(new java.awt.Dimension(270, 36));
-        jButton3.setPreferredSize(new java.awt.Dimension(270, 36));
-        pnlMenu.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 190, 290, -1));
+        btnInspeccionFinal.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
+        btnInspeccionFinal.setText("INSPECCIÓN FINAL");
+        btnInspeccionFinal.setMaximumSize(new java.awt.Dimension(270, 36));
+        btnInspeccionFinal.setMinimumSize(new java.awt.Dimension(270, 36));
+        btnInspeccionFinal.setPreferredSize(new java.awt.Dimension(270, 36));
+        pnlMenu.add(btnInspeccionFinal, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 190, 290, -1));
 
-        jButton4.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
-        jButton4.setText("Proceso 4");
-        jButton4.setMaximumSize(new java.awt.Dimension(270, 36));
-        jButton4.setMinimumSize(new java.awt.Dimension(270, 36));
-        jButton4.setPreferredSize(new java.awt.Dimension(270, 36));
-        pnlMenu.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 230, 290, -1));
+        btnAnalisisSistemasMedicion.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnAnalisisSistemasMedicion.setText("ANÁLISIS DE SISTEMAS DE MEDICIÓN");
+        btnAnalisisSistemasMedicion.setMaximumSize(new java.awt.Dimension(270, 36));
+        btnAnalisisSistemasMedicion.setMinimumSize(new java.awt.Dimension(270, 36));
+        btnAnalisisSistemasMedicion.setPreferredSize(new java.awt.Dimension(270, 36));
+        pnlMenu.add(btnAnalisisSistemasMedicion, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 230, 290, -1));
 
-        jButton5.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
-        jButton5.setText("Proceso 5");
-        jButton5.setMaximumSize(new java.awt.Dimension(270, 36));
-        jButton5.setMinimumSize(new java.awt.Dimension(270, 36));
-        jButton5.setPreferredSize(new java.awt.Dimension(270, 36));
-        pnlMenu.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 270, 290, -1));
+        btnCtrlDocumentosYRegistros.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnCtrlDocumentosYRegistros.setText("CONTROL DE DOCUMENTOS Y REGISTROS");
+        btnCtrlDocumentosYRegistros.setMaximumSize(new java.awt.Dimension(270, 36));
+        btnCtrlDocumentosYRegistros.setMinimumSize(new java.awt.Dimension(270, 36));
+        btnCtrlDocumentosYRegistros.setPreferredSize(new java.awt.Dimension(270, 36));
+        pnlMenu.add(btnCtrlDocumentosYRegistros, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 270, 290, -1));
 
         jButton6.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
         jButton6.setText("Proceso 6");
@@ -269,12 +270,12 @@ public class Menu extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAceptacionProducto;
+    private javax.swing.JButton btnAnalisisSistemasMedicion;
+    private javax.swing.JButton btnCtrlDocumentosYRegistros;
+    private javax.swing.JButton btnInspeccionFinal;
     private javax.swing.JButton btnInspeccionRecibo;
     private javax.swing.JButton btnLogOut;
     private javax.swing.JButton jButton10;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;

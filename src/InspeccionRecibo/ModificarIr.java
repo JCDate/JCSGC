@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package InspeccionRecibo;
 
 import Modelos.InspeccionReciboM;
@@ -60,13 +55,16 @@ public class ModificarIr extends javax.swing.JFrame {
         txtCalibre.setText(this.irm.getCalibre());
         txtNoRollo.setText(this.irm.getNoRollo());
         txtPzKg.setText(this.irm.getPzKg());
+        txtNombreFactura.setText(this.irm.getNombreFact());
+        txtNombreCertificado.setText(this.irm.getNombreCert());
+        txtNombreHojaInstruccion.setText(this.irm.getNombreHJ());
         txtNoHoja.setText(String.valueOf(this.irm.getNoHoja()));
 
         cbxEstatus.setSelectedItem(this.irm.getEstatus());
         cbxPresentacionLamina.setSelectedItem(this.irm.getpLamina());
         cbxProveedor.setSelectedItem(this.irm.getProveedor());
 
-        this.irm2 = new InspeccionReciboM(this.irm.getId(), this.irm.getFechaFactura(), "", "", "", this.irm.getCalibre(), "", this.irm.getNoRollo(), this.irm.getPzKg(), "", "", this.irm.getFacturapdf(), this.irm.getCertificadopdf(), this.irm.getHojaIns());
+        this.irm2 = new InspeccionReciboM(this.irm.getId(), this.irm.getFechaFactura(), "", "", "", this.irm.getCalibre(), "", this.irm.getNoRollo(), this.irm.getPzKg(), "", "", this.irm.getFacturapdf(), this.irm.getCertificadopdf(), this.irm.getHojaIns(), this.irm.getNombreHJ(), this.irm.getNombreFact(), this.irm.getNombreCert());
 
         try {
             Statement slqNombreProveedor = conexion.createStatement(); // Se define la consulta preparada
@@ -87,6 +85,50 @@ public class ModificarIr extends javax.swing.JFrame {
             dchFechaFactura.setDate(fecha); // Establecer la fecha en el JDateChooser
         } catch (ParseException e) {
         }
+    }
+
+    public ModificarIr(InspeccionReciboM irm, Usuarios usr, String rutaArchivoHJ) throws ClassNotFoundException {
+        initComponentes();
+        this.usr = usr;
+        this.irm = irm;
+        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
+
+        txtNoFactura.setText(this.irm.getNoFactura());
+        txtNoPedido.setText(this.irm.getNoPedido());
+        txtCalibre.setText(this.irm.getCalibre());
+        txtNoRollo.setText(this.irm.getNoRollo());
+        txtPzKg.setText(this.irm.getPzKg());
+        txtNoHoja.setText(String.valueOf(this.irm.getNoHoja()));
+
+        cbxEstatus.setSelectedItem(this.irm.getEstatus());
+        cbxPresentacionLamina.setSelectedItem(this.irm.getpLamina());
+        cbxProveedor.setSelectedItem(this.irm.getProveedor());
+
+        this.irm2 = new InspeccionReciboM(this.irm.getId(), this.irm.getFechaFactura(), "", "", "", this.irm.getCalibre(), "", this.irm.getNoRollo(), this.irm.getPzKg(), "", "", this.irm.getFacturapdf(), this.irm.getCertificadopdf(), this.irm.getHojaIns(), this.irm.getNombreHJ(), this.irm.getNombreFact(), this.irm.getNombreCert());
+
+        try {
+            Statement slqNombreProveedor = conexion.createStatement(); // Se define la consulta preparada
+            ResultSet registro = slqNombreProveedor.executeQuery(this.irs.SELECT_NOMBRE_PROVEEDORES_SQL); // Se consultan los nombres de los proveedores 
+            while (registro.next()) { // Mientras haya información...
+                String columna = registro.getString("nombre"); // Variable que almacena los diferentes nombres encontrados
+                cbxProveedor.addItem(columna); // Se agrega al checkBox
+            }
+        } catch (SQLException ex) { // Se captura la excepción SQLException
+            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Crear un objeto SimpleDateFormat para analizar la cadena de fecha
+
+            Date fecha = dateFormat.parse(this.irm.getFechaFactura()); // Parsear la cadena de fecha en un objeto Date
+
+            dchFechaFactura.setDate(fecha); // Establecer la fecha en el JDateChooser
+        } catch (ParseException e) {
+        }
+
+        rutaArchivoHojaInstruccion = rutaArchivoHJ;
+
+        txtNombreHojaInstruccion.setText(rutaArchivoHojaInstruccion);
     }
 
     @Override
@@ -311,6 +353,9 @@ public class ModificarIr extends javax.swing.JFrame {
         String pzKg = txtPzKg.getText();
         String estatus = cbxEstatus.getSelectedItem().toString();
         String noHoja = txtNoHoja.getText();
+        String nombreHJ = txtNombreHojaInstruccion.getText();
+        String nombreFact = txtNombreFactura.getText();
+        String nombreCert = txtNombreCertificado.getText();
 
         // Si los campos no estan vacios
         if (!proveedor.isEmpty() || !noFactura.isEmpty() || !noPedido.isEmpty() || !calibre.isEmpty() || !pLamina.isEmpty() || !noRollo.isEmpty() || !pzKg.isEmpty() || !estatus.isEmpty() || !fechaFactura.isEmpty()) {
@@ -324,11 +369,14 @@ public class ModificarIr extends javax.swing.JFrame {
             this.irm.setPzKg(pzKg);
             this.irm.setEstatus(estatus);
             this.irm.setNoHoja(noHoja);
+            this.irm.setNoHoja(noHoja);
+            this.irm.setNombreHJ(nombreHJ);
+            this.irm.setNombreFact(nombreFact);
+            this.irm.setNombreCert(nombreCert);
             this.irs.cargarArchivo(rutaArchivoFactura, this.irm::setFacturapdf);
             this.irs.cargarArchivo(rutaArchivoCertificado, this.irm::setCertificadopdf);
             this.irs.cargarArchivo(rutaArchivoHojaInstruccion, this.irm::setHojaIns);
 
-            System.out.println("ruta: " + rutaArchivoFactura);
             modificarDatos(); // Se realiza la modificación
         } else {
             JOptionPane.showMessageDialog(this, "HAY CAMPOS INCOMPLETOS.");
@@ -345,6 +393,9 @@ public class ModificarIr extends javax.swing.JFrame {
 
     private void btnAgregarHojaInstruccionesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarHojaInstruccionesActionPerformed
         seleccionarHojaInstruccion();
+        String rutaAux = rutaArchivoHojaInstruccion;
+        this.dispose();
+        rutaArchivoHojaInstruccion = irs.abrirHojaInstruccionGUI2(usr, rutaAux, irm);
     }//GEN-LAST:event_btnAgregarHojaInstruccionesActionPerformed
 
     public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
@@ -419,7 +470,6 @@ public class ModificarIr extends javax.swing.JFrame {
         }
         //</editor-fold>
 
-        //</editor-fold>
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
             new ModificarIr().setVisible(true);

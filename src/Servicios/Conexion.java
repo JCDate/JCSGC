@@ -1,46 +1,46 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Servicios;
 
 import java.sql.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 public class Conexion {
 
-    private static Conexion instancia; // Instancia única de la clase
+    // Atributos
+    private static Conexion instancia;
     private Connection connection;
 
-    private Conexion() { // Constructor privado para evitar la creación de instancias desde fuera de la clase
+    // Constructor
+    private Conexion() { // Se realiza la conexión con la información de la base de datos
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/jc_mysql2", "root", ""); // Datos de la BD
+            String SERVER = "192.168.1.75";
+            String nombreBD = "jc_mysql2";
+            String url = "jdbc:mysql://" + SERVER + ":3306/" + nombreBD + "?useUnicode=yes&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true";
+            String usuario = "root";
+            String contraseña = "";
+            connection = DriverManager.getConnection(url, usuario, contraseña);
         } catch (SQLException ex) {
-            Logger.getLogger(Conexion.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null, "Hubo un error al conectar a la base de datos");
         }
     }
 
-    public static synchronized Conexion getInstance() { // Método estático para obtener la instancia única
+    public Connection getConnection() { // Método que obtiene la conexión
+        return connection;
+    }
+
+    public static synchronized Conexion getInstance() { // Método estático para obtener una conexión única
         if (instancia == null) {
             instancia = new Conexion();
         }
         return instancia;
     }
 
-    public Connection getConnection() {
-        return connection;
-    }
-
-    public void cerrarConexion() {
+    public void cerrarConexion() { // Método que cierra la conexión
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
-                System.out.println("Conexión cerrada correctamente");
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Conexion.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null, "Error al cerrar la conexión: " + ex);
         }
     }
 }
