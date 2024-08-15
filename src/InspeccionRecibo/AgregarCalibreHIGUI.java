@@ -15,37 +15,29 @@ import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author JC
- */
 public class AgregarCalibreHIGUI extends javax.swing.JFrame {
 
-    // Atributos
-    private Usuarios usr; // Instancia de la clase Usuarios
-    private Connection conexion; // Objeto de tipo Connection para realizar la conexión a la bd
-    private InspeccionReciboM irm; // Se crea la instancia de inspeccionReciboM
-    private CalibreIRM cirm = new CalibreIRM(); // Instancia de la clase CalibreIRM
-    private CalibreIrmServicio cirms = new CalibreIrmServicio(); // Instancia de la clase CalibreIrmServicio 
+    private Usuarios usr;
+    private Connection conexion;
+    private InspeccionReciboM irm;
+    private CalibreIRM cirm = new CalibreIRM();
+    private CalibreIrmServicio cirms = new CalibreIrmServicio();
 
-    /**
-     * Creates new form AgregarCalibreHIGUI
-     */
     public AgregarCalibreHIGUI() {
         try {
-            inicializarVentanaYComponentes(); // Inicialización de componentes
+            inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public AgregarCalibreHIGUI(Usuarios usr, InspeccionReciboM irm) throws SQLException, ClassNotFoundException {
-        inicializarVentanaYComponentes(); // Inicialización de componentes
-        this.usr = usr; // Asignación de los datos del usuario
-        this.irm = irm; // Asignación del atributo InspeccionReciboM
+        this.usr = usr;
+        this.irm = irm;
+        inicializarVentanaYComponentes();
 
-        cbxEspecificaciones.addItem(""); // Se agrega el item con texto vacío
-        cirms.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem); // Se obtiene la lista de los componentes
+        cbxEspecificaciones.addItem("");
+        cirms.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem);
 
         chkDescripcionMP.addActionListener(e -> {
             if (chkDescripcionMP.isSelected()) {
@@ -54,12 +46,11 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
                 txtDescripcionMP.setText("Lamina en Cinta. Cal." + txtCalibre.getText());
             }
         });
-
     }
 
     public AgregarCalibreHIGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
-        inicializarVentanaYComponentes(); // Inicialización de componentes
-        cirms.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem); // Se obtiene la lista de los componentes
+        inicializarVentanaYComponentes();
+        cirms.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem);
 
         chkDescripcionMP.addActionListener(e -> {
             if (chkDescripcionMP.isSelected()) {
@@ -68,12 +59,11 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
                 txtDescripcionMP.setText("Lamina en Cinta. Cal." + txtCalibre.getText());
             }
         });
-
     }
 
     @Override
-    public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+    public Image getIconImage() {
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
 
@@ -175,8 +165,8 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
         try {
-            cerrarVentana(); // Se cierra la ventana actual
-            cirms.abrirEspecificacionesGUI(usr, irm); // Se muestra la ventana de EspecificacionesGUI
+            cerrarVentana();
+            cirms.abrirEspecificacionesGUI(usr, irm);
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -187,36 +177,35 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         String medidas = txtEspecificacion.getText();
         String especificacion = cbxEspecificaciones.getSelectedItem().toString();
         String descripcion = txtDescripcionMP.getText();
-        if (!calibres.trim().equals("") || !medidas.trim().equals("")) {  // Si los campos NO están vacíos...
-            // Se captura la información
-            this.cirm.setCalibre(calibres);
-            this.cirm.setMedidas(medidas);
-            this.cirm.setEspecificacion(especificacion);
-            this.cirm.setDescripcionMP(descripcion);
+        
+        if (!calibres.trim().equals("") || !medidas.trim().equals("")) {
+            cirm.setCalibre(calibres);
+            cirm.setMedidas(medidas);
+            cirm.setEspecificacion(especificacion);
+            cirm.setDescripcionMP(descripcion);
             try {
-                this.cirms.agregar(conexion, this.cirm); // Se manda a llamar el metodo guardar para almacenar la información en la bd
-                this.cirms.agregarDMP(conexion, this.cirm); // Se manda a llamar el metodo guardar para almacenar la información en la bd
-                JOptionPane.showMessageDialog(this, "DATOS GUARDADOS."); // Si todo salio bien, mandara este mensaje
-                AgregarCalibreHIGUI.this.dispose();
+                this.cirms.agregar(conexion, cirm);
+                this.cirms.agregarDMP(conexion, cirm);
+                JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
+                cerrarVentana();
             } catch (SQLException ex) {
-                System.out.println(ex.getMessage());
                 JOptionPane.showMessageDialog(this, "Ha surgido un error y no se ha podido guardar el registro.");
             }
-        } else { // Si los campos estan vacios se muestra el mensaje
+        } else {
             JOptionPane.showMessageDialog(this, "HAY CAMPOS INCOMPLETOS.");
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Se deshabilita el boton de cerrar de la ventana
-        this.conexion = Conexion.getInstance().getConnection(); // Inicialización de la conexión a la BD
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
     }
 
     private void cerrarVentana() {
-        AgregarCalibreHIGUI.this.dispose(); // Se liberan los recursos de la ventana actual
+        AgregarCalibreHIGUI.this.dispose();
     }
 
     /**

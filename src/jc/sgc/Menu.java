@@ -1,11 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package jc.sgc;
 
 import AceptacionProducto.AceptacionProductoGUI;
+import Documentos.ControlDocumentosGUI;
 import InspeccionRecibo.InspeccionReciboGUI;
 import Modelos.Usuarios;
 import java.awt.Color;
@@ -16,26 +12,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
 
-/**
- *
- * @author JC
- */
 public class Menu extends javax.swing.JFrame {
 
-    Usuarios usr; // Instancia de la clase Usuarios
-
-    /**
-     * Creates new form Menu
-     */
+    Usuarios usr; 
     public Menu() {
         inicializarVentana();
     }
 
     public Menu(Usuarios usr) {
         inicializarVentana();
-        this.usr = usr; // Se define el Usuario
-        
-        // Se habilitan/deshabilitan los botones del menú
+        this.usr = usr; 
+
         btnInspeccionRecibo.setEnabled(true);
         btnAceptacionProducto.setEnabled(true);
         btnInspeccionFinal.setEnabled(false);
@@ -46,27 +33,27 @@ public class Menu extends javax.swing.JFrame {
         jButton8.setEnabled(false);
         jButton9.setEnabled(false);
         jButton10.setEnabled(false);
-        //Color de los Botones
+
         setColores(btnInspeccionRecibo);
         setColores(btnAceptacionProducto);
         setColores(btnCtrlDocumentosYRegistros);
     }
-    
+
     public final void setColores(JButton btn) {
         btn.setBackground(new Color(0, 139, 255));
         btn.setForeground(new Color(250, 250, 250));
     }
 
     public final void inicializarVentana() {
-        initComponents(); //Inicialización de los componentes de la interfaz
-        this.setResizable(false); // Se indica que no se puede redimensionar la ventana 
-        this.setDefaultCloseOperation(0); // Se deshabilita el boton de cerrar de la ventana  
-        setLocationRelativeTo(null); // Muestra la ventana al centro de la pantalla
+        initComponents(); 
+        this.setResizable(false); 
+        this.setDefaultCloseOperation(0);   
+        this.setLocationRelativeTo(null); 
     }
 
     @Override
-    public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+    public Image getIconImage() { 
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));  
         return retValue;
     }
 
@@ -169,6 +156,11 @@ public class Menu extends javax.swing.JFrame {
         btnCtrlDocumentosYRegistros.setMaximumSize(new java.awt.Dimension(270, 36));
         btnCtrlDocumentosYRegistros.setMinimumSize(new java.awt.Dimension(270, 36));
         btnCtrlDocumentosYRegistros.setPreferredSize(new java.awt.Dimension(270, 36));
+        btnCtrlDocumentosYRegistros.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCtrlDocumentosYRegistrosActionPerformed(evt);
+            }
+        });
         pnlMenu.add(btnCtrlDocumentosYRegistros, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 270, 290, -1));
 
         jButton6.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
@@ -216,15 +208,15 @@ public class Menu extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLogOutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogOutActionPerformed
-        Login login = new Login(); // Se crea una nueva instancia para regresar al apartado de inicion de Sesión
-        login.setVisible(true); // Se muestra visible al usuario
-        this.dispose(); // Se cierra la ventana actual y se liberan los recursos del sistema
+        Login login = new Login(); 
+        login.setVisible(true); 
+        this.dispose(); 
     }//GEN-LAST:event_btnLogOutActionPerformed
 
     private void btnAceptacionProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAceptacionProductoActionPerformed
         try {
-            AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr); // Crea la Instancia de la clase
-            apGUI.setVisible(true); // Se muestra visible al usuario
+            AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr); 
+            apGUI.setVisible(true); 
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -232,12 +224,21 @@ public class Menu extends javax.swing.JFrame {
 
     private void btnInspeccionReciboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInspeccionReciboActionPerformed
         try {
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); // Crea la Instancia de la clase
-            irGUI.setVisible(true); // Se muestra visible al usuario
+            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); 
+            irGUI.setVisible(true); 
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnInspeccionReciboActionPerformed
+
+    private void btnCtrlDocumentosYRegistrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCtrlDocumentosYRegistrosActionPerformed
+        try {
+            ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usr); 
+            docGUI.setVisible(true); 
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnCtrlDocumentosYRegistrosActionPerformed
 
     /**
      * @param args the command line arguments
@@ -258,8 +259,6 @@ public class Menu extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(Menu.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
         //</editor-fold>
 
         /* Create and display the form */

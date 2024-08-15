@@ -1,25 +1,16 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class AceptacionPc2 {
 
-    String id;
-    String componente;
-    String fecha;
-    String noOrden;
-    String tamLote;
-    String tamMta;
-    String inspector;
-    String turno;
-    String disp;
+    private String id;
+    private String componente;
+    private String fecha;
+    private String noOrden;
+    private String tamLote;
+    private String tamMta;
+    private String inspector;
+    private String turno;
+    private String disp;
 
     public AceptacionPc2() {
         this.id = "";
@@ -116,50 +107,4 @@ public class AceptacionPc2 {
     public void setDisp(String disp) {
         this.disp = disp;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    /*
-    for (AceptacionPc3 dataVariable : this.ap3m) {
-    String variable = dataVariable.getVariable() + "\n" + dataVariable.getEspecificacion();
-    String valor = dataVariable.getValor();
-    
-    // Busca el objeto correspondiente en ap2m (usando un identificador único como ejemplo)
-    String id = dataVariable.getId(); // Reemplaza esto con el campo adecuado en ap3m que relaciona con ap2m
-    AceptacionPc2 objetoAp2m = buscarObjetoEnAp2mPorId(id); // Implementa una función que busque en ap2m por el id
-    
-    // Elije el mapa correcto según el valor de noOp
-    TreeMap<String, TreeMap<String, Map<String, String>>> selectedMap;
-    switch (dataVariable.getNoOp()) {
-        // ... casos anteriores ...
-
-        default:
-            selectedMap = null; // O maneja de alguna otra manera
-            break;
-    }
-
-    // Agrega los datos al mapa seleccionado, incluyendo campos de ap2m
-    if (selectedMap != null) {
-        selectedMap.computeIfAbsent(dataVariable.getFecha(), k -> new TreeMap<>())
-                .computeIfAbsent(dataVariable.getNoOp(), k -> new LinkedHashMap<>())
-                .put(variable, valor);
-        
-        // Agrega campos de ap2m
-        if (objetoAp2m != null) {
-            selectedMap.computeIfAbsent(dataVariable.getFecha(), k -> new TreeMap<>())
-                    .computeIfAbsent("NoOrden", k -> new TreeMap<>())
-                    .computeIfAbsent(dataVariable.getNoOp(), k -> new LinkedHashMap<>())
-                    .put("NoOrden", objetoAp2m.getNoOrden());
-            // Repite este proceso para otros campos de ap2m que quieras agregar
-        }
-    }
-}
-
-    
-    */
 }

@@ -4,58 +4,41 @@ import Modelos.AceptacionPc1;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
+import Servicios.Utilidades;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 
-/**
- *
- * @author JC
- */
 public class AceptacionProductoGUI2 extends javax.swing.JFrame {
 
-    // Atributos 
-    private Usuarios usr; // La instancia del usuario actual del sistema
-    private Connection conexion; // Conexión a la BD
-    private AceptacionPc1 apc1; // Se crea la instancia de la clase AceptacionPc1
-    private AceptacionProductoServicio aps = new AceptacionProductoServicio(); // Se crea la instancia de la clase AceptacionProductoServicio
+    private Usuarios usr;
+    private AceptacionPc1 apc1;
+    private Connection conexion;
+    private AceptacionProductoServicio aps = new AceptacionProductoServicio();
 
-    /**
-     * Creates new form AceptacionProducto
-     */
     public AceptacionProductoGUI2() {
         try {
-            inicializarVentanaYComponentes(); // Inicialización de componentes
+            inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
-            aps.manejarExcepcion("Surgio un error al abrir ACEPTACION PRODUCTO", ex); // Se muestra el mensaje de la excepción al usuario
+            Utilidades.manejarExcepcion("Surgio error en ACEPTACION PRODUCTO", ex);
+            Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, "Error de conexión: " + ex.getMessage(), ex);
         }
     }
 
     public AceptacionProductoGUI2(Usuarios usr) throws SQLException, ClassNotFoundException {
-        try {
-            inicializarVentanaYComponentes(); // Inicialización de componentes
-            this.usr = usr; // Se define a el usuario actual del sistema
-            this.apc1 = new AceptacionPc1(); // Se crea la instancia de AceptacionPc1
-            
-            aps.cargarNoRollos(conexion, cbxNoRollo); // Se obtienen los rollos previamente registrados en Inspección/Recibo 
-
-            Date fechaActual = new Date(); // Se obtiene la fecha actual
-
-            // Se definen datos por default en los componentes de texto y en el JDateChooser
-            dchFechaLiberacion.setDate(fechaActual);
-            txtInspeccionVisual.setText("OK");
-            txtObservaciones.setText("INSPECCIÓN 100%");
-        } catch (SQLException | ClassNotFoundException ex) {
-            aps.manejarExcepcion("Surgio un error al abrir la ventana ACEPTACION PRODUCTO", ex); // Se muestra el mensaje de la excepción al usuario
-        }
+        this.usr = usr;
+        this.apc1 = new AceptacionPc1();
+        inicializarVentanaYComponentes();
     }
 
     @Override
-    public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+    public Image getIconImage() {
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
 
@@ -81,6 +64,8 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
         lblObservaciones = new javax.swing.JLabel();
         dchFechaLiberacion = new com.toedter.calendar.JDateChooser();
         cbxNoRollo = new swing.ComboBoxSuggestion();
+        cbxComponente = new swing.ComboBoxSuggestion();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -107,7 +92,7 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
                 btnRegresarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 290, 120, 50));
+        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 330, 120, 50));
 
         btnContinuar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/continuar.png"))); // NOI18N
         btnContinuar.setContentAreaFilled(false);
@@ -116,67 +101,84 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
                 btnContinuarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnContinuar, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 290, 110, 50));
+        jPanel1.add(btnContinuar, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 330, 110, 50));
 
         lblFechaLiberacion.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblFechaLiberacion.setForeground(new java.awt.Color(76, 109, 255));
         lblFechaLiberacion.setText("FECHA LIBERACIÓN:");
-        jPanel1.add(lblFechaLiberacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 140, -1, -1));
+        jPanel1.add(lblFechaLiberacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 190, -1, -1));
 
         lblNoRollo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblNoRollo.setForeground(new java.awt.Color(76, 109, 255));
         lblNoRollo.setText("NO. ROLLO:");
-        jPanel1.add(lblNoRollo, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 210, -1, -1));
+        jPanel1.add(lblNoRollo, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 260, -1, -1));
 
         lblInspVisual.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblInspVisual.setForeground(new java.awt.Color(76, 109, 255));
         lblInspVisual.setText("INSP. VISUAL:");
-        jPanel1.add(lblInspVisual, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 140, -1, -1));
-        jPanel1.add(txtInspeccionVisual, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 130, 200, -1));
-        jPanel1.add(txtObservaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 200, 170, -1));
+        jPanel1.add(lblInspVisual, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 190, -1, -1));
+        jPanel1.add(txtInspeccionVisual, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 180, 210, -1));
+        jPanel1.add(txtObservaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 250, 190, -1));
 
         lblObservaciones.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblObservaciones.setForeground(new java.awt.Color(76, 109, 255));
         lblObservaciones.setText("OBSERVACIONES:");
-        jPanel1.add(lblObservaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 210, -1, -1));
-        jPanel1.add(dchFechaLiberacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 130, 150, -1));
+        jPanel1.add(lblObservaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 260, -1, -1));
+        jPanel1.add(dchFechaLiberacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 180, 150, -1));
 
-        jPanel1.add(cbxNoRollo, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 200, 210, -1));
+        jPanel1.add(cbxNoRollo, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 250, 220, -1));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 720, 350));
+        jPanel1.add(cbxComponente, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 110, 220, -1));
+
+        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(76, 109, 255));
+        jLabel1.setText("COMPONENTE:");
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 120, -1, -1));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 760, 400));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        cerrarVentana(); // Cierra la ventana actual
-        aps.abrirAceptacionProductoGUI(usr); // Se vuelve a abrir la ventana actual
+        cerrarVentana();
+        aps.abrirAceptacionProductoGUI(usr);
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnContinuarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContinuarActionPerformed
-        Date fechaSeleccionada = dchFechaLiberacion.getDate(); // Se captura la fecha seleccionada en el componente JDateChooser
-        String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // Se define el formato específico "dd/mm/aaaa" 
+        Date fechaSeleccionada = dchFechaLiberacion.getDate();
+        String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // formato: "dd/mm/aaaa" 
 
-        // Se captura información requerida y se guarda en el objeto apc1
+        apc1.setComponente(cbxComponente.getSelectedItem().toString());
         apc1.setFecha(fechaLiberacion);
         apc1.setNoRollo(cbxNoRollo.getSelectedItem().toString());
         apc1.setInspVisual(txtInspeccionVisual.getText());
         apc1.setObservacion(txtObservaciones.getText());
 
-        cerrarVentana(); // Se cierra la ventana actual
-        aps.abrirRetencionDimensionalGUI(usr, apc1); // Se abre la ventana principal de Retención Dimensional 
+        cerrarVentana();
+        aps.abrirRetencionDimensionalGUI(usr, apc1);
     }//GEN-LAST:event_btnContinuarActionPerformed
 
     private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Se deshabilita el boton de cerrar de la ventana
-        this.conexion = Conexion.getInstance().getConnection(); // Inicialización de la conexión a la BD
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        this.conexion = Conexion.getInstance().getConnection();
+
+        aps.cargarNoRollos(conexion, cbxNoRollo);
+        aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
+
+        dchFechaLiberacion.setDate(new Date());
+        txtInspeccionVisual.setText("OK");
+        txtObservaciones.setText("INSPECCIÓN 100%");
+
+        cbxComponente.addActionListener(cbxNoRollo);
     }
 
     private void cerrarVentana() {
-        AceptacionProductoGUI2.this.dispose(); // Se liberan los recursos de la ventana actual
+        AceptacionProductoGUI2.this.dispose();
     }
 
     /**
@@ -209,8 +211,10 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnContinuar;
     private javax.swing.JButton btnRegresar;
+    private javax.swing.JComboBox<String> cbxComponente;
     private javax.swing.JComboBox<String> cbxNoRollo;
     private com.toedter.calendar.JDateChooser dchFechaLiberacion;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lblAceptacionProducto;
     private javax.swing.JLabel lblFechaLiberacion;

@@ -1,29 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class AceptacionPc3 {
 
-    String id;
-    String componente;
-    String noOp;
-    String fecha;
-    String variable;
-    String especificacion;
-    String valor;
+    private String id;
+    private String componente;
+    private String noOp;
+    private String noTroquel;
+    private String fecha;
+    private String variable;
+    private String especificacion;
+    private String valor;
     int procesoCritico;
 
     public AceptacionPc3() {
         this.id = "";
         this.componente = "";
         this.noOp = "";
+        this.noTroquel = "";
         this.fecha = "";
         this.variable = "";
         this.especificacion = "";
@@ -31,10 +24,11 @@ public class AceptacionPc3 {
         this.procesoCritico = 0;
     }
 
-    public AceptacionPc3(String id, String componente, String noOp, String fecha, String variable, String especificacion, String valor, int procesoCritico) {
+    public AceptacionPc3(String id, String componente, String noOp,String noTroquel, String fecha, String variable, String especificacion, String valor, int procesoCritico) {
         this.id = id;
         this.componente = componente;
         this.noOp = noOp;
+        this.noTroquel = noTroquel;
         this.fecha = fecha;
         this.variable = variable;
         this.especificacion = especificacion;
@@ -105,7 +99,13 @@ public class AceptacionPc3 {
     public void setProcesoCritico(int procesoCritico) {
         this.procesoCritico = procesoCritico;
     }
-    
-    
 
+    public String getNoTroquel() {
+        return noTroquel;
+    }
+
+    public void setNoTroquel(String noTroquel) {
+        this.noTroquel = noTroquel;
+    }
+    
 }

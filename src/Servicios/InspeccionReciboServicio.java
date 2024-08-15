@@ -5,12 +5,12 @@ import InspeccionRecibo.HojaInstruccionGUI2;
 import InspeccionRecibo.InspeccionReciboGUI;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Window;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,16 +30,16 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import jnafilechooser.api.JnaFileChooser;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import swing.Button;
 
-/**
- *
- * @author JC
- */
 public class InspeccionReciboServicio {
 
-    // CONSULTAS SQL
     private final String tabla = "inspeccionrecibo";
+    private String numeroStr;
 
     public final String SELECT_NOMBRE_PROVEEDORES_SQL = "SELECT DISTINCT nombre FROM proveedores"; // DISTINCT sirve para evitar que se muestren resultados duplicados
     public final String SELECT_NO_HOJA_INSTRUCCION_SQL = "SELECT noHoja FROM inspeccionrecibo WHERE noHoja LIKE ? ORDER BY noHoja DESC LIMIT 1";
@@ -56,32 +56,125 @@ public class InspeccionReciboServicio {
     Connection conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos
 
     public void agregar(Connection conexion, InspeccionReciboM irm) throws SQLException {
-        if (noRolloExiste(conexion, irm.getNoRollo())) { // Verificando si el rollo existe o fue registrado previamente
-            copiarHojaInstruccion(conexion, irm.getNoRollo(), irm.getHojaIns());
-        } else {
-            // Si no existe, realizar la inserción normal
-            try (PreparedStatement sqlInsertarIR = conexion.prepareStatement(INSERT_INSPECCION_RECIBO_SQL)) {
-                sqlInsertarIR.setString(1, irm.getFechaFactura());
-                sqlInsertarIR.setString(2, irm.getProveedor());
-                sqlInsertarIR.setString(3, irm.getNoFactura());
-                sqlInsertarIR.setString(4, irm.getNoPedido());
-                sqlInsertarIR.setString(5, irm.getCalibre());
-                sqlInsertarIR.setString(6, irm.getpLamina());
-                sqlInsertarIR.setString(7, irm.getNoRollo());
-                sqlInsertarIR.setString(8, irm.getPzKg());
-                sqlInsertarIR.setString(9, irm.getEstatus());
-                sqlInsertarIR.setString(10, irm.getNoHoja());
-                sqlInsertarIR.setBytes(11, irm.getFacturapdf());
-                sqlInsertarIR.setBytes(12, irm.getCertificadopdf());
-                sqlInsertarIR.setBytes(13, irm.getHojaIns());
-                sqlInsertarIR.setString(14, irm.getNombreHJ());
-                sqlInsertarIR.setString(15, irm.getNombreFact());
-                sqlInsertarIR.setString(16, irm.getNombreCert());
-                sqlInsertarIR.executeUpdate();
-            } catch (SQLException ex) {
-                throw new SQLException("Error al ejecutar la consulta SQL de inserción: " + ex.getMessage(), ex);
+        try {
+            // Inicia la transacción
+            conexion.setAutoCommit(false);
+
+            // Consulta para verificar si el noRollo ya está registrado
+            String sql = "SELECT hojaInstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
+            try (PreparedStatement pstmtSelect = conexion.prepareStatement(sql)) {
+                pstmtSelect.setString(1, irm.getNoRollo());
+                ResultSet rs = pstmtSelect.executeQuery();
+
+                if (rs.next()) {
+                    // Si el noRollo ya está registrado, obtén la hojainstruccion
+                    byte[] hojaInstruccion = rs.getBytes("hojaInstruccion");
+
+                    if (hojaInstruccion != null && hojaInstruccion.length != 0) {
+                        // Verifica si la hojainstruccion no está vacía
+                        byte[] nuevahojaInstruccion = editarHojaInstruccion(hojaInstruccion, irm);
+
+                        // Inserta el nuevo registro con la hojainstruccion obtenida
+                        String sqlInsert = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, pdfFactura, pdfCertificado, hojaInstruccion, nombreHJ, nombreFact, nombreCert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        try (PreparedStatement pstmtInsert = conexion.prepareStatement(sqlInsert)) {
+                            pstmtInsert.setString(1, irm.getFechaFactura());
+                            pstmtInsert.setString(2, irm.getProveedor());
+                            pstmtInsert.setString(3, irm.getNoFactura());
+                            pstmtInsert.setString(4, irm.getNoPedido());
+                            pstmtInsert.setString(5, irm.getCalibre());
+                            pstmtInsert.setString(6, irm.getpLamina());
+                            pstmtInsert.setString(7, irm.getNoRollo());
+                            pstmtInsert.setString(8, irm.getPzKg());
+                            pstmtInsert.setString(9, irm.getEstatus());
+                            pstmtInsert.setString(10, irm.getNoHoja());
+                            pstmtInsert.setBytes(11, irm.getFacturapdf());
+                            pstmtInsert.setBytes(12, irm.getCertificadopdf());
+                            pstmtInsert.setBytes(13, nuevahojaInstruccion); // Utiliza la hojainstruccion obtenida
+                            pstmtInsert.setString(14, irm.getNombreHJ());
+                            pstmtInsert.setString(15, irm.getNombreFact());
+                            pstmtInsert.setString(16, irm.getNombreCert());
+                            pstmtInsert.executeUpdate();
+                        }
+                    } else {
+                        // Si hojainstruccion es nula o vacía, realiza la inserción normal
+                        String sqlInsertNormal = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, pdfFactura, pdfCertificado, hojaInstruccion, nombreHJ, nombreFact, nombreCert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        try (PreparedStatement pstmtInsertNormal = conexion.prepareStatement(sqlInsertNormal)) {
+                            pstmtInsertNormal.setString(1, irm.getFechaFactura());
+                            pstmtInsertNormal.setString(2, irm.getProveedor());
+                            pstmtInsertNormal.setString(3, irm.getNoFactura());
+                            pstmtInsertNormal.setString(4, irm.getNoPedido());
+                            pstmtInsertNormal.setString(5, irm.getCalibre());
+                            pstmtInsertNormal.setString(6, irm.getpLamina());
+                            pstmtInsertNormal.setString(7, irm.getNoRollo());
+                            pstmtInsertNormal.setString(8, irm.getPzKg());
+                            pstmtInsertNormal.setString(9, irm.getEstatus());
+                            pstmtInsertNormal.setString(10, irm.getNoHoja());
+                            pstmtInsertNormal.setBytes(11, irm.getFacturapdf());
+                            pstmtInsertNormal.setBytes(12, irm.getCertificadopdf());
+                            pstmtInsertNormal.setBytes(13, irm.getHojaIns());
+                            pstmtInsertNormal.setString(14, irm.getNombreHJ());
+                            pstmtInsertNormal.setString(15, irm.getNombreFact());
+                            pstmtInsertNormal.setString(16, irm.getNombreCert());
+                            pstmtInsertNormal.executeUpdate();
+                        }
+                    }
+                } else {
+                    // Si el noRollo no está registrado, realiza solo la inserción normal
+                    String sqlInsertNormal = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, pdfFactura, pdfCertificado, hojaInstruccion, nombreHJ, nombreFact, nombreCert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    try (PreparedStatement pstmtInsertNormal = conexion.prepareStatement(sqlInsertNormal)) {
+                        pstmtInsertNormal.setString(1, irm.getFechaFactura());
+                        pstmtInsertNormal.setString(2, irm.getProveedor());
+                        pstmtInsertNormal.setString(3, irm.getNoFactura());
+                        pstmtInsertNormal.setString(4, irm.getNoPedido());
+                        pstmtInsertNormal.setString(5, irm.getCalibre());
+                        pstmtInsertNormal.setString(6, irm.getpLamina());
+                        pstmtInsertNormal.setString(7, irm.getNoRollo());
+                        pstmtInsertNormal.setString(8, irm.getPzKg());
+                        pstmtInsertNormal.setString(9, irm.getEstatus());
+                        pstmtInsertNormal.setString(10, irm.getNoHoja());
+                        pstmtInsertNormal.setBytes(11, irm.getFacturapdf());
+                        pstmtInsertNormal.setBytes(12, irm.getCertificadopdf());
+                        pstmtInsertNormal.setBytes(13, irm.getHojaIns());
+                        pstmtInsertNormal.setString(14, irm.getNombreHJ());
+                        pstmtInsertNormal.setString(15, irm.getNombreFact());
+                        pstmtInsertNormal.setString(16, irm.getNombreCert());
+                        pstmtInsertNormal.executeUpdate();
+                    }
+                }
             }
+
+            // Confirma la transacción
+            conexion.commit();
+        } catch (SQLException ex) {
+            // Si hay algún error, realiza un rollback para deshacer los cambios
+            conexion.rollback();
+            throw new SQLException("Error al ejecutar la transacción SQL: " + ex.getMessage(), ex);
+        } finally {
+            // Restaura el modo de autocommit a true
+            conexion.setAutoCommit(true);
         }
+    }
+
+    public Button crearBoton(Object object, ImageIcon icon, String texto) {
+        Font fuentePersonalizada = new Font("Arial", Font.PLAIN, 10);
+        Button boton = new Button();
+        if (object != null) {
+            if (object instanceof byte[]) {
+                byte[] byteArray = (byte[]) object;
+                if (byteArray.length != 0) {
+                    boton.setIcon(icon);
+                } else {
+                    boton.setText(texto);
+                    boton.setFont(fuentePersonalizada);
+                }
+            } else {
+                boton.setText(texto);
+                boton.setFont(fuentePersonalizada);
+            }
+        } else {
+            boton.setText(texto);
+        }
+        return boton;
     }
 
     private boolean noRolloExiste(Connection conexion, String noRollo) throws SQLException {
@@ -210,11 +303,11 @@ public class InspeccionReciboServicio {
             sqlInsert.executeUpdate();
             JOptionPane.showMessageDialog(null, "El Archivo se genero y se guardo Correctamente");
         } catch (SQLException ex) {
-            throw new SQLException("Error al ejecutar la consulta SQL de inserción: " + ex.getMessage(), ex);
+            JOptionPane.showMessageDialog(null, "Error al ejecutar la consulta SQL de inserción Y NO SE SUBIO NADA: " + ex.getMessage());
+
         }
     }
 
-    // Permite mostrar PDF contenido en la base de datos
     public void ejecutarArchivoPDF(String id, int column) throws ClassNotFoundException, SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -273,16 +366,14 @@ public class InspeccionReciboServicio {
     }
 
     public File seleccionarArchivo(Component parentComponent) {
-
         JnaFileChooser jfc = new JnaFileChooser();
-        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF");
+        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx");
         boolean action = jfc.showOpenDialog((Window) parentComponent);
         if (action) {
             return jfc.getSelectedFile();
         }
 
         return null;
-
     }
 
     public void ejecutarArchivoXLSX(String id, int column) throws ClassNotFoundException, SQLException {
@@ -303,47 +394,31 @@ public class InspeccionReciboServicio {
                 bos.read(datosXLSX, 0, tamanoInput);
                 try (OutputStream out = new FileOutputStream("nuevaHojaInstruccion.xlsx")) {
                     out.write(datosXLSX);
-                    // Abrir archivo con Excel
+
+                    // Verificar la existencia del archivo antes de abrirlo con Excel
                     File archivoXLSX = new File("nuevaHojaInstruccion.xlsx");
-                    if (Desktop.isDesktopSupported()) {
+                    if (archivoXLSX.exists() && Desktop.isDesktopSupported()) {
                         Desktop.getDesktop().open(archivoXLSX);
+                    } else {
+                        System.out.println("El archivo no existe o el escritorio no es compatible para abrirlo.");
                     }
+                } catch (IOException ex) {
+                    // Manejo de la excepción de E/S
+                    System.out.println("Error al escribir en el archivo: " + ex.getMessage());
+                } catch (UnsupportedOperationException ex) {
+                    // Manejo de la excepción si el escritorio no es compatible
+                    System.out.println("El escritorio no es compatible para abrir archivos: " + ex.getMessage());
+                } catch (Exception ex) {
+                    // Manejo de cualquier otra excepción inesperada
+                    System.out.println("Error al descargar el documento: " + ex.getMessage());
                 }
+
             }
             ps.close();
             rs.close();
         } catch (IOException | NumberFormatException | SQLException ex) {
             System.out.println("Error al abrir archivo XLSX: " + ex.getMessage());
         }
-    }
-
-    public Button crearBoton(Object object, ImageIcon icon, String texto, Color a, Color b) {
-        // Crear una fuente con el tamaño deseado
-        Font customFont = new Font("Arial", Font.PLAIN, 10);
-        Button boton; // Se define el boton
-        if (object != null) { // Si el objeto que se manda es nulo
-            if (object instanceof byte[]) { // Si es un arreglo de bytes                
-                byte[] byteArray = (byte[]) object; // Se crea el arreglo de bytes del objecto
-                if (byteArray.length != 0) { // Si la longitud es diferente a cero...
-                    boton = new Button(); // Se crea el nuevo boton
-                    // Agregar un MouseListener al botón
-                    //boton.setRolloverEnabled(true);
-                    boton.setIcon(icon);
-                } else {
-                    boton = new Button(); // Se crea el nuevo boton
-                    boton.setText(texto);
-                    boton.setFont(customFont);
-                }
-            } else {
-                boton = new Button(); // Se crea el nuevo boton
-                boton.setText(texto);
-                boton.setFont(customFont);
-            }
-        } else {
-            boton = new Button(); // Se crea el nuevo boton
-            boton.setText(texto);
-        }
-        return boton;
     }
 
     public List<String> selectProveedores(Connection conexion) throws SQLException {
@@ -369,22 +444,20 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public int existeNoRollo(String noRollo) throws ClassNotFoundException {
+    public boolean existeNoRollo(String noRollo) throws ClassNotFoundException {
         try {
-            String sql = "SELECT COUNT(calibre) FROM " + this.tabla + " WHERE calibre=?";
-
+            String sql = "SELECT COUNT(noRollo) FROM " + this.tabla + " WHERE noRollo = ?";
             PreparedStatement ps = conexion.prepareStatement(sql);
             ps.setString(1, noRollo);
-
             ResultSet rs = ps.executeQuery();
-
             if (rs.next()) {
-                return rs.getInt(1);
+                int count = rs.getInt(1);
+                return count > 0; // Retorna verdadero si existe algún rollo con el número proporcionado
             }
-            return 1;
+            return false; // No se encontraron resultados, por lo que el rollo no existe
         } catch (SQLException ex) {
             Logger.getLogger(SqlUsuarios.class.getName()).log(Level.SEVERE, null, ex);
-            return 1;
+            return false; // Manejo de excepciones, el rollo no puede existir si hay un error SQL
         }
     }
 
@@ -439,4 +512,62 @@ public class InspeccionReciboServicio {
         frame.setLocationRelativeTo(null);
     }
 
+    private byte[] editarHojaInstruccion(byte[] hojaInstruccion, InspeccionReciboM irm) {
+        ByteArrayInputStream bis = new ByteArrayInputStream(hojaInstruccion);
+        XSSFWorkbook workbook;
+        byte[] hojaNueva = null;
+        try {
+            workbook = new XSSFWorkbook(bis);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            // Número de Hoja
+            String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
+            numeroStr = partes[1];
+            int numero = Integer.parseInt(numeroStr);
+            if (numero < 10) { // Eliminar ceros a la izquierda
+                numeroStr = String.valueOf(numero);
+            }
+            workbook.setSheetName(workbook.getSheetIndex(sheet), numeroStr); // Cambiar el nombre de la Hoja con el número previamente obtenido
+
+            Row fila = sheet.getRow(5); // Obtén la fila
+            Cell celda = fila.getCell(2); // Obtén la celda en la fila
+            celda.setCellValue(numeroStr); // Modifica el valor de la celda
+
+            // Fecha
+            Row fila2 = sheet.getRow(9); // Obtén la fila
+            Cell celda2 = fila2.getCell(8); // Obtén la celda en la fila
+            celda2.setCellValue(irm.getFechaFactura()); // Modifica el valor de la celda
+
+            // Factura
+            Row fila4 = sheet.getRow(9); // Obtén la fila
+            Cell celda4 = fila4.getCell(8); // Obtén la celda en la fila
+            celda4.setCellValue(irm.getNoFactura()); // Modifica el valor de la celda
+
+            // No PzKg
+            Row fila7 = sheet.getRow(13); // Obtén la fila
+            Cell celda7 = fila7.getCell(7); // Obtén la celda en la fila
+            celda7.setCellValue(irm.getPzKg()); // Modifica el valor de la celda
+
+            // Descripción
+            Row fila3 = sheet.getRow(9); // Obtén la fila
+            Cell celda3 = fila3.getCell(1); // Obtén la celda en la fila
+            String txtTexto = celda3.getStringCellValue();
+            if (txtTexto.contains("HOJA") && irm.getpLamina().equals("CINTA")) {
+                txtTexto = txtTexto.replace("HOJA", "CINTA");
+            } else if (txtTexto.contains("CINTA") && irm.getpLamina().equals("HOJA")) {
+                txtTexto = txtTexto.replace("CINTA", "HOJA");
+            }
+            celda3.setCellValue(txtTexto);
+
+            bis.close(); // Cerrar el flujo de entrada
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            workbook.write(bos);
+            hojaNueva = bos.toByteArray();
+            bos.close();
+
+        } catch (IOException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return hojaNueva;
+    }
 }

@@ -1,19 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class ComposicionQuimicaM {
 
-    String especificacion;
-    String cq;
-    String valor;
+    private String especificacion;
+    private String cq;
+    private String valor;
 
     public ComposicionQuimicaM(String especificacion, String cq, String valor) {
         this.especificacion = especificacion;

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package componente;
 
 import swing.ButtonOutLine;
@@ -19,10 +14,6 @@ import java.util.Locale;
 import javax.swing.JLabel;
 import net.miginfocom.swing.MigLayout;
 
-/**
- *
- * @author JC
- */
 public class PanelCover extends javax.swing.JPanel {
 
     private final DecimalFormat df = new DecimalFormat("##0.###", DecimalFormatSymbols.getInstance(Locale.US));
@@ -33,10 +24,7 @@ public class PanelCover extends javax.swing.JPanel {
     private JLabel description1;
     private ButtonOutLine button;
     private boolean isLogin;
-    
-    /**
-     * Creates new form PanelCover
-     */
+
     public PanelCover() {
         initComponents();
         setOpaque(false);
@@ -127,10 +115,7 @@ public class PanelCover extends javax.swing.JPanel {
             this.isLogin = login;
         }
     }
-    
-    
-    
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -151,7 +136,6 @@ public class PanelCover extends javax.swing.JPanel {
             .addGap(0, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

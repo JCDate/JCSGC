@@ -10,6 +10,7 @@ import InspeccionRecibo.InspeccionReciboGUI;
 import Modelos.AnchoLargoM;
 import Modelos.DatosIRM;
 import Modelos.InspeccionReciboM;
+import Modelos.RugosidadDurezaM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.SQL;
@@ -58,10 +59,10 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     }
 
     public HojaInstruccionGUI(Usuarios usr, InspeccionReciboM irm) throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        inicializarVentana(); // Se inicializan los componente principales
-        this.usr = usr; // Se asigna el valor de la instancia de usuarios
-        this.irm = irm; // Se asigna el valor de la instancia de InspeccionReciboM
+        initComponents(); 
+        inicializarVentana();
+        this.usr = usr; 
+        this.irm = irm; 
         this.dirm = new DatosIRM(); // Se crea la instancia de la clase DatosIRM
         txtHojaInstrucciones.setText(String.valueOf(irm.getNoHoja())); // Se muestra el no. que tiene la hoja de instrucción        
         this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
@@ -113,32 +114,32 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
             // Muestra información detallada del error
             System.out.println("error");
         }
+       
     }
 
-    public HojaInstruccionGUI(Usuarios usr, InspeccionReciboM irm, DatosIRM dirm, List<AnchoLargoM> anchoLargoList) throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        inicializarVentana(); // Se inicializan los componente principales
-        this.usr = usr; // Se asigna el valor de la instancia de usuarios
-        this.irm = irm; // Se asigna el valor de la instancia de InspeccionReciboM
-        this.dirm = dirm; // Se crea la instancia de la clase DatosIRM
-        txtHojaInstrucciones.setText(String.valueOf(irm.getNoHoja())); // Se muestra el no. que tiene la hoja de instrucción     
+    public HojaInstruccionGUI(Usuarios usr, InspeccionReciboM irm, DatosIRM dirm, List<AnchoLargoM> anchoLargoList, List<RugosidadDurezaM> rdList) throws SQLException, ClassNotFoundException {
+        initComponents();
+        inicializarVentana();
+        this.usr = usr; 
+        this.irm = irm; 
+        this.dirm = dirm; 
+        txtHojaInstrucciones.setText(String.valueOf(irm.getNoHoja()));   
         cbxDescripcionMP.setSelectedItem(dirm.getDescripcionMP());
         cbxLamina.setSelectedItem(dirm.getCalibreLamina());
 
         try {
-            PreparedStatement slqNomProv = conexion.prepareStatement(SQL_CONSULTA_INSPECTORES); // Se define la consulta preparada
+            PreparedStatement slqNomProv = conexion.prepareStatement(SQL_CONSULTA_INSPECTORES); 
             slqNomProv.setInt(1, 5);
-            ResultSet registro = slqNomProv.executeQuery(); // Se ejecuta la consulta preparada
-            while (registro.next()) { // Mientras haya información...
-                String columna = registro.getString("nombre"); // Variable que almacena los diferentes nombres encontrados
-                cbxNombreInspector.addItem(columna); // Se agrega al comboBox
+            ResultSet registro = slqNomProv.executeQuery(); 
+            while (registro.next()) { 
+                String columna = registro.getString("nombre");
+                cbxNombreInspector.addItem(columna);
             }
 
-        } catch (SQLException ex) { // Se captura la excepción SQLException
+        } catch (SQLException ex) {
             Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        //Formato de la fecha
         SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
         try {
             Date fechaInspeccion = formato.parse(dirm.getFechaInspeccion());
@@ -149,14 +150,20 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
 
         // Obtener el modelo de tabla existente
         DefaultTableModel modelo = (DefaultTableModel) tblAnchoLargo.getModel();
+        DefaultTableModel modelo2 = (DefaultTableModel) tblRugosidadDureza.getModel();
 
         // Limpiar el modelo de tabla
         modelo.setRowCount(0);
+        modelo2.setRowCount(0);
 
-        // Agregar filas al modelo de tabla
         for (AnchoLargoM medida : anchoLargoList) {
             Object[] fila = {medida.getAncho(), medida.getLargo()};
             modelo.addRow(fila);
+        }
+        
+        for (RugosidadDurezaM rd : rdList) {
+            Object[] fila = {rd.getRugosidad(), rd.getDureza()};
+            modelo2.addRow(fila);
         }
 
         if (dirm.getAceptacion() == 1) {
@@ -167,6 +174,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
             chkRechazo.setSelected(true);
         }
         tblAnchoLargo.setModel(modelo);
+        tblRugosidadDureza.setModel(modelo2);
     }
 
     public final void inicializarVentana() throws SQLException, ClassNotFoundException {
@@ -219,6 +227,9 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         txtObservacionesRD = new swing.TextField();
         cbxLamina = new swing.ComboBoxSuggestion();
         cbxDescripcionMP = new swing.ComboBoxSuggestion();
+        chkHoy = new swing.JCheckBoxCustom(new Color(20, 134, 255));
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblRugosidadDureza = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -239,7 +250,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         lblObeservacionesResultados.setForeground(new java.awt.Color(76, 109, 255));
         lblObeservacionesResultados.setText("<html>OBSERVACIONES A LOS RESULTADOS DIMENSIONALES, PROPIEDADES MECÁNICAS Y REQUERIMIENTOS QUÍMICOS</html>");
         lblObeservacionesResultados.setToolTipText("");
-        jPanel1.add(lblObeservacionesResultados, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 390, 410, 40));
+        jPanel1.add(lblObeservacionesResultados, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 380, 410, 40));
 
         lblLecturaMuestreo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblLecturaMuestreo.setForeground(new java.awt.Color(76, 109, 255));
@@ -270,7 +281,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         lblDisposicionMateriaPrima.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblDisposicionMateriaPrima.setForeground(new java.awt.Color(76, 109, 255));
         lblDisposicionMateriaPrima.setText("OBSERVACIONES A LA DISPOSICION DE LA MATERIA PRIMA:");
-        jPanel1.add(lblDisposicionMateriaPrima, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 410, -1, -1));
+        jPanel1.add(lblDisposicionMateriaPrima, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 480, -1, -1));
 
         chkAceptacion.setText("Aceptación");
         chkAceptacion.addActionListener(new java.awt.event.ActionListener() {
@@ -278,7 +289,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
                 chkAceptacionActionPerformed(evt);
             }
         });
-        jPanel1.add(chkAceptacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 530, 100, 40));
+        jPanel1.add(chkAceptacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 550, 100, 40));
 
         chkRechazo.setText("Rechazo");
         chkRechazo.addActionListener(new java.awt.event.ActionListener() {
@@ -286,7 +297,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
                 chkRechazoActionPerformed(evt);
             }
         });
-        jPanel1.add(chkRechazo, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 530, 90, 40));
+        jPanel1.add(chkRechazo, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 550, 90, 40));
 
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         jPanel1.add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
@@ -334,7 +345,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
                 btnRegresarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 540, -1, -1));
+        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 550, -1, -1));
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(76, 109, 255));
@@ -367,14 +378,40 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         jPanel1.add(cbxNombreInspector, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 110, 270, 30));
 
         cbxObservacionesMP.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MATERIAL DENTRO DE ESPECIFICACIÓN", "MATERIAL FUERA DE ESPECIFICACIÓN (CUARENTENA)", "MATERIAL DAÑADO DE ESPECIFICACIÓN (CUARENTENA)" }));
-        jPanel1.add(cbxObservacionesMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 430, 440, 40));
+        jPanel1.add(cbxObservacionesMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 500, 440, 40));
 
         txtObservacionesRD.setText("SE LIBERAN ___ PIEZAS, CON UN TOTAL DE ___ KG");
-        jPanel1.add(txtObservacionesRD, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 430, 420, 40));
+        jPanel1.add(txtObservacionesRD, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 420, 390, 40));
 
         jPanel1.add(cbxLamina, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 290, 360, 30));
 
         jPanel1.add(cbxDescripcionMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, 360, -1));
+
+        chkHoy.setFont(new java.awt.Font("Tahoma", 1, 10)); // NOI18N
+        chkHoy.setForeground(new java.awt.Color(76, 109, 255));
+        chkHoy.setText("HOY");
+        chkHoy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkHoyActionPerformed(evt);
+            }
+        });
+        jPanel1.add(chkHoy, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 110, -1, 30));
+
+        tblRugosidadDureza.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "RUGOSIDAD", "DUREZA"
+            }
+        ));
+        jScrollPane1.setViewportView(tblRugosidadDureza);
+
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 420, 400, 110));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1010, 630));
 
@@ -411,7 +448,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         HojaInstruccionGUI.this.dispose(); // Se liberan los recursos de la ventana
 
         try {
-            EspecificacionesGUI ir = new EspecificacionesGUI(usr, this.dirm, this.irm, tblAnchoLargo); // Se crea la instancia de la clase EspecificacionesGUI y se mandan los objetos de las clases  datosIRM, inspeccionReciboM y AnchoLargoM
+            EspecificacionesGUI ir = new EspecificacionesGUI(usr, this.dirm, this.irm, tblAnchoLargo, tblRugosidadDureza); // Se crea la instancia de la clase EspecificacionesGUI y se mandan los objetos de las clases  datosIRM, inspeccionReciboM y AnchoLargoM
             ir.setVisible(true); // Se muestra visible la ventana
             ir.setLocationRelativeTo(null); // La ventana se muestra al centro de la pantalla
         } catch (SQLException | ClassNotFoundException ex) { // Atrapa los errores definidos
@@ -437,6 +474,14 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     private void cbxNombreInspectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxNombreInspectorActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cbxNombreInspectorActionPerformed
+
+    private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
+        if (chkHoy.isSelected()) {
+            dchFechaInspeccion.setDate(new java.util.Date());
+        } else {
+            dchFechaInspeccion.setDate(null);
+        }
+    }//GEN-LAST:event_chkHoyActionPerformed
 
     /**
      * @param args the command line arguments
@@ -479,11 +524,13 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxNombreInspector;
     private javax.swing.JComboBox<String> cbxObservacionesMP;
     private javax.swing.JCheckBox chkAceptacion;
+    private javax.swing.JCheckBox chkHoy;
     private javax.swing.JCheckBox chkRechazo;
     private com.toedter.calendar.JDateChooser dchFechaInspeccion;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblCalibreLamina;
     private javax.swing.JLabel lblDescripcionMPR;
@@ -498,6 +545,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     private javax.swing.JLabel lblPunto1;
     private javax.swing.JLabel lblPunto2;
     private javax.swing.JTable tblAnchoLargo;
+    private javax.swing.JTable tblRugosidadDureza;
     private javax.swing.JTextField txtHojaInstrucciones;
     private javax.swing.JTextField txtObservacionesRD;
     // End of variables declaration//GEN-END:variables

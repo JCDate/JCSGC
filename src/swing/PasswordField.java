@@ -18,11 +18,11 @@ public class PasswordField extends JPasswordField {
     private String hint = "";
 
     public PasswordField() {
-        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Se crea un borde vacío de 10 pixeles en cada lado
-        setBackground(new Color(0, 0, 0, 0)); // Se establece el fondo como transparente (Sin color de fondo)
-        setForeground(Color.decode("#7A8C8D")); // Se establece el color del texto en el TextField, el color se decodifica a partir de un hexadecimal
-        setFont(new java.awt.Font("sansserif", 0, 13)); // Se establece la fuente y el tamaño del texto dentro del TextField
-        setSelectionColor(new Color(75, 175, 152)); // Se establece el color cuando se selecciona el TextField
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10)); 
+        setBackground(new Color(0, 0, 0, 0)); 
+        setForeground(Color.decode("#7A8C8D"));
+        setFont(new java.awt.Font("sansserif", 0, 13)); 
+        setSelectionColor(new Color(75, 175, 152)); 
     }
 
     public String getHint() {
@@ -54,21 +54,21 @@ public class PasswordField extends JPasswordField {
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); // Configura el suavizado de bordes (antialiasing) para mejorar la apariencia de las formas dibujadas
-        g2.setColor(new Color(230, 245, 241)); // Establece el color de relleno para las formas que se van a dibujar
-        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 5, 5); // Dibuja un rectángulo redondeado utilizando el color de relleno y las dimensiones del componente parámetros (coordenana x inicial, coordenada y inicial, ancho, alto, radio Horizontal, radio Vertical)
-        paintIcon(g); // Método que se encarga de dibujar iconos en el componente
-        super.paintComponent(g); // Garantiza que cualquier contenido anterior del componente se pinte correctamente y se realicen las tareas de dibujo estándar asociadas con el componente
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); 
+        g2.setColor(new Color(230, 245, 241)); 
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 5, 5); 
+        paintIcon(g);
+        super.paintComponent(g);
     }
 
     @Override
     public void paint(Graphics g) {
-        super.paint(g); // Borra cualquier contenido previo en el componente antes de la personalización.
+        super.paint(g); 
         if (getText().length() == 0) {
             int h = getHeight();
-            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON); // Configura el suavizado de bordes (antialiasing) para mejorar la apariencia de las formas dibujadas
-            Insets ins = getInsets(); // Obtiene los márgenes internos del componente
-            FontMetrics fm = g.getFontMetrics(); // Obtiene la fuente y la altura utilizada en el componente de texto
+            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            Insets ins = getInsets(); 
+            FontMetrics fm = g.getFontMetrics();
             g.setColor(new Color(200, 200, 200));
             g.drawString(hint, ins.left, h / 2 + fm.getAscent() / 2 - 2);
         }
@@ -76,15 +76,15 @@ public class PasswordField extends JPasswordField {
 
     private void paintIcon(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-        if (prefixIcon != null) { // Verifica si prefixIcon (el icono de prefijo) no es nulo. Esto es una precaución para asegurarse de que el icono exista antes de intentar dibujarlo.
-            Image prefix = ((ImageIcon) prefixIcon).getImage(); // Obtiene la imagen del icono de prefijo.
-            int y = (getHeight() - prefixIcon.getIconHeight()) / 2; // Calcula la posición vertical y para el icono.
-            g2.drawImage(prefix, 10, y, this); // Dibuja la imagen del icono de prefijo (prefix) en las coordenadas (10, y) utilizando el objeto Graphics2D.
+        if (prefixIcon != null) { 
+            Image prefix = ((ImageIcon) prefixIcon).getImage(); 
+            int y = (getHeight() - prefixIcon.getIconHeight()) / 2; 
+            g2.drawImage(prefix, 10, y, this); 
         }
-        if (suffixIcon != null) { // Verifica si suffixIcon (el icono de prefijo) no es nulo. Esto es una precaución para asegurarse de que el icono exista antes de intentar dibujarlo.
-            Image suffix = ((ImageIcon) suffixIcon).getImage(); // Obtiene la imagen del icono de sufijo.
-            int y = (getHeight() - suffixIcon.getIconHeight()) / 2; // Calcula la posición vertical y para el icono.
-            g2.drawImage(suffix, getWidth() - suffixIcon.getIconWidth() - 10, y, this); // Dibuja la imagen del icono de prefijo (prefix) en las coordenadas (10, y) utilizando el objeto Graphics2D.
+        if (suffixIcon != null) { 
+            Image suffix = ((ImageIcon) suffixIcon).getImage(); 
+            int y = (getHeight() - suffixIcon.getIconHeight()) / 2; 
+            g2.drawImage(suffix, getWidth() - suffixIcon.getIconWidth() - 10, y, this); 
         }
     }
 
@@ -92,11 +92,11 @@ public class PasswordField extends JPasswordField {
         int left = 15;
         int right = 15;
         if (prefixIcon != null) {
-            left = prefixIcon.getIconWidth() + 15; //  prefix se ajusta en el margen izquierdo
+            left = prefixIcon.getIconWidth() + 15; 
         }
         if (suffixIcon != null) {
-            right = suffixIcon.getIconWidth() + 15;  //  suffix se ajusta en el margen derecho
+            right = suffixIcon.getIconWidth() + 15; 
         }
-        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, left, 10, right)); // Se crea el borde vacío
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, left, 10, right));
     }
 }

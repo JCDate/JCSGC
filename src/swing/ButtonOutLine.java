@@ -6,8 +6,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.border.EmptyBorder;
 import org.jdesktop.animation.timing.Animator;
@@ -21,6 +19,7 @@ public class ButtonOutLine extends JButton {
     private float alpha;
     private Color effectColor = new Color(255, 255, 255);
     private boolean over;
+    
     public ButtonOutLine() {
         setContentAreaFilled(false);
         setBorder(new EmptyBorder(5, 0, 5, 0));

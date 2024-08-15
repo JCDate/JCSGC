@@ -7,6 +7,7 @@ import Modelos.AnchoLargoM;
 import Modelos.DatosFila;
 import Modelos.DatosIRM;
 import Modelos.InspeccionReciboM;
+import Modelos.RugosidadDurezaM;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -51,33 +52,25 @@ public class ExcelEditor {
     int filaBaseNoOp3 = 47;
     int filaBaseNoOp4 = 85;
     int filaBaseNoOp5 = 123;
-    
-    /*
-            getProceso(mapVariablesNoOp12, columnaBase, listVariables1, filaBaseNoOp1, sheet2, 5, workbook, 5);
-        getProceso(mapVariablesNoOp3, columnaBase, listVariables3, filaBaseNoOp3, sheet2, 43, workbook, 43);
-        getProceso(mapVariablesNoOp4, columnaBase, listVariables4, filaBaseNoOp4, sheet2, 81, workbook, 81);
-        getProceso(mapVariablesNoOp5, columnaBase, listVariables5, filaBaseNoOp5, sheet2, 119, workbook, 119);
-    
-    */
+
     int fila1 = 5;
     int fila3 = 43;
     int fila4 = 81;
     int fila5 = 119;
-    
-    
+
     int columnaBase = 8; // A partir de esta fila se imprimen las variables y sus respectivos valores en el documento de Retención Dimensional
 
     private static final int[] FILAS_INFO = {2, 40, 78, 116}; // 
     private static final int[] FILAS_PROCESOS = {4, 42, 80, 118}; // Celdas donde se imprimen las "x" de los procesos 
     private static final int[] COLUMNAS_COMPONENTE = {13, 20, 26}; // Columnas donde se imprime la información del componente
 
-    public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, List<JTable> listTablas, List listaAL) throws IOException, SQLException, ClassNotFoundException {
+    public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, List<JTable> listTablas, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
         String filePath = "HojaInstruccion.xlsx"; // Se obtiene el formato editable de la Hoja de Instrucción
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
             XSSFWorkbook workbook = new XSSFWorkbook(fileInputStream);
 
-            procesarPaginaUnoHJ(workbook, irm, dirm, listaAL);
+            procesarPaginaUnoHJ(workbook, irm, dirm, listaAL, listaRD);
             procesarPaginaDosHJ(workbook, conexion, dirm, listTablas);
 
             // Crear un nuevo archivo de Excel para guardar los cambios
@@ -85,11 +78,12 @@ public class ExcelEditor {
             FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo);
             workbook.write(fos);
         } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error al GENERAR LA HOJA DE INSTRUCCIÓN EXCEL EDITOR: " + e.getMessage());
         }
         return nuevaRutaArchivo;
     }
 
-    private void procesarPaginaUnoHJ(XSSFWorkbook workbook, InspeccionReciboM irm, DatosIRM dirm, List listaAL) {
+    private void procesarPaginaUnoHJ(XSSFWorkbook workbook, InspeccionReciboM irm, DatosIRM dirm, List listaAL, List listaRD) {
         Sheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro
 
         String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
@@ -134,37 +128,62 @@ public class ExcelEditor {
             cellLargo.setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
         }
 
+        int numColumna = 2;
+        for (int i = 0; i < listaRD.size(); i++) { 
+            RugosidadDurezaM medida = (RugosidadDurezaM) listaRD.get(i);
+            Row row = sheet.getRow(43);
+            if (row == null) {
+                row = sheet.createRow(43);
+            }
+
+            Row row2 = sheet.getRow(44);
+            if (row == null) {
+                row2 = sheet.createRow(44);
+            }
+
+            Cell cellAncho = row.createCell(numColumna); 
+            cellAncho.setCellValue(medida.getRugosidad());
+
+            Cell cellLargo = row2.createCell(numColumna); 
+            cellLargo.setCellValue(medida.getDureza());
+
+            numColumna++;
+
+            cellAncho.setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+            cellLargo.setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+        }
+
         // Aceptación/Rechazo
         int numCellAR = (dirm.getAceptacion() == 1) ? 2 : 7;
-        Row rowAR = sheet.getRow(39); // Obtén la fila de donde se encuentra la opción de aceptación o rechazo
-        Cell celdaAR = rowAR.getCell(numCellAR); // Obtén la celda en la fila
+        Row rowAR = sheet.getRow(39);
+        Cell celdaAR = rowAR.getCell(numCellAR);
 
         Row row = sheet.getRow(39);
-        Cell celdaAR2 = (numCellAR == 2) ? row.getCell(7) : row.getCell(2); // Obtiene la fila contraria al aceptación o rechazo y se invierte el valor
-        celdaAR2.setCellValue(""); // Modifica el valor de la celda  
-        celdaAR.setCellValue("√"); // Modifica el valor de la celda
+        Cell celdaAR2 = (numCellAR == 2) ? row.getCell(7) : row.getCell(2);
+        celdaAR2.setCellValue("");
+        celdaAR.setCellValue("√");
 
-        XSSFFont fuente = formato.crearFuente(workbook, "Calibri", (short) 10, false); // Se crea un nuevo estilo de fuente
-        CellStyle estilo = formato.bordeGrueso(workbook); // Crear un estilo de celda y establecer el borde grueso
-        estilo.setFont(fuente); // Se aplica el formato de la fuente
+        XSSFFont fuente = formato.crearFuente(workbook, "Calibri", (short) 10, false);
+        CellStyle estilo = formato.bordeGrueso(workbook);
+        estilo.setFont(fuente);
 
-        celdaAR2.setCellStyle(estilo); // Aplicar el estilo a la celda
+        celdaAR2.setCellStyle(estilo);
 
-        setValorCeldasHojaInstruccion(sheet, 34, 1, dirm.getObservacionesRD());  // Observaciones a los resultados dimensionales
-        setValorCeldasHojaInstruccion(sheet, 42, 1, dirm.getObsMP());  // Observaciones a la disposición de la Materia Prima
-        setValorCeldasHojaInstruccion(sheet, 60, 1, dirm.getInspector());  // Inspector
+        setValorCeldasHojaInstruccion(sheet, 34, 1, dirm.getObservacionesRD());
+        setValorCeldasHojaInstruccion(sheet, 42, 1, dirm.getObsMP());
+        setValorCeldasHojaInstruccion(sheet, 60, 1, dirm.getInspector());
     }
 
     private void procesarPaginaDosHJ(XSSFWorkbook workbook, Connection conexion, DatosIRM dirm, List<JTable> listTablas) throws SQLException {
-        Sheet sheet2 = workbook.getSheetAt(1); // Obtén la segunda hoja del libro
-        workbook.setSheetName(workbook.getSheetIndex(sheet2), formato.eliminarSeparadores(dirm.getFechaInspeccion())); // Cambiar el nombre de la Hoja
+        Sheet sheet2 = workbook.getSheetAt(1);
+        workbook.setSheetName(workbook.getSheetIndex(sheet2), formato.eliminarSeparadores(dirm.getFechaInspeccion()));
 
-        List<DatosFila> datosFilas = new ArrayList<>(); // Obtener la lista de tablas
+        List<DatosFila> datosFilas = new ArrayList<>();
 
-        for (JTable table : listTablas) { // Se obtiene la información de las especificaciones de los componentes
+        for (JTable table : listTablas) {
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             int rowCount = model.getRowCount();
-            for (int i = 0; i < rowCount; i++) { // Iterar sobre las filas de la JTable
+            for (int i = 0; i < rowCount; i++) {
                 Object especificacion = model.getValueAt(0, 0);
                 Object calibres = model.getValueAt(0, 2);
                 Object propiedad = model.getValueAt(i, 3);
@@ -177,48 +196,45 @@ public class ExcelEditor {
             }
         }
 
-        // Variables para el control de las filas
-        int numeroFilaEspecificacion = 6; // Valor inicial de la fila para la primera especificación
+        int numeroFilaEspecificacion = 6;
         String especificacionAnterior = "";
 
         XSSFFont fuente2 = formato.crearFuente(workbook, "Calibri", (short) 10, false);
-        CellStyle estilo2 = formato.bordeGrueso(workbook); // Crear un estilo de celda y establecer el borde grueso
+        CellStyle estilo2 = formato.bordeGrueso(workbook); 
         estilo2.setFont(fuente2);
 
-        // Establecer el formato de fuente para el contenido
         CellStyle estilo3 = workbook.createCellStyle();
         XSSFFont fuente3 = formato.crearFuente(workbook, "Arial", (short) 6, false);
         estilo3.setBorderTop(HSSFCellStyle.BORDER_MEDIUM);
         estilo3.setFont(fuente3);
 
-        boolean primeraEspecificacion = true; // Variable para rastrear la primera aparición de la especificación
+        boolean primeraEspecificacion = true;
 
-        for (DatosFila datosFila : datosFilas) { // Recorrer los elementos
-            String especificacionActual = datosFila.getEspecificacion().toString(); // Obtener la especificación actual
-            if (!especificacionActual.equals(especificacionAnterior)) { // Verificar si es una nueva especificación
-                numeroFilaEspecificacion = datosFila.getElemento(especificacionActual); // Cambiar a la siguiente fila específica para la nueva especificación
-                primeraEspecificacion = true; // Reiniciar la variable para la primera especificación
+        for (DatosFila datosFila : datosFilas) {
+            String especificacionActual = datosFila.getEspecificacion().toString();
+            if (!especificacionActual.equals(especificacionAnterior)) {
+                numeroFilaEspecificacion = datosFila.getElemento(especificacionActual);
+                primeraEspecificacion = true;
             }
 
-            Row row2 = sheet2.getRow(numeroFilaEspecificacion); // Crear la fila en el archivo de Excel
+            Row row2 = sheet2.getRow(numeroFilaEspecificacion);
             if (row2 == null) {
                 row2 = sheet2.createRow(numeroFilaEspecificacion);
             }
 
-            CellStyle estiloCheckbox = workbook.createCellStyle(); // Crear estilo de celda con checkbox
+            CellStyle estiloCheckbox = workbook.createCellStyle();
             estiloCheckbox.setLocked(true);
 
-            if (primeraEspecificacion) { // Imprimir el valor de calibre solo en la primera aparición de la especificación
+            if (primeraEspecificacion) {
                 Cell chkCalibre = row2.createCell(4);
                 Cell cellCalibre = row2.createCell(5);
                 cellCalibre.setCellValue(datosFila.getCalibre().toString());
                 cellCalibre.setCellStyle(estilo3);
                 chkCalibre.setCellValue("R");
                 chkCalibre.setCellStyle(formato.estiloTablaAnchoLargoHI(workbook));
-                primeraEspecificacion = false; // Marcar que ya se imprimió el calibre
+                primeraEspecificacion = false;
             }
 
-            // Escribir los datos en las celdas correspondientes referentes a las propiedades de los componentes
             Cell cellCumplePropiedad = row2.createCell(10);
             if (datosFila.getPropiedad() == null || datosFila.getPropiedad().equals("")) {
                 cellCumplePropiedad.setCellValue("");
@@ -228,7 +244,6 @@ public class ExcelEditor {
             }
             cellCumplePropiedad.setCellStyle(estilo2);
 
-            // Escribir los datos en las celdas correspondientes referentes a la composición química de los componentes
             Cell cellCumpleComposicion = row2.createCell(13);
             if (datosFila.getComposicion() == null || datosFila.getComposicion().equals("")) {
                 cellCumpleComposicion.setCellValue("");
@@ -238,18 +253,18 @@ public class ExcelEditor {
             }
 
             cellCumpleComposicion.setCellStyle(estilo2);
-            numeroFilaEspecificacion++; // Incrementar el número de fila correspondiente a la especificación actual
+            numeroFilaEspecificacion++;
             especificacionAnterior = especificacionActual;
         }
     }
 
-    public String generarExcelRD(Connection conexion, List<AceptacionPc1> ap1m, AceptacionProductoServicio aps, JComboBox cbxComponente, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
-        String filePath = "RETENCION-DIMENSIONAL.xlsx"; // Se obtiene el formato editable de la Hoja de Instrucción
+    public String generarExcelRD(Connection conexion, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
+        String filePath = "RETENCION-DIMENSIONAL.xlsx";
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
             XSSFWorkbook workbook = new XSSFWorkbook(fileInputStream);
 
-            ap1m = aps.recuperarAP1(conexion, cbxComponente.getSelectedItem().toString()); // Se recupera la información sobre los componentes
+            List<AceptacionPc1> ap1m = aps.recuperarAP1(conexion, ap3m.get(0).getComponente()); 
 
             if (ap1m == null || ap1m.isEmpty()) { // Si es null y vacío...
                 JOptionPane.showMessageDialog(null, "No se encontró información sobre los componentes");
@@ -291,33 +306,29 @@ public class ExcelEditor {
             agregarFilaInformacion(sheet, fila, 11, aceptacionPc1.getInspVisual()); // Inspección Visual
             agregarFilaInformacion(sheet, fila, 16, aceptacionPc1.getObservacion()); // Observación
 
-            valoresUnicos.add(claveUnica); // Agrega la clave única al conjunto para evitar imprimir los mismos valores
+            valoresUnicos.add(claveUnica);
 
-            if (fila == 34) { // Si la fila es igual a 35...
-                fila = 41; // Que se pase a la siguiente lista, que comienza en la fila 41
+            if (fila == 34) { 
+                fila = 41; 
             }
             fila++;
         }
     }
 
     private void procesarPaginaDosRD(Connection conexion, XSSFWorkbook workbook, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m, AceptacionProductoServicio aps, AceptacionPc2 apc2) {
-        XSSFSheet sheet2 = workbook.getSheetAt(1); // Obtén la segunda hoja del libro
+        XSSFSheet hoja2 = workbook.getSheetAt(1);
 
-        procesarComponentes(sheet2, ap1m); // Se muestra la información referente al componente en las celdas de excel
-        procesarProcesos(sheet2, ap1m); // Se muestran el total de Procesos del componente en el documento de excel
+        mostrarComponentes(hoja2, ap1m, ap3m);
+        mostrarProcesos(hoja2, ap1m);
 
-        Comparator<String> dateComparator = new Comparator<String>() { // Se llama esta clase para comparar las fechas de los registros y ordenarlas
+        Comparator<String> dateComparator = (fecha1, fecha2) -> { // Expresión lambda para comparar fechas
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-
-            @Override
-            public int compare(String fecha1, String fecha2) {
-                try {
-                    Date date1 = sdf.parse(fecha1);
-                    Date date2 = sdf.parse(fecha2);
-                    return date1.compareTo(date2);
-                } catch (ParseException e) {
-                    return 0;
-                }
+            try {
+                Date date1 = sdf.parse(fecha1);
+                Date date2 = sdf.parse(fecha2);
+                return date1.compareTo(date2);
+            } catch (ParseException e) {
+                return 0;
             }
         };
 
@@ -337,14 +348,14 @@ public class ExcelEditor {
 
         TreeMap<String, TreeMap<String, Map<String, String>>> selectedMap; // Variable para seleccionar el mapa y guardar los datos en el mapa elegido
         for (AceptacionPc3 dataVariable : ap3m) {
-            String variable = dataVariable.getVariable() + "\n" + dataVariable.getEspecificacion(); // Se obtiene la variable y su especificación
-            String valor = dataVariable.getValor(); // Se Obtiene el valor
+            String variable = dataVariable.getVariable() + "\n" + dataVariable.getEspecificacion();
+            String valor = dataVariable.getValor();
 
-            switch (dataVariable.getNoOp()) { // Según el número de operación...
+            switch (dataVariable.getNoOp()) { // Seleccionar el mapa según el número de operación
                 case "1":
                 case "2":
-                    selectedMap = mapVariablesNoOp12; // Se elije un mapa
-                    if (!listVariables1.contains(variable)) { // Si esa variable no estaba ya en el mapa...
+                    selectedMap = mapVariablesNoOp12;
+                    if (!listVariables1.contains(variable)) {
                         listVariables1.add(variable);
                     }
                     break;
@@ -361,29 +372,31 @@ public class ExcelEditor {
                     }
                     break;
                 case "5":
+                case "IF":
                     selectedMap = mapVariablesNoOp5;
                     if (!listVariables5.contains(variable)) {
                         listVariables5.add(variable);
                     }
                     break;
                 default:
-                    selectedMap = null; // En caso de valores de noOp desconocidos
+                    selectedMap = null; // Manejar valores de noOp desconocidos
                     break;
             }
 
-            try {
-                // Busca el objeto correspondiente en ap2m (usando un identificador único como ejemplo)
-                String id = dataVariable.getFecha(); // Reemplaza esto con el campo adecuado en ap3m que relaciona con ap2m
-                String comp = dataVariable.getComponente(); // Reemplaza esto con el campo adecuado en ap3m que relaciona con ap2m
-                List<AceptacionPc2> objetoAp2m = aps.buscarObjetoEnAp2mPorFecha(conexion, id, comp, apc2); // Implementa una función que busque en ap2m por el id    } catch (SQLException ex) {
-                if (selectedMap != null) {
+            if (selectedMap != null) {
+                try { // Buscar objeto correspondiente en ap2m usando identificador único
+                    String id = dataVariable.getFecha();
+                    String comp = dataVariable.getComponente();
+                    List<AceptacionPc2> objetoAp2m = aps.buscarObjetoEnAp2mPorFecha(conexion, id, comp, apc2);
+
+                    // Actualizar el mapa seleccionado con los datos
                     selectedMap.computeIfAbsent(dataVariable.getFecha(), k -> new TreeMap<>())
                             .computeIfAbsent(dataVariable.getNoOp(), k -> new LinkedHashMap<>())
                             .put(variable, valor);
-                    // Agrega campos de ap2m
+
+                    // Agregar campos de ap2m al mapa
                     int numO = 0;
                     for (AceptacionPc2 dataVariable3 : objetoAp2m) {
-                        // Agrega el tamaño y el número de orden al mapa
                         Map<String, String> variablesMap = selectedMap.get(dataVariable.getFecha()).get(dataVariable.getNoOp());
                         variablesMap.put("noOrden" + numO, dataVariable3.getNoOrden());
                         variablesMap.put("tamLote" + numO, dataVariable3.getTamLote());
@@ -391,19 +404,18 @@ public class ExcelEditor {
                         variablesMap.put("insp" + numO, dataVariable3.getInspector());
                         variablesMap.put("turno" + numO, dataVariable3.getTurno());
                         variablesMap.put("disp" + numO, dataVariable3.getDisp());
+                        numO++;
                     }
+                } catch (SQLException ex) {
+                    aps.manejarExcepcion("Hubo un error al obtener la información de la base de datos: ", ex);
                 }
-            } catch (SQLException ex) {
-                aps.manejarExcepcion("Hubo un error al obtener la información de la base de datos: ", ex);
             }
         }
 
-        // Se Imprimen los valores correspondientes en las filas y columnas
-        getProceso(mapVariablesNoOp12, columnaBase, listVariables1, filaBaseNoOp1, sheet2, fila1, workbook, 5);
-        getProceso(mapVariablesNoOp3, columnaBase, listVariables3, filaBaseNoOp3, sheet2, fila3, workbook, 43);
-        getProceso(mapVariablesNoOp4, columnaBase, listVariables4, filaBaseNoOp4, sheet2, fila4, workbook, 81);
-        getProceso(mapVariablesNoOp5, columnaBase, listVariables5, filaBaseNoOp5, sheet2, fila5, workbook, 119);
-
+        getProceso(mapVariablesNoOp12, columnaBase, listVariables1, filaBaseNoOp1, hoja2, fila1, workbook, 5);
+        getProceso(mapVariablesNoOp3, columnaBase, listVariables3, filaBaseNoOp3, hoja2, fila3, workbook, 43);
+        getProceso(mapVariablesNoOp4, columnaBase, listVariables4, filaBaseNoOp4, hoja2, fila4, workbook, 81);
+        getProceso(mapVariablesNoOp5, columnaBase, listVariables5, filaBaseNoOp5, hoja2, fila5, workbook, 119);
     }
 
     private void getProceso(TreeMap<String, TreeMap<String, Map<String, String>>> map, int columnaBase, List<String> listVariables, int fila, Sheet sheet2, int rows, XSSFWorkbook workbook, int filaD) {
@@ -477,97 +489,67 @@ public class ExcelEditor {
 
                     Map<String, String> variablesMap = entrada2.getValue();
                     int columna = columnaBase; // Inicializar la columna en función de columnaBase
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Crear el estilo de celda fuera del bucle
+                    CellStyle cellStyle = workbook.createCellStyle();
+                    Row sourceRow = sheet2.getRow(9);
+                    Cell sourceCell = sourceRow.getCell(columnaBase);
+                    cellStyle.cloneStyleFrom(sourceCell.getCellStyle()); // Clonar el estilo de celda de origen
+
                     for (String variable : listVariables) {
                         Cell cellVariable = row.getCell(columna);
                         Cell cellVariable2 = row.getCell(columna + 1);
-                        if (cellVariable == null || columna > 42 || cellVariable2 == null || columna > 42) { // Si la celda es nula, crea una nueva celda en su lugar
+
+                        // Si la celda es nula, crea una nueva celda en su lugar
+                        if (cellVariable == null) {
                             cellVariable = row.createCell(columna);
+                        }
+                        if (cellVariable2 == null) {
                             cellVariable2 = row.createCell(columna + 1);
                         }
 
-                        if (variablesMap.containsKey(variable)) { // Si hay un valor para esa variable, se imprime, sino, se muestra "N/A"
+                        // Configurar el valor de la celda
+                        if (variablesMap.containsKey(variable)) {
                             cellVariable.setCellValue(variablesMap.get(variable));
                         } else {
                             cellVariable.setCellValue("N/A");
                         }
 
-                        int columnaBase2 = 30; // Definir la columna base a partir de la cual se combinarán las celdas en pares
+                        // Configurar el estilo de celda clonado para la nueva celda
+                        cellVariable.setCellStyle(cellStyle);
+                        cellVariable2.setCellStyle(cellStyle);
 
-                        // Crear el estilo de celda fuera del bucle
-                        CellStyle cellStyle = workbook.createCellStyle();
-                        Row sourceRow = sheet2.getRow(9);
-                        Cell sourceCell = sourceRow.getCell(columnaBase);
+                        // Combinar las celdas en pares
+                        CellRangeAddress region = new CellRangeAddress(
+                                row.getRowNum(), // Fila inicial
+                                row.getRowNum(), // Fila final (misma fila)
+                                columna, // Columna inicial
+                                columna + 1 // Columna final (celda siguiente)
+                        );
 
-                        cellStyle.cloneStyleFrom(sourceCell.getCellStyle()); // Clonar el estilo de celda de origen
-
-                        for (String variable3 : listVariables) {
-                            int columna2 = columnaBase2; // Ajustar la columna en función de la columna base
-
-                            if (cellVariable == null || cellVariable2 == null) { // Si la celda es nula, crea una nueva celda en su lugar
-                                cellVariable = row.createCell(columna2);
-                                cellVariable2 = row.createCell(columna2 + 1);
-
-                                // Configurar el estilo de celda clonado para la nueva celda
-                                cellVariable.setCellStyle(cellStyle);
-                                cellVariable2.setCellStyle(cellStyle);
-                            }
-
-                            // Configurar el valor de la celda
-                            if (variablesMap.containsKey(variable3)) {
-                                cellVariable.setCellValue(variablesMap.get(variable3));
-                            } else {
-                                cellVariable.setCellValue("N/A");
-                            }
-
-                            // Incrementar la columna para la siguiente iteración
-                            columnaBase2 += 2;
-
-                            // Combinar las celdas en pares
-                            CellRangeAddress region = new CellRangeAddress(
-                                    row.getRowNum(), // Fila inicial
-                                    row.getRowNum(), // Fila final (misma fila)
-                                    columna2, // Columna inicial
-                                    columna2 + 1 // Columna final (celda siguiente)
-                            );
-
-                            // Verificar si la región ya está combinada
-                            boolean combinada = false;
-                            for (int i = 0; i < sheet2.getNumMergedRegions(); i++) {
-                                CellRangeAddress mergedRegion = sheet2.getMergedRegion(i);
-                                if (mergedRegion.getFirstRow() == region.getFirstRow()
-                                        && mergedRegion.getLastRow() == region.getLastRow()
-                                        && mergedRegion.getFirstColumn() == region.getFirstColumn()
-                                        && mergedRegion.getLastColumn() == region.getLastColumn()) {
-                                    combinada = true;
-                                    break;
-                                }
-                            }
-
-                            if (!combinada) { // Agregar la región combinada solo si no está combinada previamente
-                                sheet2.addMergedRegion(region);
+                        // Verificar si la región ya está combinada
+                        boolean combinada = false;
+                        for (int i = 0; i < sheet2.getNumMergedRegions(); i++) {
+                            CellRangeAddress mergedRegion = sheet2.getMergedRegion(i);
+                            if (mergedRegion.getFirstRow() == region.getFirstRow()
+                                    && mergedRegion.getLastRow() == region.getLastRow()
+                                    && mergedRegion.getFirstColumn() == region.getFirstColumn()
+                                    && mergedRegion.getLastColumn() == region.getLastColumn()) {
+                                combinada = true;
+                                break;
                             }
                         }
 
-                        // Crear filas y celdas copiando el estilo de las celdas ya previamente definidos
-                        Row sourceRow3 = sheet2.getRow(9);
-                        Cell sourceCell3 = sourceRow.getCell(8);
+                        if (!combinada) { // Agregar la región combinada solo si no está combinada previamente
+                            sheet2.addMergedRegion(region);
+                        }
 
-                        Row sourceRow2 = sheet2.getRow(9);
-                        Cell sourceCell2 = sourceRow2.getCell(9);
-
-                        // Crear un estilo de celda
-                        CellStyle cellStyle4 = workbook.createCellStyle();
-                        CellStyle cellStyle5 = workbook.createCellStyle();
-
-                        cellStyle4.cloneStyleFrom(sourceCell.getCellStyle()); // Copia el estilo de la celda de origen
-                        cellStyle5.cloneStyleFrom(sourceCell2.getCellStyle()); // Copia el estilo de la celda de origen
-
-                        cellVariable.setCellStyle(cellStyle4);
-                        cellVariable2.setCellStyle(cellStyle5);
-
+                        // Incrementar la columna para la siguiente iteración
                         columna += 2;
                     }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     // Concatenar valores de 'noOrden'
                     Set<String> valoresUnicosNoOrden = new HashSet<>();
                     Set<String> valoresUnicosTamLote = new HashSet<>();
@@ -699,24 +681,80 @@ public class ExcelEditor {
         return celda;
     }
 
-    private void procesarProcesos(XSSFSheet sheet, List<AceptacionPc1> ap1m) {
-        for (int filaProcesos : FILAS_PROCESOS) {
-            int filaBase = 12;
-            for (int i = 1; i <= Integer.parseInt(ap1m.get(0).getNoOps()); i++) {
-                Row rowNoOps = sheet.getRow(filaProcesos);
-                Cell cellNoOps = rowNoOps.getCell(filaBase);
+    private void mostrarProcesos(XSSFSheet sheet, List<AceptacionPc1> ap1m) {
+        String noOps = ap1m.get(0).getNoOps();
+
+        for (int i = 1; i <= 5; i++) {  // Asumiendo que 5 es el valor máximo para noOps en formato numérico.
+            Row rowNoOps;
+            Cell cellNoOps;
+
+            if (noOps.equals(String.valueOf(i)) || noOps.equalsIgnoreCase("IF")) {
+                rowNoOps = sheet.getRow(118);
+                if (rowNoOps == null) {
+                    rowNoOps = sheet.createRow(118);
+                }
+                cellNoOps = rowNoOps.getCell(28);
+                if (cellNoOps == null) {
+                    cellNoOps = rowNoOps.createCell(28);
+                }
                 cellNoOps.setCellValue("X");
-                filaBase += 4;
+                break;  // No need to check other cases once the condition is met
+            } else {
+                switch (i) {
+                    case 1:
+                        rowNoOps = sheet.getRow(4);
+                        if (rowNoOps == null) {
+                            rowNoOps = sheet.createRow(4);
+                        }
+                        cellNoOps = rowNoOps.getCell(12);
+                        if (cellNoOps == null) {
+                            cellNoOps = rowNoOps.createCell(12);
+                        }
+                        cellNoOps.setCellValue("X");
+                        break;
+                    case 2:
+                        rowNoOps = sheet.getRow(4);
+                        if (rowNoOps == null) {
+                            rowNoOps = sheet.createRow(4);
+                        }
+                        cellNoOps = rowNoOps.getCell(16);
+                        if (cellNoOps == null) {
+                            cellNoOps = rowNoOps.createCell(16);
+                        }
+                        cellNoOps.setCellValue("X");
+                        break;
+                    case 3:
+                        rowNoOps = sheet.getRow(42);
+                        if (rowNoOps == null) {
+                            rowNoOps = sheet.createRow(42);
+                        }
+                        cellNoOps = rowNoOps.getCell(20);
+                        if (cellNoOps == null) {
+                            cellNoOps = rowNoOps.createCell(20);
+                        }
+                        cellNoOps.setCellValue("X");
+                        break;
+                    case 4:
+                        rowNoOps = sheet.getRow(80);
+                        if (rowNoOps == null) {
+                            rowNoOps = sheet.createRow(80);
+                        }
+                        cellNoOps = rowNoOps.getCell(24);
+                        if (cellNoOps == null) {
+                            cellNoOps = rowNoOps.createCell(24);
+                        }
+                        cellNoOps.setCellValue("X");
+                        break;
+                }
             }
         }
     }
 
-    private void procesarComponentes(XSSFSheet sheet, List<AceptacionPc1> ap1m) {
+    private void mostrarComponentes(XSSFSheet sheet, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m) {
         for (int filaInfo : FILAS_INFO) {
             for (int indexColumna : COLUMNAS_COMPONENTE) {
                 Row rowComponente = sheet.getRow(filaInfo);
                 Cell cell = rowComponente.getCell(indexColumna);
-
                 switch (indexColumna) {
                     case 13:
                         cell.setCellValue(ap1m.get(0).getComponente());
@@ -725,10 +763,33 @@ public class ExcelEditor {
                         cell.setCellValue(ap1m.get(0).getNoParte());
                         break;
                     case 26:
-                        cell.setCellValue(ap1m.get(0).getNoTroquel());
+                        ap3m.forEach((ap3) -> {
+                            String noOp = ap3.getNoOp();
+                            int filaCorrespondiente = obtenerFilaCorrespondiente(noOp);
+                            if (filaCorrespondiente == filaInfo) {
+                                cell.setCellValue(ap3.getNoTroquel());
+                            }
+                        });
                         break;
                 }
             }
+        }
+    }
+
+    private int obtenerFilaCorrespondiente(String noOp) {
+        switch (noOp) {
+            case "1":
+            case "2":
+                return 2;
+            case "3":
+                return 40;
+            case "4":
+                return 78;
+            case "5":
+            case "IF":
+                return 116;
+            default:
+                throw new IllegalArgumentException("Número de operación no válido: " + noOp);
         }
     }
 
@@ -750,7 +811,7 @@ public class ExcelEditor {
             filaBaseNoOp3 += filasNecesarias;
             filaBaseNoOp4 += filasNecesarias;
             filaBaseNoOp5 += filasNecesarias;
-            
+
             fila1 += filasNecesarias;
             fila3 += filasNecesarias;
             fila4 += filasNecesarias;

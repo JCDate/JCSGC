@@ -148,6 +148,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         btnGuardar = new swing.Button(new Color(121, 190, 255),new Color(10, 110, 255));
         txtDescripcionMP = new swing.TextField();
         txtToleranciaLamina = new swing.TextField();
+        chkHoy = new swing.JCheckBoxCustom(new Color(20, 134, 255));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -303,6 +304,16 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         jPanel1.add(txtDescripcionMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, 350, 40));
         jPanel1.add(txtToleranciaLamina, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 290, 350, 40));
 
+        chkHoy.setFont(new java.awt.Font("Tahoma", 1, 10)); // NOI18N
+        chkHoy.setForeground(new java.awt.Color(76, 109, 255));
+        chkHoy.setText("HOY");
+        chkHoy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkHoyActionPerformed(evt);
+            }
+        });
+        jPanel1.add(chkHoy, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 110, -1, 30));
+
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1010, 630));
 
         pack();
@@ -348,6 +359,14 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
+    private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
+        if (chkHoy.isSelected()) {
+            dchFechaInspeccion.setDate(new java.util.Date());
+        } else {
+            dchFechaInspeccion.setDate(null);
+        }
+    }//GEN-LAST:event_chkHoyActionPerformed
+
     private void leerYModificarExcel() throws IOException {
         fileInputStream = new FileInputStream(new File(rutaArchivo));
         workbook = new XSSFWorkbook(fileInputStream);
@@ -359,9 +378,9 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         int year = Calendar.getInstance().get(Calendar.YEAR);
         String codigoHoja = s.getCodigoHoja(irs.SELECT_NO_HOJA_INSTRUCCION_SQL, year);
         String nuevoCodigo = s.obtenerSiguiente(codigoHoja, String.valueOf(year));
-        txtHojaInstrucciones.setText(nuevoCodigo); // Se genera automaticamente el no. de hoja de Instrucción
+        txtHojaInstrucciones.setText(irm.getNoHoja()); // Se genera automaticamente el no. de hoja de Instrucción
 
-        // Patrón de formato de fecha que coincide con tu cadena
+        // Patrón de formato de fecha
         patron = "d 'de' MMMM 'de' yyyy";
 
         // Crear un objeto SimpleDateFormat con el patrón
@@ -539,6 +558,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxNombreInspector;
     private javax.swing.JComboBox<String> cbxObservacionesMP;
     private javax.swing.JCheckBox chkAceptacion;
+    private javax.swing.JCheckBox chkHoy;
     private javax.swing.JCheckBox chkRechazo;
     private com.toedter.calendar.JDateChooser dchFechaInspeccion;
     private javax.swing.JLabel jLabel1;

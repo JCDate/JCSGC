@@ -31,57 +31,36 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-/**
- *
- * @author JC
- */
 public class AgregarIrGUI extends javax.swing.JFrame {
 
-    private final InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Instancia de la clase InspeccionReciboServicio
-    private final InspeccionReciboM irm; // Instancia de la clase InspeccionReciboM
+    private final InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private final InspeccionReciboM irm;
 
-    String rutaArchivoCertificado = ""; // Variable que guarda la ruta absoluta del archivo de certificado
-    String rutaArchivoFactura = ""; // Variable que guarda la ruta absoluta del archivo de la factura
-    String rutaArchivoHojaInstruccion = ""; // Variable que guarda la ruta absoluta del archivo de la hoja Instrucción
+    String rutaArchivoCertificado = "";
+    String rutaArchivoFactura = "";
+    String rutaArchivoHojaInstruccion = "";
 
-    Usuarios usr; // Instancia de la clase usuarios con los datos del usuario que inicio Sesión
-    Connection conexion; // Objeto de tipo Connection para realizar la conexión a la bd
+    Usuarios usr;
+    Connection conexion;
 
     ContadorAnual contador = new ContadorAnual();
 
-    /**
-     * Creates new form AgregarIr
-     *
-     * @throws java.lang.ClassNotFoundException
-     */
-    public AgregarIrGUI() throws ClassNotFoundException { // Constructor por defecto
-        initComponentes();
-        this.irm = new InspeccionReciboM(); // Se crea una nueva instancia de la clase InspeccionReciboM
-        try {
-            Statement slqNombreProveedores = conexion.createStatement(); // Se define la consulta preparada
-            ResultSet registro = slqNombreProveedores.executeQuery(this.irs.SELECT_NOMBRE_PROVEEDORES_SQL); // Se consultan los nombres de los proveedores 
-            while (registro.next()) { //Mientras haya información...
-                String columna = registro.getString("nombre"); //Variable que almacena los diferentes nombres encontrados
-                cbxProveedor.addItem(columna); // Se agrega al checkBox
-            }
-        } catch (SQLException ex) { // Se captura la excepción SQLException
-            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-
-        }
+    public AgregarIrGUI() throws ClassNotFoundException {
+        inicializarVentanaYComponentes();
+        this.irm = new InspeccionReciboM();
     }
 
-    public AgregarIrGUI(Usuarios usr) throws ClassNotFoundException { // Constructor
-        initComponentes(); // Inicialización de Componentes
-        this.irm = new InspeccionReciboM(); // Se crea una nueva instancia de la clase InspeccionReciboM
+    public AgregarIrGUI(Usuarios usr) throws ClassNotFoundException {
+        inicializarVentanaYComponentes();
+        this.irm = new InspeccionReciboM();
         try {
-            Statement slqNombreProveedor = conexion.createStatement(); // Se define la consulta preparada
-            ResultSet registro = slqNombreProveedor.executeQuery(this.irs.SELECT_NOMBRE_PROVEEDORES_SQL); // Se consultan los nombres de los proveedores 
-            // DISTINCT sirve para evitar que se muestren resultados duplicados
-            while (registro.next()) { // Mientras haya información...
-                String columna = registro.getString("nombre"); // Variable que almacena los diferentes nombres encontrados
-                cbxProveedor.addItem(columna); // Se agrega al checkBox
+            Statement slqNombreProveedor = conexion.createStatement();
+            ResultSet registro = slqNombreProveedor.executeQuery(this.irs.SELECT_NOMBRE_PROVEEDORES_SQL);
+            while (registro.next()) {
+                String columna = registro.getString("nombre");
+                cbxProveedor.addItem(columna);
             }
-        } catch (SQLException ex) { // Se captura la excepción SQLException
+        } catch (SQLException ex) {
             Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
         SQL s = new SQL();
@@ -92,18 +71,17 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     }
 
     @Override
-    public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().
-                getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+    public Image getIconImage() {
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
 
-    public final void initComponentes() {
-        initComponents(); // Inicialización de componente
-        this.setResizable(false); // Se define que no se puede redimensionar la ventana 
-        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        this.setDefaultCloseOperation(0); // Deshabilita el boton de cerrar de la venta
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
+    public final void inicializarVentanaYComponentes() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(0);
+        this.conexion = Conexion.getInstance().getConnection();
     }
 
     /**
@@ -147,6 +125,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         cbxPresentacionLamina = new swing.ComboBoxSuggestion();
         cbxProveedor = new swing.ComboBoxSuggestion();
         cbxEstatus = new swing.ComboBoxSuggestion();
+        chkHoy = new swing.JCheckBoxCustom(new Color(20, 134, 255));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -228,7 +207,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         lblNoFactura.setForeground(new java.awt.Color(76, 109, 255));
         lblNoFactura.setText("NO. FACTURA:");
         jPanel1.add(lblNoFactura, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 190, 140, -1));
-        jPanel1.add(dchFechaFactura, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 130, 210, -1));
+        jPanel1.add(dchFechaFactura, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 130, 170, -1));
 
         btnAgregarCertificado.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnAgregarCertificado.setForeground(new java.awt.Color(255, 255, 255));
@@ -305,6 +284,16 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         cbxEstatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "LIBERADA", "POR LIBERAR", "RECHAZADA", "CERTIFICADO INCOMPLETO", " " }));
         jPanel1.add(cbxEstatus, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 330, 280, -1));
 
+        chkHoy.setFont(new java.awt.Font("Tahoma", 1, 10)); // NOI18N
+        chkHoy.setForeground(new java.awt.Color(76, 109, 255));
+        chkHoy.setText("HOY");
+        chkHoy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkHoyActionPerformed(evt);
+            }
+        });
+        jPanel1.add(chkHoy, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 130, -1, 29));
+
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 830, 630));
 
         pack();
@@ -319,9 +308,9 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // Obtén la fecha seleccionada
+
         Date selectedDate = dchFechaFactura.getDate();
-        // Crea un objeto SimpleDateFormat para el formato deseado
+
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         String estatus = cbxEstatus.getSelectedItem().toString();
         String calibre = txtCalibre.getText().trim();
@@ -336,7 +325,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         String[] partes = noHoja.split("/");
         String numeroStr = partes[1];
         int numero = Integer.parseInt(numeroStr);
-        // Eliminar ceros a la izquierda
+
         numeroStr = String.valueOf(numero);
 
         String nomHJ = txtNombreHojaInstruccion.getText();
@@ -409,8 +398,8 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                         // Archivo de Hoja de Instrucción
                         irs.cargarArchivo(rutaArchivoHojaInstruccion, irm::setHojaIns);
 
-                        if (irs.existeNoRollo(txtCalibre.getText()) == 0) {
-                            JOptionPane.showMessageDialog(this, "Calibre registrado previamente");
+                        if (irs.existeNoRollo(txtNoRollo.getText())) {
+                            JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
                         }
                         guardarDatos(); // Se guardan los datos
 
@@ -432,7 +421,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
 
                     // Archivo de Hoja de Instrucción
                     irs.cargarArchivo(rutaArchivoHojaInstruccion, irm::setHojaIns);
-
                     // Se guardan el resto de los atributos de la instancia
                     irm.setFechaFactura(fechaFactura);
                     irm.setProveedor(proveedor);
@@ -447,15 +435,16 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                     irm.setNombreHJ(nomHJ);
                     irm.setNombreFact(nomFactura);
                     irm.setNombreCert(nomCert);
-                    try {
-                        if (irs.existeNoRollo(txtCalibre.getText()) == 0) {
-                            JOptionPane.showMessageDialog(this, "Calibre registrado previamente");
-                        }
-                        guardarDatos(); // Se guardan los datos
 
+                    try {
+                        if (irs.existeNoRollo(txtNoRollo.getText())) {
+                            JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
+                        }
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                    guardarDatos(); // Se guardan los datos
+
                 } else { // Si el calibre esta vacío se muestra el mensaje
                     JOptionPane.showMessageDialog(null, "DATOS INCOMPLETOS");
                 }
@@ -478,6 +467,14 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     private void txtNoHojaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNoHojaActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtNoHojaActionPerformed
+
+    private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
+        if (chkHoy.isSelected()) {
+            dchFechaFactura.setDate(new java.util.Date());
+        } else {
+            dchFechaFactura.setDate(null);
+        }
+    }//GEN-LAST:event_chkHoyActionPerformed
 
     public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
         File archivoSeleccionado = this.irs.seleccionarArchivo(this); // Se selecciona el archivo
@@ -545,7 +542,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         //</editor-fold>
         //</editor-fold>
 
-        //</editor-fold>
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
             try {
@@ -565,6 +561,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxEstatus;
     private javax.swing.JComboBox<String> cbxPresentacionLamina;
     private javax.swing.JComboBox<String> cbxProveedor;
+    private javax.swing.JCheckBox chkHoy;
     private com.toedter.calendar.JDateChooser dchFechaFactura;
     private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JPanel jPanel1;

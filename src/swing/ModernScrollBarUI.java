@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package swing;
 
 import java.awt.Dimension;
@@ -16,16 +11,12 @@ import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
-/**
- *
- * @author JC
- */
 public class ModernScrollBarUI extends BasicScrollBarUI {
 
     private final int THUMB_SIZE = 60;
 
     @Override
-    protected Dimension getMinimumThumbSize() { // Define el tamaño minimo de la barra de dezplazamiento
+    protected Dimension getMinimumThumbSize() {
         if (scrollbar.getOrientation() == JScrollBar.VERTICAL) {
             return new Dimension(0, THUMB_SIZE);
         } else {
@@ -48,7 +39,7 @@ public class ModernScrollBarUI extends BasicScrollBarUI {
     }
 
     @Override
-    protected void paintThumb(Graphics grphcs, JComponent jc, Rectangle rctngl) { // Personaliza la apariencia del "thumb" de la barra de desplazamiento.
+    protected void paintThumb(Graphics grphcs, JComponent jc, Rectangle rctngl) {
         Graphics2D g2 = (Graphics2D) grphcs;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int x = rctngl.x;
@@ -66,7 +57,8 @@ public class ModernScrollBarUI extends BasicScrollBarUI {
         g2.fillRoundRect(x + 2, y, width, height, 10, 10);
     }
 
-    private class ScrollBarButton extends JButton { // Crea botones personalizados para la barra de desplazamiento.
+    private class ScrollBarButton extends JButton {
+
         public ScrollBarButton() {
             setBorder(BorderFactory.createEmptyBorder());
         }

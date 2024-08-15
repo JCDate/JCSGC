@@ -1,14 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class CalibreIRM {
 
     private String calibre;
@@ -16,15 +7,15 @@ public class CalibreIRM {
     private String especificacion;
     private String descripcionMP;
 
+    public CalibreIRM() {
+
+    }
+
     public CalibreIRM(String calibre, String medidas, String especificacion, String descripcionMP) {
         this.calibre = calibre;
         this.medidas = medidas;
         this.especificacion = especificacion;
         this.descripcionMP = descripcionMP;
-    }
-
-    public CalibreIRM() {
-
     }
 
     public String getCalibre() {
@@ -58,7 +49,4 @@ public class CalibreIRM {
     public void setDescripcionMP(String descripcionMP) {
         this.descripcionMP = descripcionMP;
     }
-    
-    
-
 }

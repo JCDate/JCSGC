@@ -5,6 +5,7 @@ import Modelos.AceptacionPc2;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
+import Servicios.Utilidades;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.Color;
@@ -13,40 +14,28 @@ import java.sql.SQLException;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author JC
- */
 public class AgregarVariableGUI extends javax.swing.JFrame {
 
-    // Atributos
-    private Usuarios usr; // La instancia del usuario actual del sistema
-    private Connection conexion; // Conexión a la BD
-    private AceptacionPc1 apc1; // Se crea la instancia de la clase AceptacionPc1
-    private AceptacionPc2 apc2; // Se crea la instancia de la clase AceptacionPc2
-    private AceptacionProductoServicio aps = new AceptacionProductoServicio(); // Se crea la instancia de la clase AceptacionProductoServicio
+    private Usuarios usr;
+    private Connection conexion;
+    private AceptacionPc1 apc1;
+    private AceptacionPc2 apc2;
+    private AceptacionProductoServicio aps = new AceptacionProductoServicio();
 
-    /**
-     * Creates new form AgregarVariable
-     *
-     */
     public AgregarVariableGUI() {
-        inicializarVentanaYComponentes(); // Inicialización de componentes
+        inicializarVentanaYComponentes();
     }
 
     public AgregarVariableGUI(Usuarios usr, AceptacionPc1 apc1, AceptacionPc2 apc2) {
-        inicializarVentanaYComponentes(); // Inicialización de componentes
-
-        // Definición de los atributos
         this.usr = usr;
         this.apc1 = apc1;
         this.apc2 = apc2;
-
+        inicializarVentanaYComponentes();
     }
 
     @Override
-    public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+    public Image getIconImage() {
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
 
@@ -116,36 +105,36 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
-        cerrarVentana(); // Se cierra la ventana actual
-        this.aps.abrirRetencionDimensionalGUI(usr, apc1, apc2); // Se abre la ventana principal de Retención Dimensional
+        cerrarVentana();
+        aps.abrirRetencionDimensionalGUI(usr, apc1, apc2);
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        String nuevaVariable = txtNuevaVariable.getText(); // Se obtiene el texto del campo para agregar nueva variable
-        if (nuevaVariable.isEmpty()) { // Si no hay nada en el campo...
+        String nuevaVariable = txtNuevaVariable.getText();
+        if (nuevaVariable.isEmpty()) {
             JOptionPane.showMessageDialog(this, "El campo para agregar una nueva variable esta vacío");
         } else {
             try {
-                aps.agregarNuevaVariable(conexion, nuevaVariable); // Se inserta la nueva variable
+                aps.agregarNuevaVariable(conexion, nuevaVariable);
                 JOptionPane.showMessageDialog(this, "NUEVA VARIABLE AGREGADA CORRECTAMENTE");
-                cerrarVentana(); // Se cierra la ventana actual
-                aps.abrirRetencionDimensionalGUI(usr, apc1, apc2); // Se abre la ventana principal de Retención Dimensional
+                cerrarVentana();
+                aps.abrirRetencionDimensionalGUI(usr, apc1, apc2);
             } catch (SQLException ex) {
-                aps.manejarExcepcion("Surgio un error al abrir la Ventana AGREGAR VARIABLES", ex); // Se muestra el mensaje de la excepción al usuario
+                Utilidades.manejarExcepcion("Surgio un error al abrir la Ventana AGREGAR VARIABLES", ex);
             }
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
-        initComponents(); // Inicialización de Componentes
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Se deshabilita el boton de cerrar de la ventana
-        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        this.conexion = Conexion.getInstance().getConnection(); // Inicialización de la conexión a la BD
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
     }
 
     private void cerrarVentana() {
-        AgregarVariableGUI.this.dispose(); // Se liberan los recursos de la interfaz
+        AgregarVariableGUI.this.dispose();
     }
 
     /**

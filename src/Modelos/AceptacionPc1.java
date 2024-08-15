@@ -1,24 +1,15 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class AceptacionPc1 {
-    String id;
-    String componente;
-    String fecha;
-    String noRollo;
-    String inspVisual;
-    String observacion;
-    String noParte;
-    String noTroquel;
-    String noOps;
+    
+    private String id;
+    private String componente;
+    private String fecha;
+    private String noRollo;
+    private String inspVisual;
+    private String observacion;
+    private String noParte;
+    private String noOps;
     
     public AceptacionPc1() {
         this.id = "";
@@ -28,11 +19,10 @@ public class AceptacionPc1 {
         this.inspVisual = "";
         this.observacion = "";
         this.noParte = "";
-        this.noTroquel = "";
         this.noOps = "";
     }
 
-    public AceptacionPc1(String id, String componente, String fecha, String noRollo, String inspVisual, String observacion, String noParte, String noTroquel, String noOps) {
+    public AceptacionPc1(String id, String componente, String fecha, String noRollo, String inspVisual, String observacion, String noParte, String noOps) {
         this.id = id;
         this.componente = componente;
         this.fecha = fecha;
@@ -40,7 +30,6 @@ public class AceptacionPc1 {
         this.inspVisual = inspVisual;
         this.observacion = observacion;
         this.noParte = noParte;
-        this.noTroquel = noTroquel;
         this.noOps = noOps;
     }
 
@@ -98,14 +87,6 @@ public class AceptacionPc1 {
 
     public void setNoParte(String noParte) {
         this.noParte = noParte;
-    }
-
-    public String getNoTroquel() {
-        return noTroquel;
-    }
-
-    public void setNoTroquel(String noTroquel) {
-        this.noTroquel = noTroquel;
     }
 
     public String getNoOps() {

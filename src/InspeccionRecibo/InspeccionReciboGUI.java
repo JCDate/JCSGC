@@ -30,19 +30,14 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import swing.Button;
 
-/**
- *
- * @author JC
- */
 public class InspeccionReciboGUI extends javax.swing.JFrame {
 
-    private final InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Se crea la instancia de la clase Inspección Servicio
-    private List<InspeccionReciboM> irm; // Se crea una lista de tipo Inspección Recibo
-    Connection conexion; // Objeto de tipo Connection para realizar la conexión a la bd
-
-    private final toExcel excel = new toExcel(); // Instancia de la clase toExcel para generar el archivo de Excel
-    private Usuarios usr; // La instancia del usuario
-    private TableRowSorter<DefaultTableModel> trs;  // Objeto para filtrar la busqueda en la tabla
+    private final InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private List<InspeccionReciboM> irm; 
+    private Connection conexion;
+    private Usuarios usr; 
+    private final toExcel excel = new toExcel();
+    private TableRowSorter<DefaultTableModel> trs;
 
     // Constantes para los índices de columnas
     private static final int COLUMN_NO_HOJA = 0;
@@ -60,10 +55,10 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private static final int COLUMN_VER_HOJA_INSTRUCCION = 12;
 
     public InspeccionReciboGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
-        initComponentes(); // Se inicializan los componente principales
-        this.usr = usr; // Se asigna el valor del objeto Usuario
+        initComponentes();
+        this.usr = usr;
         try {
-            this.InspeccionReciboGUI(); // Se manda a llamar al método de Inspección Recibo
+            this.InspeccionReciboGUI();
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -104,9 +99,9 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 fila[COLUMN_ESTATUS] = this.irm.get(i).getEstatus();
 
                 // Se crean los botones para el resto de campos
-                fila[COLUMN_VER_FACTURA] = this.irs.crearBoton(this.irm.get(i).getFacturapdf(), iconoPdf, "Vacio", new Color(255, 132, 126), new Color(255, 105, 97));
-                fila[COLUMN_VER_CERTIFICADO] = this.irs.crearBoton(this.irm.get(i).getCertificadopdf(), iconoPdf, "Vacio", new Color(255, 132, 126), new Color(255, 105, 97));
-                fila[COLUMN_VER_HOJA_INSTRUCCION] = this.irs.crearBoton(this.irm.get(i).getHojaIns(), iconoExcel, "Realizar", new Color(157, 255, 156), new Color(120, 255, 118));
+                fila[COLUMN_VER_FACTURA] = this.irs.crearBoton(this.irm.get(i).getFacturapdf(), iconoPdf, "Vacío");
+                fila[COLUMN_VER_CERTIFICADO] = this.irs.crearBoton(this.irm.get(i).getCertificadopdf(), iconoPdf, "Vacío");
+                fila[COLUMN_VER_HOJA_INSTRUCCION] = this.irs.crearBoton(this.irm.get(i).getHojaIns(), iconoExcel, "Realizar");
                 dt.addRow(fila); // Se añade la fila 
             }
 
@@ -114,7 +109,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             trs = new TableRowSorter<>(dt);
             tblInspeccionRecibo.setRowSorter(trs); // Se establece el objeto que filtra la tabla
             tblInspeccionRecibo.setRowHeight(27); // Se define el tamaño de la altura de las filas
-            tblInspeccionRecibo.setPreferredSize(new Dimension(2700, 2700)); // Aumentar la altura; // Se define el tamaño de la altura de las filas
+            tblInspeccionRecibo.setPreferredSize(new Dimension(4500, 4500)); // Aumentar la altura; // Se define el tamaño de la altura de las filas
             tblInspeccionRecibo.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // Se define el tamaño de la altura de las filas
 
         }
@@ -319,10 +314,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             }
         });
         jScrollPane1.setViewportView(tblInspeccionRecibo);
-        if (tblInspeccionRecibo.getColumnModel().getColumnCount() > 0) {
-            tblInspeccionRecibo.getColumnModel().getColumn(11).setHeaderValue("VER CERTIFICADO");
-            tblInspeccionRecibo.getColumnModel().getColumn(12).setHeaderValue("HOJA DE INSTRUACCIÓN");
-        }
 
         getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 139, 1130, -1));
 
@@ -376,17 +367,19 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
         int filaSeleccionada = tblInspeccionRecibo.getSelectedRow(); // Se obtiene la fila seleccionada
         if (filaSeleccionada != -1) { // Si el indice de la fila es diferente de -1
-            // Se obtienen los valores de las celdas
+
             String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_HOJA);
             String fechaFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_FECHA);
             String noFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_FACTURA);
             String noPedido = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_PEDIDO);
             String pzKg = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_PZKG);
-            //Mensaje de confirmación de eliminación
+          
             int resp = JOptionPane.showConfirmDialog(null, "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ,¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-            if (resp == JOptionPane.YES_NO_OPTION) { // Si el usuario acepta eliminar...
+            if (resp == JOptionPane.YES_NO_OPTION) {
                 eliminarRegistro(noHoja, fechaFactura, noFactura, noPedido, pzKg);
             }
+        } else {
+            JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
         }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
@@ -426,7 +419,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
             Object value = tblInspeccionRecibo.getValueAt(row, column); // Se obtiene el valor de la celda en la columna y fila especificados
             if (value instanceof JButton) { // Si el valor de la celda es un boton...
-                JButton boton = (Button) value; // Se le asigna el valor de la celda a un nuevo boton
+                JButton boton = (Button) value;
                 String textoBoton = boton.getText(); // Se obtiene el texto del boton
                 switch (textoBoton) { // Según el texto del boton...
                     case "Vacio":
@@ -465,7 +458,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         } catch (SQLException | ParseException ex) {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
-        JOptionPane.showMessageDialog(this, "Datos Exportados."); // Se muestra un mensaje de confirmación
+        JOptionPane.showMessageDialog(this, "Datos Exportados."); 
     }//GEN-LAST:event_btnToExcelActionPerformed
 
     private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
@@ -483,9 +476,9 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void btnAgregarCalibreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCalibreActionPerformed
         try {
-            AgregarCalibreHIGUI irGUI = new AgregarCalibreHIGUI(usr); // Se crea una instancia de la interfaz gráfica
-            irGUI.setVisible(true); // Se hace visible la ventana
-            irGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema
+            AgregarCalibreHIGUI irGUI = new AgregarCalibreHIGUI(usr); 
+            irGUI.setVisible(true); 
+            irGUI.setLocationRelativeTo(null); 
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -510,8 +503,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(InspeccionReciboGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
         //</editor-fold>
 
         /* Create and display the form */

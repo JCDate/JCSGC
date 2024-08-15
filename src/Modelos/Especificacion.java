@@ -1,14 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class Especificacion {
 
     private int id;
@@ -104,5 +95,4 @@ public class Especificacion {
     public void setFila(int fila) {
         this.fila = fila;
     }
-
 }

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package InspeccionRecibo;
 
 import Modelos.Usuarios;
@@ -15,31 +10,24 @@ import java.sql.Connection;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author JC
- */
 public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
 
-    private Usuarios usr; // La instancia del usuario actual del sistema
-    private Connection conexion; // Conexión a la BD
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Se crea la instancia de la clase Inspección Servicio
+    private Usuarios usr;
+    private Connection conexion;
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
 
-    /**
-     * Creates new form AgregarEspecificacionHIGUI
-     */
     public AgregarEspecificacionHIGUI() {
-        initComponents();
+        inicializarVentanaYComponentes();
     }
 
     public AgregarEspecificacionHIGUI(Connection conexion, Usuarios usr) {
-        inicializarVentanaYComponentes();
         this.usr = usr;
+        inicializarVentanaYComponentes();
     }
 
     @Override
     public Image getIconImage() {
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); 
         return retValue;
     }
 
@@ -119,11 +107,11 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
-        initComponents(); // Inicialización de Componentes
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Se deshabilita el boton de cerrar de la ventana
-        this.conexion = Conexion.getInstance().getConnection(); // Inicialización de la conexión a la BD
+        initComponents(); 
+        this.setResizable(false); 
+        this.setLocationRelativeTo(null); 
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
+        this.conexion = Conexion.getInstance().getConnection(); 
     }
 
     private void cerrarVentana() {

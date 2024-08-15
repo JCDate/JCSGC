@@ -16,6 +16,7 @@ import Servicios.Conexion;
 import Servicios.EspecificacionesServicio;
 import Servicios.HojaInstruccionServicio;
 import Servicios.InspeccionReciboServicio;
+import Servicios.RugosidadDurezaServicio;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -37,25 +38,23 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
-/**
- *
- * @author JC
- */
 public class EspecificacionesGUI extends JFrame {
 
-    private Usuarios usr; // Instancia de la clase Usuarios
-    private Connection conexion; // Objeto de tipo Connection para realizar la conexión a la bd
-    private DatosIRM dirm; // Instancia de la clase dirm
-    private JTable tableAnchoLargo; // Tabla que mandeja los datos de Ancho y Largo de las laminas
-    private List<JTable> tableList = new ArrayList<>(); // Lista para almacenar las referencias de las tablas
-    private InspeccionReciboM irm; // Se crea la instancia de inspeccionReciboM
-    private final InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Se crea la instancia de la clase Inspección Servicio
-    private List<JTable> tables; // Las tablas de las especificaciones
+    private Usuarios usr;
+    private Connection conexion;
+    private DatosIRM dirm;
+    private JTable tableAnchoLargo, tableRD;
+    private List<JTable> tableList = new ArrayList<>();
+    private InspeccionReciboM irm;
+    private final InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private List<JTable> tables;
     private HojaInstruccionServicio his = new HojaInstruccionServicio();
     private AnchoLargoServicio als;
+    private RugosidadDurezaServicio rds;
     private EspecificacionesServicio es = new EspecificacionesServicio();
     private ExcelEditor xls = new ExcelEditor();
     private List al = new ArrayList<>();
+    private List rd = new ArrayList<>();
 
     // Consultas
     final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";
@@ -73,13 +72,15 @@ public class EspecificacionesGUI extends JFrame {
         inicializarVentana(); // Se definen algunas propiedades para las ventanas
     }
 
-    public EspecificacionesGUI(Usuarios usr, DatosIRM dirm, InspeccionReciboM irm, JTable tableal) throws SQLException, ClassNotFoundException {
-        initComponents();// Inicialización de Componentes
+    public EspecificacionesGUI(Usuarios usr, DatosIRM dirm, InspeccionReciboM irm, JTable tableal, JTable tablerd) throws SQLException, ClassNotFoundException {
+        initComponents();
         this.usr = usr;
         this.dirm = dirm;
         this.irm = irm;
         this.tableAnchoLargo = tableal;
+        this.tableRD = tablerd;
         this.als = new AnchoLargoServicio(tableAnchoLargo);
+        this.rds = new RugosidadDurezaServicio(tableRD);
         inicializarVentana(); // Se definen algunas propiedades para las ventanas
     }
 
@@ -101,12 +102,12 @@ public class EspecificacionesGUI extends JFrame {
         this.setDefaultCloseOperation(0); // Se deshabilita el boton de cerrar de la ventana
         tables = new ArrayList<>(); // Arreglo de las tablas
         this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-        
+
         pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS)); // Configuración del layout de las tablas
 
         // Se realizan las consultas SQL
         try (PreparedStatement consulta2 = conexion.prepareStatement(SQL_CONSULTA_CALIBRE)) {
-            consulta2.setString(1, "%" + irm.getCalibre() + "%");
+            consulta2.setString(1, "%" + irm.getCalibre().substring(0, 2) + "%");
             ResultSet resultado2 = consulta2.executeQuery();
 
             while (resultado2.next()) { // Se guardan los calibres en el comboBox
@@ -115,7 +116,6 @@ public class EspecificacionesGUI extends JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        /////
 
         try {
             cbxEspecificacionTecnica.removeAllItems();
@@ -143,7 +143,6 @@ public class EspecificacionesGUI extends JFrame {
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        ///////
         cbxCalibre.addActionListener(e -> {
             try {
                 cbxEspecificacionTecnica.removeAllItems();
@@ -428,7 +427,7 @@ public class EspecificacionesGUI extends JFrame {
         JOptionPane.showMessageDialog(this, "DATOS DE TABLA ELIMINADOS"); // Se muestra el mensaje de actualización
         eliminarUltimaTabla();
         try {
-            EspecificacionesGUI esGUI = new EspecificacionesGUI(usr, dirm, irm, tableAnchoLargo); //Se crea la instancia de la clase
+            EspecificacionesGUI esGUI = new EspecificacionesGUI(usr, dirm, irm, tableAnchoLargo, tableRD); //Se crea la instancia de la clase
             esGUI.setVisible(true); //Se hace visible la ventana
             esGUI.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
         } catch (SQLException | ClassNotFoundException ex) {
@@ -441,7 +440,8 @@ public class EspecificacionesGUI extends JFrame {
         try {
             int idIR = his.getId(conexion, this.irm); // Se obtiene el id de la hoja de instrucción
             al = als.recuperarTodas(idIR, dirm.getAnchoLargo());
-            HojaInstruccionGUI hj = new HojaInstruccionGUI(usr, irm, dirm, al); // Se crea una instancia de la interfaz gráfica
+            rd = als.recuperarTodas(idIR, dirm.getAnchoLargo());
+            HojaInstruccionGUI hj = new HojaInstruccionGUI(usr, irm, dirm, al, rd); // Se crea una instancia de la interfaz gráfica
             hj.setVisible(true); // Se hace visible la ventana
             hj.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
         } catch (SQLException | ClassNotFoundException ex) {
@@ -451,19 +451,20 @@ public class EspecificacionesGUI extends JFrame {
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         try {
-            int idIR = his.getId(conexion, this.irm); // Se obtiene el id de la hoja de instrucción
+            int idIR = his.getId(conexion, this.irm);
             List ald = als.recuperarTodas(idIR, dirm.getAnchoLargo());
-            String HojaIns = this.xls.generarHojaInstruccion(conexion, this.dirm, this.irm, this.tableAnchoLargo, tableList, ald);
+            List rdd = rds.recuperarTodas(idIR, dirm.getAnchoLargo());
+            String HojaIns = this.xls.generarHojaInstruccion(conexion, this.dirm, this.irm, this.tableAnchoLargo, tableList, ald, rdd);
             this.irm.setHojaIns(this.irs.leerArchivo(HojaIns));
             this.irs.subirHI(conexion, this.irm);
 
-            EspecificacionesGUI.this.dispose(); // Se liberan los recursos de la interfaz
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); // Se crea una instancia de la interfaz gráfica
-            irGUI.setVisible(true); // Se hace visible la ventana
-            irGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
+            EspecificacionesGUI.this.dispose();
+            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr);
+            irGUI.setVisible(true);
+            irGUI.setLocationRelativeTo(null);
 
         } catch (SQLException | ClassNotFoundException | IOException ex) {
-            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null, "Error al ejecutar al guardar la hoja de instrucción ESPECIFICACIONESGUI: " + ex.getMessage());
         }
 
     }//GEN-LAST:event_btnGuardarActionPerformed
@@ -489,7 +490,6 @@ public class EspecificacionesGUI extends JFrame {
         }
         //</editor-fold>
 
-        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {

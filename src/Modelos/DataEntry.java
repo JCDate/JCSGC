@@ -1,14 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class DataEntry {
 
     public String noOp;
@@ -22,5 +13,4 @@ public class DataEntry {
         this.especificacion = especificacion;
         this.valorTerceraColumna = valorTerceraColumna;
     }
-
 }

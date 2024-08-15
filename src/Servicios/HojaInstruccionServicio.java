@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -38,8 +39,9 @@ public class HojaInstruccionServicio {
             }
             return id;
         } catch (SQLException ex) {
-            throw new SQLException("Error al ejecutar la consulta SQL de inserción: " + ex.getMessage(), ex);
+            JOptionPane.showMessageDialog(null,"Error al OBTERNER EL ID: " + ex.getMessage());
         }
+        return 0;
     }
 
     public int getData(Connection conexion, int id) throws SQLException {

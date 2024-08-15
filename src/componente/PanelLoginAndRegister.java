@@ -38,14 +38,12 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
         initLogin();
         login.setVisible(false);
         register.setVisible(true);
-
     }
 
     private void initRegister() {
         register.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]10[]10[]25[]push"));
-        
-        // Carga una imagen desde un archivo (asegúrate de proporcionar la ruta correcta)
-        ImageIcon icon = new ImageIcon(getClass().getResource("/jc/img/jcLogo.png")); // Cambia esto a la ruta de tu imagen
+
+        ImageIcon icon = new ImageIcon(getClass().getResource("/jc/img/jcLogo.png"));
 
         JLabel lblJCIcono = new JLabel(icon);
         lblJCIcono.setSize(100,100);
@@ -95,9 +93,8 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
     private void initLogin() {
         login.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]10[]25[]push"));
         
-        // Carga una imagen desde un archivo (asegúrate de proporcionar la ruta correcta)
-        ImageIcon iconLogo = new ImageIcon(getClass().getResource("/jc/img/jcLogo.png")); // Cambia esto a la ruta de tu imagen
-        ImageIcon iconLogin = new ImageIcon(getClass().getResource("/jc/img/Login_37128.png")); // Cambia esto a la ruta de tu imagen
+        ImageIcon iconLogo = new ImageIcon(getClass().getResource("/jc/img/jcLogo.png"));
+        ImageIcon iconLogin = new ImageIcon(getClass().getResource("/jc/img/Login_37128.png")); 
 
         JLabel lblJCIcono = new JLabel(iconLogo);
         lblJCIcono.setSize(100,100);
@@ -120,8 +117,7 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
 
         JCheckBox cmdRemember = new JCheckBoxCustom(new Color(25, 123, 255));
         cmdRemember.setText("Recuerdame");
-        
-        //JButton cmdForget = new JButton("Forgot your password ?");
+
         cmdRemember.setForeground(new Color(100, 100, 100));
         cmdRemember.setFont(new Font("sansserif", 1, 12));
         cmdRemember.setContentAreaFilled(false);
@@ -249,29 +245,28 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
     // End of variables declaration//GEN-END:variables
 
     private void iniciarSesion(String strUser, char[] chrContrasena) {
-        SqlUsuarios modSql = new SqlUsuarios(); // Se crea una instancia de la clase SqlUsuarios
-        Usuarios mod = new Usuarios(); // Se crea una instancia de la clase Usuarios
-        Date date = new Date(); // Se crea una instancia de la clase Date
+        SqlUsuarios modSql = new SqlUsuarios(); 
+        Usuarios mod = new Usuarios();
+        Date date = new Date(); 
 
-        DateFormat fechaHora = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Se especifíca el formato en que se guardará la fecha
-        String pass = new String(chrContrasena); // Se obtiene la contraseña ingresada por el Usuario
+        DateFormat fechaHora = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+        String pass = new String(chrContrasena); 
 
-        if (!strUser.equals("") && !pass.equals("")) { // Si el campo de usuario y contraseña NO estan vacíos...
+        if (!strUser.equals("") && !pass.equals("")) { 
             try {
-                String nuevoPass = Hash.sha1(pass); // Se manda a cifrar la contraseña
-                mod.setUsuario(strUser); // Se captura el campo de usuario
-                mod.setPassword(nuevoPass); // Se captura la contraseña ya cifrada
-                mod.setLast_session(fechaHora.format(date)); // Se captura la última fecha de inicio de sesión del usuario 
-                if (modSql.login(mod)) { // Si el usuario si esta registrado y hace login correctamente...
-                    // Supongamos que "layeredPane" es tu JLayeredPane.
+                String nuevoPass = Hash.sha1(pass); 
+                mod.setUsuario(strUser); 
+                mod.setPassword(nuevoPass);
+                mod.setLast_session(fechaHora.format(date));  
+                if (modSql.login(mod)) { 
+                 
                     Container parent = this.login.getTopLevelAncestor();
                     if (parent instanceof JFrame) {
                         JFrame frame = (JFrame) parent;
-                        frame.dispose(); // Cierra el JFrame que contiene el JLayeredPane
+                        frame.dispose();
                     }
-                    //this.login.dispose(); // Se cierra la ventana actual y se liberan sus recursos del sistema
-                    Menu menuGUI = new Menu(mod); // Se crea una instancia de la clase Usuarios
-                    menuGUI.setVisible(true); // Se muestra visible al usuario la ventana del menú
+                    Menu menuGUI = new Menu(mod); 
+                    menuGUI.setVisible(true); 
                 } else {
                     JOptionPane.showMessageDialog(this, "Datos incorrectos");
                 }
@@ -313,7 +308,7 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
                                 mod.setId_tipo(3);
                                 break;
                             default:
-                                mod.setId_tipo(4);
+                                mod.setId_tipo(5);
                                 break;
                         }
                         if (modSql.registrar(mod)) {
@@ -330,5 +325,4 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
             }
         }
     }
-
 }

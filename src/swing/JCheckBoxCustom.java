@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package swing;
 
 import java.awt.Color;
@@ -12,10 +7,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import javax.swing.JCheckBox;
 
-/**
- *
- * @author JC
- */
 public class JCheckBoxCustom extends JCheckBox {
 
     private final int border = 4;
@@ -40,7 +31,7 @@ public class JCheckBoxCustom extends JCheckBox {
             }
 
             g2.fillRoundRect(1, ly, 16, 16, border, border);
-            // Draw check icon
+
             int px[] = {4, 8, 14, 12, 8, 6};
             int py[] = {ly + 8, ly + 14, ly + 5, ly + 3, ly + 10, ly + 6};
             g2.setColor(Color.WHITE);

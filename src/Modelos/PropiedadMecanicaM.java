@@ -1,19 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Modelos;
 
-/**
- *
- * @author JC
- */
 public class PropiedadMecanicaM {
 
-    String especificacion;
-    String pm;
-    String valor;
+    private String especificacion;
+    private String pm;
+    private String valor;
 
     public PropiedadMecanicaM(String especificacion, String pm, String valor) {
         this.especificacion = especificacion;
