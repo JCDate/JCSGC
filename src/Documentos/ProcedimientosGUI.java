@@ -33,10 +33,9 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private Usuarios usr;
     private ProcedimientosM procedimiento;
     private Connection conexion;
-    private DefaultTableModel modeloTabla;
-    private List<FormatosM> listFormatos = new ArrayList<>();
-    private DocumentosM docManual;
-    private DocumentosM docDF;
+    private DefaultTableModel modeloTablaDoctos,modeloTablaFormatos;
+    private List<FormatosM> listaFormatos = new ArrayList<>();
+    private List<DocumentosM> listaDocumentos = new ArrayList<>();
     private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
 
     public ProcedimientosGUI() {
@@ -97,10 +96,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
         tblDocumentos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+
             },
             new String [] {
                 "TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "ARCHIVO"
@@ -201,19 +197,24 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         this.conexion = Conexion.getInstance().getConnection();
         lblProcedimiento.setText("<html>PROCEDIMIENTO: <br>" + procedimiento.getProcedimiento() + "</html>");
 
-        this.modeloTabla = new DefaultTableModel() {
+        this.modeloTablaDoctos = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        
+        this.modeloTablaFormatos = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-//        docManual = cds.recuperarManual(conexion, procedimiento.getId());
-//        docDF = cds.recuperarDiagramaFlujo(conexion, procedimiento.getId());
-
-        /*
-            recuperarInstructivos
-         */
+        listaDocumentos = cds.recuperarDocumentos(conexion, procedimiento.getIdp());
+        listaFormatos = cds.recuperarFormatos(conexion, procedimiento.getIdp());
+        
+        
         DefaultTableModel tblModeloDocumentos = construirTblDocumentos();
         DefaultTableModel tblModeloFormatos = construirTblFormatos();
         tblDocumentos.setModel(tblModeloDocumentos);
@@ -221,22 +222,21 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         
         tblFormatos.setModel(tblModeloFormatos);
         tblFormatos.setRowHeight(40);
-//        mostrarDatosTabla();
+        mostrarDatosTabla();
     }
 
     private DefaultTableModel construirTblDocumentos() {
-        modeloTabla.addColumn("TIPO DE DOCUMENTO");
-        modeloTabla.addColumn("FECHA DE ACTUALIZACIÓN");
-        modeloTabla.addColumn("NOMBRE");
-        modeloTabla.addColumn("ARCHIVO");
-        return modeloTabla;
+        modeloTablaDoctos.addColumn("TIPO DE DOCUMENTO");
+        modeloTablaDoctos.addColumn("FECHA DE ACTUALIZACIÓN");
+        modeloTablaDoctos.addColumn("NOMBRE");
+        modeloTablaDoctos.addColumn("ARCHIVO");
+        return modeloTablaDoctos;
     }
     
     private DefaultTableModel construirTblFormatos() {
-        modeloTabla.addColumn("FECHA DE ACTUALIZACIÓN");
-        modeloTabla.addColumn("NOMBRE");
-        modeloTabla.addColumn("ARCHIVO");
-        return modeloTabla;
+        modeloTablaFormatos.addColumn("NOMBRE");
+        modeloTablaFormatos.addColumn("ARCHIVO");
+        return modeloTablaFormatos;
     }
 
     private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
@@ -244,22 +244,36 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     }
 
     public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-        modeloTabla.setRowCount(0);
-        
+        modeloTablaDoctos.setRowCount(0);
         Button boton = new Button();
         boton.setIcon(Iconos.ICONO_VER);
-
-        Object fila[] = new Object[6];
-        fila[0] = docManual.getFechaActualizacion();
-        fila[1] = cds.crearBoton(docManual.getContenido(), Iconos.ICONO_WORD, "Vacío");
-        fila[2] = cds.crearBoton(docDF.getContenido(), Iconos.ICONO_WORD, "Vacío");
-        fila[3] = "instructivos";
-        fila[4] = "formatos";
-        fila[5] = "registros";
-
-        modeloTabla.addRow(fila);
-
+        if (this.listaDocumentos != null) {
+            listaDocumentos.stream().map((documento) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
+                Object fila[] = new Object[4];
+                fila[0] = documento.getTipo();
+                fila[1] = documento.getFechaActualizacion();
+                fila[2] = documento.getNombre();
+                fila[3] = cds.crearBoton(documento.getContenido(), Iconos.ICONO_VER, "Vacío");
+                return fila;
+            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
+                modeloTablaDoctos.addRow(fila);
+            });
+        }
         tblDocumentos.setDefaultRenderer(Object.class, new imgTabla());
+        
+        modeloTablaFormatos.setRowCount(0);
+        boton.setIcon(Iconos.ICONO_VER);
+        if (this.listaFormatos != null) {
+            listaFormatos.stream().map((formato) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
+                Object fila[] = new Object[2];
+                fila[0] = formato.getNombre();
+                fila[1] = cds.crearBoton(formato.getContenido(), Iconos.ICONO_VER, "Vacío");
+                return fila;
+            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
+                modeloTablaFormatos.addRow(fila);
+            });
+        }
+        tblFormatos.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     public Image getImage(String ruta) {

@@ -1,5 +1,6 @@
 package Documentos;
 
+import Modelos.ProcedimientosM;
 import Modelos.ProcesosM;
 import Modelos.SolicitudesM;
 import Modelos.Usuarios;
@@ -9,9 +10,11 @@ import Servicios.InspeccionReciboServicio;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -22,6 +25,8 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private Connection conexion;
     private ProcesosM proceso;
     private SolicitudesM solicitudes;
+    private List<ProcedimientosM> listProcedimientos;
+    int position;
     private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
     private final InspeccionReciboServicio irs = new InspeccionReciboServicio();
 
@@ -56,7 +61,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         lblJCIcono = new javax.swing.JLabel();
         lblSolicitud = new javax.swing.JLabel();
-        lblProcedimiento = new javax.swing.JLabel();
+        lblProceso = new javax.swing.JLabel();
         btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
         btnSolicitud = new swing.Button(new Color(121, 190, 255),new Color(10, 110, 255));
         lblAccion = new javax.swing.JLabel();
@@ -64,16 +69,16 @@ public class SolicitudGUI extends javax.swing.JFrame {
         lblFormatoNuevo = new javax.swing.JLabel();
         txtNuevaRevision = new swing.TextField();
         btnNuevoArchivo = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
-        lblCodigo = new javax.swing.JLabel();
         lblRevAnterior = new javax.swing.JLabel();
         lblRevNueva = new javax.swing.JLabel();
         lblEncargado = new javax.swing.JLabel();
         txtEncargado = new swing.TextField();
-        txtCodigo = new swing.TextField();
         txtRevisionAnterior = new swing.TextField();
         txtNombre = new swing.TextField();
         lblTipo = new javax.swing.JLabel();
         cbxTipoArchivo = new swing.ComboBoxSuggestion();
+        lblProcedimiento = new javax.swing.JLabel();
+        cbxProcedimientos = new swing.ComboBoxSuggestion();
 
         jInternalFrame1.setVisible(true);
 
@@ -91,12 +96,12 @@ public class SolicitudGUI extends javax.swing.JFrame {
         lblSolicitud.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
         lblSolicitud.setForeground(new java.awt.Color(10, 110, 255));
         lblSolicitud.setText("SOLICITUD DE CAMBIO");
-        jPanel1.add(lblSolicitud, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 10, 340, 50));
+        jPanel1.add(lblSolicitud, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 10, 340, 50));
 
-        lblProcedimiento.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
-        lblProcedimiento.setForeground(new java.awt.Color(10, 110, 255));
-        lblProcedimiento.setText("Procedimiento:");
-        jPanel1.add(lblProcedimiento, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 70, -1, -1));
+        lblProceso.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
+        lblProceso.setForeground(new java.awt.Color(10, 110, 255));
+        lblProceso.setText("Proceso:");
+        jPanel1.add(lblProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 60, -1, -1));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -118,12 +123,12 @@ public class SolicitudGUI extends javax.swing.JFrame {
                 btnSolicitudActionPerformed(evt);
             }
         });
-        jPanel1.add(btnSolicitud, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 530, 220, 40));
+        jPanel1.add(btnSolicitud, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 410, 220, 40));
 
         lblAccion.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblAccion.setForeground(new java.awt.Color(10, 110, 255));
         lblAccion.setText("ACCIÓN:");
-        jPanel1.add(lblAccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 180, -1, -1));
+        jPanel1.add(lblAccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 170, -1, -1));
 
         cbxAccion.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ACTUALIZAR", "AGREGAR", "ELIMINAR" }));
         cbxAccion.addActionListener(new java.awt.event.ActionListener() {
@@ -131,13 +136,13 @@ public class SolicitudGUI extends javax.swing.JFrame {
                 cbxAccionActionPerformed(evt);
             }
         });
-        jPanel1.add(cbxAccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 170, 260, -1));
+        jPanel1.add(cbxAccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 160, 260, -1));
 
         lblFormatoNuevo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblFormatoNuevo.setForeground(new java.awt.Color(10, 110, 255));
         lblFormatoNuevo.setText("NUEVO FORMATO:");
-        jPanel1.add(lblFormatoNuevo, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 480, -1, -1));
-        jPanel1.add(txtNuevaRevision, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 290, 200, -1));
+        jPanel1.add(lblFormatoNuevo, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 420, -1, -1));
+        jPanel1.add(txtNuevaRevision, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 300, 200, -1));
 
         btnNuevoArchivo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnNuevoArchivo.setForeground(new java.awt.Color(255, 255, 255));
@@ -147,45 +152,44 @@ public class SolicitudGUI extends javax.swing.JFrame {
                 btnNuevoArchivoActionPerformed(evt);
             }
         });
-        jPanel1.add(btnNuevoArchivo, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 460, 200, 50));
-
-        lblCodigo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblCodigo.setForeground(new java.awt.Color(10, 110, 255));
-        lblCodigo.setText("CÓDIGO:");
-        jPanel1.add(lblCodigo, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 240, -1, -1));
+        jPanel1.add(btnNuevoArchivo, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 400, 200, 50));
 
         lblRevAnterior.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblRevAnterior.setForeground(new java.awt.Color(10, 110, 255));
         lblRevAnterior.setText("REVISIÓN ANTERIOR:");
-        jPanel1.add(lblRevAnterior, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 350, -1, -1));
+        jPanel1.add(lblRevAnterior, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 310, -1, -1));
 
         lblRevNueva.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblRevNueva.setForeground(new java.awt.Color(10, 110, 255));
         lblRevNueva.setText("NUEVA REVISIÓN:");
-        jPanel1.add(lblRevNueva, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 300, -1, -1));
+        jPanel1.add(lblRevNueva, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 360, -1, -1));
 
         lblEncargado.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblEncargado.setForeground(new java.awt.Color(10, 110, 255));
         lblEncargado.setText("DUEÑO DEL PROCESO: ");
-        jPanel1.add(lblEncargado, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 130, -1, -1));
+        jPanel1.add(lblEncargado, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, -1, -1));
 
         txtEncargado.setEnabled(false);
-        jPanel1.add(txtEncargado, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 120, 300, -1));
-
-        txtCodigo.setToolTipText("");
-        jPanel1.add(txtCodigo, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 230, 260, -1));
-        jPanel1.add(txtRevisionAnterior, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 340, 170, -1));
-        jPanel1.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 470, 190, -1));
+        jPanel1.add(txtEncargado, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 110, 300, -1));
+        jPanel1.add(txtRevisionAnterior, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 350, 170, -1));
+        jPanel1.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 410, 190, -1));
 
         lblTipo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblTipo.setForeground(new java.awt.Color(10, 110, 255));
-        lblTipo.setText("TIPO:");
-        jPanel1.add(lblTipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 410, -1, -1));
+        lblTipo.setText("TIPO DE ARCHIVO:");
+        jPanel1.add(lblTipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 210, -1, -1));
 
-        cbxTipoArchivo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "INSTRUCTIVO/MANUAL", "DIAGRAMA DE FLUJO", "DIAGRAMA DE TORTUGA", "FORMATO", "OTROS INSTRUCTIVOS" }));
-        jPanel1.add(cbxTipoArchivo, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 400, 270, -1));
+        cbxTipoArchivo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MANUAL", "DIAGRAMA DE FLUJO", "DIAGRAMA DE TORTUGA", "INSTRUCTIVO", "FORMATO" }));
+        jPanel1.add(cbxTipoArchivo, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 200, 270, -1));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 870, 590));
+        lblProcedimiento.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblProcedimiento.setForeground(new java.awt.Color(10, 110, 255));
+        lblProcedimiento.setText("PROCEDIMIENTO:");
+        jPanel1.add(lblProcedimiento, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
+
+        jPanel1.add(cbxProcedimientos, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 250, 350, -1));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 980, 590));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -226,16 +230,80 @@ public class SolicitudGUI extends javax.swing.JFrame {
     }
 
     private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-//        initComponents();
-//        this.setResizable(false);
-//        this.setLocationRelativeTo(null);
-//        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-//        this.conexion = Conexion.getInstance().getConnection();
-//        lblProcedimiento.setText("PROCEDIMIENTO: " + proceso.getProcedimiento());
-//        System.out.println("ID: "+proceso.getId());
-//        txtEncargado.setText(proceso.getEncargado());
-//        txtCodigo.setText(proceso.getCodigo());
-//        txtRevisionAnterior.setText(proceso.getRevision());
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
+        lblProceso.setText("PROCESO: " + proceso.getProceso());
+
+        listProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
+        
+        for (int i = 0; i < listProcedimientos.size(); i++) {
+            cbxProcedimientos.addItem(listProcedimientos.get(i).getProcedimiento());
+            position = i;
+        }
+
+        solicitarActualizacion();
+        
+        txtEncargado.setText(proceso.getEncargado());
+        txtRevisionAnterior.setText(listProcedimientos.get(position).getRevision());
+
+        cbxAccion.addActionListener((ActionEvent ae) -> {
+     
+            String accion = cbxAccion.getSelectedItem().toString();
+            switch (accion) {
+                case "ACTUALIZAR":
+                    solicitarActualizacion();
+                    break;
+                case "AGREGAR":
+                    System.out.println("2");
+                    break;
+                case "ELIMINAR":
+                    System.out.println("3");
+                    break;
+            }
+        });
+
+    }
+
+    private void solicitarActualizacion() {
+        cbxTipoArchivo.addActionListener((ActionEvent ae) -> {
+            String archivo = cbxTipoArchivo.getSelectedItem().toString();
+
+            switch (archivo) {
+                case "MANUAL":
+                case "DIAGRAMA DE FLUJO":
+                    lblRevAnterior.setVisible(true);
+                    txtNuevaRevision.setVisible(true);
+                    lblRevNueva.setVisible(true);
+                    txtRevisionAnterior.setVisible(true);
+                    
+                    break;
+                case "DIAGRAMA DE TORTUGA":
+
+                    lblRevAnterior.setVisible(false);
+                    txtNuevaRevision.setVisible(false);
+                    lblRevNueva.setVisible(false);
+                    txtRevisionAnterior.setVisible(false);
+                    break;
+                case "INSTRUCTIVO":
+                    lblRevAnterior.setVisible(false);
+                    txtNuevaRevision.setVisible(false);
+                    lblRevNueva.setVisible(false);
+                    txtRevisionAnterior.setVisible(false);
+                    break;
+                case "FORMATO":
+                    lblRevAnterior.setVisible(false);
+                    txtNuevaRevision.setVisible(false);
+                    lblRevNueva.setVisible(false);
+                    txtRevisionAnterior.setVisible(false);
+                    break;
+                default:
+                    break;
+            }
+        });
+
     }
 
     public void seleccionarArchivo() {
@@ -294,20 +362,20 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private javax.swing.JButton btnNuevoArchivo;
     private javax.swing.JButton btnSolicitud;
     private javax.swing.JComboBox<String> cbxAccion;
+    private javax.swing.JComboBox<String> cbxProcedimientos;
     private javax.swing.JComboBox<String> cbxTipoArchivo;
     private javax.swing.JInternalFrame jInternalFrame1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lblAccion;
-    private javax.swing.JLabel lblCodigo;
     private javax.swing.JLabel lblEncargado;
     private javax.swing.JLabel lblFormatoNuevo;
     private javax.swing.JLabel lblJCIcono;
     private javax.swing.JLabel lblProcedimiento;
+    private javax.swing.JLabel lblProceso;
     private javax.swing.JLabel lblRevAnterior;
     private javax.swing.JLabel lblRevNueva;
     private javax.swing.JLabel lblSolicitud;
     private javax.swing.JLabel lblTipo;
-    private javax.swing.JTextField txtCodigo;
     private javax.swing.JTextField txtEncargado;
     private javax.swing.JTextField txtNombre;
     private javax.swing.JTextField txtNuevaRevision;

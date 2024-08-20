@@ -101,46 +101,48 @@ public class ControlDocumentacionServicio {
         return procedimientos;
     }
 
-    public DocumentosM recuperarDiagramaFlujo(Connection conexion, int id) throws SQLException {
-        DocumentosM documento = null;
-        String sql = "SELECT * FROM documentos WHERE tipo = 'diagrama_flujo' AND idProcedimiento = ?";
+    public List<DocumentosM> recuperarDocumentos(Connection conexion, int id) throws SQLException {
+        List<DocumentosM> documentos = new ArrayList<>();
+        String sql = "SELECT * FROM documentos WHERE idProcedimiento = ?";
         try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
             consulta.setInt(1, id);
             ResultSet resultado = consulta.executeQuery();
-            if (resultado.next()) {
-                documento = new DocumentosM(
+            while (resultado.next()) {
+                DocumentosM documento = new DocumentosM(
                         resultado.getInt("id"),
+                        resultado.getInt("idProceso"),
                         resultado.getInt("idProcedimiento"),
+                        resultado.getString("revision"),
                         resultado.getString("fechaActualizacion"),
                         resultado.getString("tipo"),
                         resultado.getString("nombre"),
                         resultado.getBytes("contenido")
                 );
+                documentos.add(documento);
             }
         }
-        return documento;
+        return documentos;
     }
-    
-    public DocumentosM recuperarManual(Connection conexion, int id) throws SQLException {
-        DocumentosM documento = null;
-        String sql = "SELECT * FROM documentos WHERE tipo = 'manual' AND idProcedimiento = ?";
+
+    public List<FormatosM> recuperarFormatos(Connection conexion, int id) throws SQLException {
+        List<FormatosM> formatos = new ArrayList<>();
+        String sql = "SELECT * FROM formatos WHERE id_procedimiento = ?";
         try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
             consulta.setInt(1, id);
             ResultSet resultado = consulta.executeQuery();
-            if (resultado.next()) {
-                documento = new DocumentosM(
+            while (resultado.next()) {
+                FormatosM formato = new FormatosM(
                         resultado.getInt("id"),
-                        resultado.getInt("idProcedimiento"),
-                        resultado.getString("fechaActualizacion"),
-                        resultado.getString("tipo"),
+                        resultado.getInt("id_procedimiento"),
                         resultado.getString("nombre"),
                         resultado.getBytes("contenido")
                 );
+                formatos.add(formato);
             }
         }
-        return documento;
+        return formatos;
     }
-    
+
     public Button crearBoton(Object object, ImageIcon icon, String texto) {
         // Crear una fuente con el tamaño deseado
         Font customFont = new Font("Arial", Font.PLAIN, 10);
@@ -210,7 +212,7 @@ public class ControlDocumentacionServicio {
             }
         }
     }
-    
+
     public void ejecutarManual(int id) throws ClassNotFoundException, SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -218,7 +220,7 @@ public class ControlDocumentacionServicio {
             ps = conexion.prepareStatement("SELECT contenido FROM documentos WHERE tipo='manual' idProcedimiento = ?");
 
             ps.setInt(1, id);
-          
+
             rs = ps.executeQuery();
 
             if (rs.next()) {
@@ -255,11 +257,22 @@ public class ControlDocumentacionServicio {
         }
     }
 
-//    public void abrirSolicitudCambioGUI(Usuarios usr) {
-//        SolicitudesGUI doc = new SolicitudesGUI(usr); // Se crea la instancia de la clase
-//        doc.setVisible(true); // Se muestra visible al usuario
-//        doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-//    }
+    public void abrirSolicitudCambioGUI(Usuarios usr) {
+        SolicitudesGUI doc = new SolicitudesGUI(usr); // Se crea la instancia de la clase
+        doc.setVisible(true); // Se muestra visible al usuario
+        doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+
+    public void abrirSolicitudGUI(Usuarios usr, ProcesosM proceso) {
+        try {
+            SolicitudGUI doc = new SolicitudGUI(usr, proceso); // Se crea la instancia de la clase
+            doc.setVisible(true); // Se muestra visible al usuario
+            doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
 //
 //    public void agregarSolicitud(SolicitudesM solicitud) {
 //        String sql = "INSERT INTO solicitudescambio(idp, codigo, nombreProceso, nombre, revAnterior, revNueva, encargado, tipoArchivo, archivo, accion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -279,7 +292,6 @@ public class ControlDocumentacionServicio {
 //            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-
 //    public List<SolicitudesM> recuperarSolicitudes(Connection conexion) throws SQLException {
 //        List<SolicitudesM> listaSolicitudes = new ArrayList<>();
 //        String sqlConsulta = "SELECT * FROM solicitudescambio";
@@ -325,15 +337,6 @@ public class ControlDocumentacionServicio {
 //        }
 //    }
 //
-//    public void abrirSolicitudGUI(Usuarios usr, ProcesosM proceso) {
-//        try {
-//            SolicitudGUI doc = new SolicitudGUI(usr, proceso); // Se crea la instancia de la clase
-//            doc.setVisible(true); // Se muestra visible al usuario
-//            doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-//        } catch (SQLException | ClassNotFoundException ex) {
-//            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//    }
 //
 //    public List<ProcesosM> recuperarProcesos(Connection conexion, String nombreProceso) throws SQLException {
 //        List<ProcesosM> procedimientos = new ArrayList<>();
@@ -427,9 +430,7 @@ public class ControlDocumentacionServicio {
 //        return null;
 //    }
 //
-
 //
-
 //
 //    public void ejecutarArchivoPPT(int id) throws ClassNotFoundException, SQLException {
 //        PreparedStatement ps = null;

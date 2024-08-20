@@ -78,6 +78,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblProcedimientos = new javax.swing.JTable();
         btnDiagramaTortuga = new swing.Button(new Color(255, 199, 114),new Color(255, 170, 39));
+        btnSolicitudCambio = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -136,6 +137,17 @@ public class ProcesosGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnDiagramaTortuga, new org.netbeans.lib.awtextra.AbsoluteConstraints(1160, 10, 80, 80));
 
+        btnSolicitudCambio.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnSolicitudCambio.setForeground(new java.awt.Color(255, 255, 255));
+        btnSolicitudCambio.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Ordenes.png"))); // NOI18N
+        btnSolicitudCambio.setText("SOLICITUD DE CAMBIO");
+        btnSolicitudCambio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSolicitudCambioActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnSolicitudCambio, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 480, 300, 50));
+
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1260, 550));
 
         pack();
@@ -186,6 +198,11 @@ public class ProcesosGUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnDiagramaTortugaActionPerformed
 
+    private void btnSolicitudCambioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudCambioActionPerformed
+        cerrarVentana();
+        cds.abrirSolicitudGUI(usr, proceso);
+    }//GEN-LAST:event_btnSolicitudCambioActionPerformed
+
     private void inicializarVentanaYComponentes(int idProceso) throws SQLException, ClassNotFoundException {
         initComponents();
         this.setResizable(false);
@@ -194,6 +211,12 @@ public class ProcesosGUI extends javax.swing.JFrame {
         this.conexion = Conexion.getInstance().getConnection();
         this.proceso = cds.recuperarProceso(conexion, idProceso);
         this.listaProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
+
+        if (usr.getId() == proceso.getUid() || usr.getId() == 8) {
+            btnSolicitudCambio.setVisible(true);
+        } else {
+            btnSolicitudCambio.setVisible(false);
+        }
 
         lblTitulo.setText("PROCESO: " + proceso.getProceso());
 
@@ -208,6 +231,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         tblProcedimientos.setModel(tableModel);
         tblProcedimientos.setRowHeight(40);
         mostrarDatosTabla();
+
     }
 
     private DefaultTableModel construirModeloTabla() {
@@ -276,6 +300,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnDiagramaTortuga;
+    private javax.swing.JButton btnSolicitudCambio;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblJCIcono;
