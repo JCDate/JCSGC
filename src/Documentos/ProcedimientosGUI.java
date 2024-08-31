@@ -4,17 +4,13 @@ import Modelos.DocumentosM;
 import Modelos.FormatosM;
 import Modelos.Iconos;
 import Modelos.ProcedimientosM;
-import Modelos.ProcesosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
 import Servicios.imgTabla;
 import java.awt.Color;
-import java.awt.Desktop;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,7 +29,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private Usuarios usr;
     private ProcedimientosM procedimiento;
     private Connection conexion;
-    private DefaultTableModel modeloTablaDoctos,modeloTablaFormatos;
+    private DefaultTableModel modeloTabla;
     private List<FormatosM> listaFormatos = new ArrayList<>();
     private List<DocumentosM> listaDocumentos = new ArrayList<>();
     private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
@@ -73,10 +69,8 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblDocumentos = new javax.swing.JTable();
         btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
-        jScrollPane2 = new javax.swing.JScrollPane();
-        tblFormatos = new javax.swing.JTable();
-        lblFormatos = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
+        btnFormatos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -99,7 +93,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
             },
             new String [] {
-                "TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "ARCHIVO"
+                "TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "ARCHIVO", "REGISTROS"
             }
         ));
         tblDocumentos.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -120,34 +114,25 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
                 btnCerrarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 550, 130, 50));
-
-        tblFormatos.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null},
-                {null, null},
-                {null, null},
-                {null, null}
-            },
-            new String [] {
-                "NOMBRE", "ARCHIVO"
-            }
-        ));
-        jScrollPane2.setViewportView(tblFormatos);
-
-        jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 360, 1170, 170));
-
-        lblFormatos.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
-        lblFormatos.setForeground(new java.awt.Color(10, 110, 255));
-        lblFormatos.setText("Formatos:");
-        jPanel1.add(lblFormatos, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 340, -1, -1));
+        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 390, 130, 50));
 
         jLabel1.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(10, 110, 255));
         jLabel1.setText("Documentos:");
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, -1, -1));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 620));
+        btnFormatos.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnFormatos.setForeground(new java.awt.Color(255, 255, 255));
+        btnFormatos.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Factura.png"))); // NOI18N
+        btnFormatos.setText("VER FORMATOS");
+        btnFormatos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFormatosActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnFormatos, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 320, 200, 50));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 480));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -155,23 +140,31 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private void tblDocumentosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDocumentosMouseClicked
         int columnaSeleccionada = tblDocumentos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblDocumentos.rowAtPoint(evt.getPoint());
+        String textoPrimeraCelda = "";
 
-        if (esCeldaValida(columnaSeleccionada, filaSeleccionada)) {// Si las coordenadas estan dentro de los limites de la tabla... 
-            Object value = tblDocumentos.getValueAt(filaSeleccionada, columnaSeleccionada); // Se obtiene el valor de la celda en la columna y fila especificados
-            if (value instanceof JButton) { // Si el valor de la celda es un boton...
-                JButton boton = (Button) value;
-                String textoBoton = boton.getText(); // Se obtiene el texto del boton
-                switch (textoBoton) { // Según el texto del boton...
+        if (esCeldaValida(columnaSeleccionada, filaSeleccionada)) {
+            Object value = tblDocumentos.getValueAt(filaSeleccionada, columnaSeleccionada); // Get the value of the clicked cell
+            if (value instanceof JButton) {
+                JButton boton = (JButton) value;
+                String textoBoton = boton.getText();
+
+                // Get the text from the first cell (column 0) of the selected row
+                Object firstCellValue = tblDocumentos.getValueAt(filaSeleccionada, 0);
+                if (firstCellValue != null) {
+                    textoPrimeraCelda = firstCellValue.toString();
+                }
+
+                switch (textoBoton) {
                     case "Vacío":
                         JOptionPane.showMessageDialog(null, "No hay archivo");
                         break;
                     default:
                         try {
-                            if (columnaSeleccionada == 1) { // Si le dio a ver factura o ver certificado
-                                cds.ejecutarManual(procedimiento.getIdp());
-                                Desktop.getDesktop().open(new File("Manual.doc"));
+                            if (columnaSeleccionada == 3) {
+                                cds.ejecutarManual(procedimiento, textoPrimeraCelda);
+
                             }
-                        } catch (ClassNotFoundException | SQLException | IOException ex) {
+                        } catch (ClassNotFoundException | SQLException ex) {
                             Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
                         }
                         break;
@@ -182,8 +175,12 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
-//        cds.abrirDocumentacionGUI(usr, proceso.getProceso());
+        cds.abrirDocumentacionGUI(usr, procedimiento.getIdp());
     }//GEN-LAST:event_btnCerrarActionPerformed
+
+    private void btnFormatosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFormatosActionPerformed
+        cds.abrirFormatosGUI(usr, procedimiento);
+    }//GEN-LAST:event_btnFormatosActionPerformed
 
     public void cerrarVentana() {
         ProcedimientosGUI.this.dispose();
@@ -197,46 +194,27 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         this.conexion = Conexion.getInstance().getConnection();
         lblProcedimiento.setText("<html>PROCEDIMIENTO: <br>" + procedimiento.getProcedimiento() + "</html>");
 
-        this.modeloTablaDoctos = new DefaultTableModel() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        this.modeloTablaFormatos = new DefaultTableModel() {
+        this.modeloTabla = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-        listaDocumentos = cds.recuperarDocumentos(conexion, procedimiento.getIdp());
-        listaFormatos = cds.recuperarFormatos(conexion, procedimiento.getIdp());
-        
-        
+        listaDocumentos = cds.recuperarDocumentos(conexion, procedimiento.getId());
+
         DefaultTableModel tblModeloDocumentos = construirTblDocumentos();
-        DefaultTableModel tblModeloFormatos = construirTblFormatos();
         tblDocumentos.setModel(tblModeloDocumentos);
         tblDocumentos.setRowHeight(40);
-        
-        tblFormatos.setModel(tblModeloFormatos);
-        tblFormatos.setRowHeight(40);
         mostrarDatosTabla();
     }
 
     private DefaultTableModel construirTblDocumentos() {
-        modeloTablaDoctos.addColumn("TIPO DE DOCUMENTO");
-        modeloTablaDoctos.addColumn("FECHA DE ACTUALIZACIÓN");
-        modeloTablaDoctos.addColumn("NOMBRE");
-        modeloTablaDoctos.addColumn("ARCHIVO");
-        return modeloTablaDoctos;
-    }
-    
-    private DefaultTableModel construirTblFormatos() {
-        modeloTablaFormatos.addColumn("NOMBRE");
-        modeloTablaFormatos.addColumn("ARCHIVO");
-        return modeloTablaFormatos;
+        modeloTabla.addColumn("TIPO DE DOCUMENTO");
+        modeloTabla.addColumn("FECHA DE ACTUALIZACIÓN");
+        modeloTabla.addColumn("NOMBRE");
+        modeloTabla.addColumn("ARCHIVO");
+           return modeloTabla;
     }
 
     private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
@@ -244,7 +222,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     }
 
     public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-        modeloTablaDoctos.setRowCount(0);
+        modeloTabla.setRowCount(0);
         Button boton = new Button();
         boton.setIcon(Iconos.ICONO_VER);
         if (this.listaDocumentos != null) {
@@ -254,26 +232,13 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
                 fila[1] = documento.getFechaActualizacion();
                 fila[2] = documento.getNombre();
                 fila[3] = cds.crearBoton(documento.getContenido(), Iconos.ICONO_VER, "Vacío");
+
                 return fila;
             }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
-                modeloTablaDoctos.addRow(fila);
+                modeloTabla.addRow(fila);
             });
         }
         tblDocumentos.setDefaultRenderer(Object.class, new imgTabla());
-        
-        modeloTablaFormatos.setRowCount(0);
-        boton.setIcon(Iconos.ICONO_VER);
-        if (this.listaFormatos != null) {
-            listaFormatos.stream().map((formato) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-                Object fila[] = new Object[2];
-                fila[0] = formato.getNombre();
-                fila[1] = cds.crearBoton(formato.getContenido(), Iconos.ICONO_VER, "Vacío");
-                return fila;
-            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
-                modeloTablaFormatos.addRow(fila);
-            });
-        }
-        tblFormatos.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     public Image getImage(String ruta) {
@@ -316,14 +281,12 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCerrar;
+    private javax.swing.JButton btnFormatos;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JLabel lblFormatos;
     private javax.swing.JLabel lblJCIcono;
     private javax.swing.JLabel lblProcedimiento;
     private javax.swing.JTable tblDocumentos;
-    private javax.swing.JTable tblFormatos;
     // End of variables declaration//GEN-END:variables
 }

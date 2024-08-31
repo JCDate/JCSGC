@@ -11,7 +11,10 @@ public class Iconos {
     public static final ImageIcon ICONO_POWER_POINT = new ImageIcon(getImage("/jc/img/powerpoint.png"));
     public static final ImageIcon ICONO_PDF = new ImageIcon(getImage("/jc/img/PDF.png"));
     public static final ImageIcon ICONO_VER = new ImageIcon(getImage("/jc/img/ver2.png"));
+    public static final ImageIcon ICONO_ACEPTAR = new ImageIcon(getImage("/jc/img/ok2.png"));
+    public static final ImageIcon ICONO_RECHAZAR = new ImageIcon(getImage("/jc/img/cancelar.png"));
     public static final ImageIcon ICONO_SOLICITUD = new ImageIcon(getImage("/jc/img/antecedentesfamilia.png"));
+    public static final ImageIcon ICONO_REGISTROS = new ImageIcon(getImage("/jc/img/lista.png"));
     
     public static Image getImage(String ruta) {
         try {

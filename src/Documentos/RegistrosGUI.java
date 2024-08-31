@@ -1,9 +1,56 @@
 package Documentos;
 
+import Modelos.Iconos;
+import Modelos.Usuarios;
+import Modelos.ProcedimientosM;
+import Modelos.RegistrosM;
+import Servicios.Conexion;
+import Servicios.ControlDocumentacionServicio;
+import Servicios.imgTabla;
+import java.awt.Color;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFrame;
+import javax.swing.table.DefaultTableModel;
+import swing.Button;
+
 public class RegistrosGUI extends javax.swing.JFrame {
 
+    private Connection conexion;
+    private Usuarios usr;
+    private ProcedimientosM procedimiento;
+    private DefaultTableModel modeloTabla;
+    private List<RegistrosM> listaRegistros = new ArrayList<>();
+    private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
+
     public RegistrosGUI() {
-        initComponents();
+        try {
+            inicializarVentanaYComponentes();
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(RegistrosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public RegistrosGUI(Usuarios usr, ProcedimientosM procedimiento) {
+        try {
+            this.usr = usr;
+            this.procedimiento = procedimiento;
+            inicializarVentanaYComponentes();
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(RegistrosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    public Image getIconImage() {
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
+        return retValue;
     }
 
     /**
@@ -20,9 +67,10 @@ public class RegistrosGUI extends javax.swing.JFrame {
         lblRegistroCambio = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblRegistros = new javax.swing.JTable();
-        btnCerrar = new javax.swing.JButton();
+        btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setIconImage(getIconImage());
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jPanel1.setBackground(new java.awt.Color(251, 251, 251));
@@ -39,29 +87,103 @@ public class RegistrosGUI extends javax.swing.JFrame {
 
         tblRegistros.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "CÓDIGO", "NOMBRE", "REV. ANTERIOR", "REV. NUEVA", "ACCIÓN", "FECHA DE MODIFICACIÓN"
+                "FECHA", "CÓDIGO", "PROCESO", "PROCEDIMIENTO", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO", "ACCIÓN", "ARCHIVO", "NOMBRE"
             }
         ));
         jScrollPane1.setViewportView(tblRegistros);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 910, 310));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 980, 360));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
         btnCerrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/cancelar.png"))); // NOI18N
         btnCerrar.setText("CERRAR");
+        btnCerrar.setToolTipText("");
+        btnCerrar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCerrarActionPerformed(evt);
+            }
+        });
         jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 490, 130, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 930, 550));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1010, 550));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
+        cerrarVentana();
+    }//GEN-LAST:event_btnCerrarActionPerformed
+
+    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
+
+        this.modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        listaRegistros = cds.recuperarRegistros(conexion, procedimiento.getId(), usr);
+
+        DefaultTableModel tblModeloDocumentos = construirTabla();
+        tblRegistros.setModel(tblModeloDocumentos);
+        tblRegistros.setRowHeight(40);
+        mostrarDatosTabla();
+    }
+
+    private DefaultTableModel construirTabla() {
+        modeloTabla.addColumn("FECHA");
+        modeloTabla.addColumn("CÓDIGO");
+        modeloTabla.addColumn("PROCESO");
+        modeloTabla.addColumn("PROCEDIMIENTO");
+        modeloTabla.addColumn("REV. ANTERIOR");
+        modeloTabla.addColumn("REV. NUEVA");
+        modeloTabla.addColumn("ENCARGADO");
+        modeloTabla.addColumn("ACCIÓN");
+        modeloTabla.addColumn("TIPO ARCHIVO");
+        modeloTabla.addColumn("NOMBRE");
+        return modeloTabla;
+    }
+
+    public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
+        modeloTabla.setRowCount(0);
+        if (this.listaRegistros != null) {
+            listaRegistros.stream().map((registro) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
+                Object fila[] = new Object[10];
+                fila[0] = registro.getFecha();
+                fila[1] = registro.getCodigo();
+                fila[2] = registro.getProceso();
+                fila[3] = registro.getProcedimiento();
+                fila[4] = registro.getRevAnterior();
+                fila[5] = registro.getRevNueva();
+                fila[6] = registro.getEncargado();
+                fila[7] = registro.getAccion();
+                fila[8] = registro.getTipoArchivo();
+                fila[9] = registro.getNombre();
+
+                return fila;
+            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
+                modeloTabla.addRow(fila);
+            });
+        }
+        tblRegistros.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    public void cerrarVentana() {
+        RegistrosGUI.this.dispose();
+    }
 
     /**
      * @param args the command line arguments

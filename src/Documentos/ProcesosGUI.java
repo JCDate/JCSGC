@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import swing.Button;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 public class ProcesosGUI extends javax.swing.JFrame {
@@ -110,13 +111,13 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
         tblProcedimientos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null}
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null}
             },
             new String [] {
-                "NO", "CÓDIGO", "REVISIÓN", "PROCESO", "DUEÑO(A) DE PROCESO", "VER DOCUMENTOS"
+                "NO", "CÓDIGO", "REVISIÓN", "PROCESO", "DUEÑO(A) DE PROCESO", "VER DOCUMENTOS", "REGISTROS"
             }
         ));
         tblProcedimientos.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -159,11 +160,12 @@ public class ProcesosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void tblProcedimientosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblProcedimientosMouseClicked
-        int column = tblProcedimientos.getColumnModel().getColumnIndexAtX(evt.getX());
-        int row = tblProcedimientos.rowAtPoint(evt.getPoint());
+        int columnaSeleccionada = tblProcedimientos.getColumnModel().getColumnIndexAtX(evt.getX());
+        int filaSeleccionada = tblProcedimientos.rowAtPoint(evt.getPoint());
+        String textoPrimeraCelda = "";
 
-        if (row < tblProcedimientos.getRowCount() && row >= 0 && column < tblProcedimientos.getColumnCount() && column >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
-            String id = (String) tblProcedimientos.getValueAt(row, 0); // Se guarda el valor de la celda (row,0) en la primera columna
+        if (filaSeleccionada < tblProcedimientos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblProcedimientos.getColumnCount() && columnaSeleccionada >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
+            String id = (String) tblProcedimientos.getValueAt(filaSeleccionada, 0); // Se guarda el valor de la celda (row,0) en la primera columna
             int posicion = -1;
 
             for (int i = 0; i < listaProcedimientos.size(); i++) {
@@ -174,17 +176,40 @@ public class ProcesosGUI extends javax.swing.JFrame {
                 }
             }
 
-            Object value = tblProcedimientos.getValueAt(row, column);
+            Object value = tblProcedimientos.getValueAt(filaSeleccionada, columnaSeleccionada);
             if (value instanceof JButton) {
-                ProcesosGUI.this.dispose();
-                ProcedimientosGUI proc;
-                try {
-                    proc = new ProcedimientosGUI(usr, listaProcedimientos.get(posicion));
-                    proc.setVisible(true);
-                    proc.setLocationRelativeTo(null);
-                } catch (SQLException | ClassNotFoundException ex) {
-                    Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
+
+                JButton boton = (JButton) value;
+                String textoBoton = boton.getText();
+
+                // Get the text from the first cell (column 0) of the selected row
+                Object firstCellValue = tblProcedimientos.getValueAt(filaSeleccionada, 0);
+                if (firstCellValue != null) {
+                    textoPrimeraCelda = firstCellValue.toString();
                 }
+
+                switch (textoBoton) {
+                    case "Vacío":
+                        JOptionPane.showMessageDialog(null, "No hay documentos");
+                        break;
+                    default:
+                            if (columnaSeleccionada == 5) {
+                                ProcesosGUI.this.dispose();
+                                ProcedimientosGUI proc;
+                                try {
+                                    proc = new ProcedimientosGUI(usr, listaProcedimientos.get(posicion));
+                                    proc.setVisible(true);
+                                    proc.setLocationRelativeTo(null);
+                                } catch (SQLException | ClassNotFoundException ex) {
+                                    Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            } else if (columnaSeleccionada == 6) {
+                                cds.abrirRegistrosGUI(usr, listaProcedimientos.get(posicion));
+                            }
+
+                        break;
+                }
+
             }
         }
     }//GEN-LAST:event_tblProcedimientosMouseClicked
@@ -210,7 +235,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.conexion = Conexion.getInstance().getConnection();
         this.proceso = cds.recuperarProceso(conexion, idProceso);
-        this.listaProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
+        
 
         if (usr.getId() == proceso.getUid() || usr.getId() == 8) {
             btnSolicitudCambio.setVisible(true);
@@ -231,7 +256,6 @@ public class ProcesosGUI extends javax.swing.JFrame {
         tblProcedimientos.setModel(tableModel);
         tblProcedimientos.setRowHeight(40);
         mostrarDatosTabla();
-
     }
 
     private DefaultTableModel construirModeloTabla() {
@@ -241,22 +265,27 @@ public class ProcesosGUI extends javax.swing.JFrame {
         modeloTabla.addColumn("PROCEDIMIENTO");
         modeloTabla.addColumn("DUEÑO DE PROCESO");
         modeloTabla.addColumn("VER DOCUMENTOS");
+        modeloTabla.addColumn("REGISTROS");
         return modeloTabla;
     }
 
     public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
         modeloTabla.setRowCount(0);
+        listaProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
         Button boton = new Button();
+        Button boton2 = new Button();
         boton.setIcon(Iconos.ICONO_VER);
-        if (this.listaProcedimientos != null) {
+        boton2.setIcon(Iconos.ICONO_SOLICITUD);
+        if (listaProcedimientos != null) {
             listaProcedimientos.stream().map((procedimiento) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-                Object fila[] = new Object[6];
+                Object fila[] = new Object[7];
                 fila[0] = procedimiento.getNo();
                 fila[1] = procedimiento.getCodigo();
                 fila[2] = procedimiento.getRevision();
                 fila[3] = procedimiento.getProcedimiento();
                 fila[4] = procedimiento.getEncargado();
                 fila[5] = boton;
+                fila[6] = boton2;
                 return fila;
             }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
                 modeloTabla.addRow(fila);

@@ -1,6 +1,9 @@
 package Documentos;
 
+import Modelos.DocumentosM;
 import Modelos.FormatosM;
+import Modelos.Iconos;
+import Modelos.ProcedimientosM;
 import Modelos.ProcesosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
@@ -25,29 +28,29 @@ import swing.Button;
 public class FormatosGUI extends javax.swing.JFrame {
 
     private Usuarios usr;
-    private ProcesosM proceso;
+    private ProcedimientosM procedimiento;
     private Connection conexion;
     private DefaultTableModel modeloTabla;
-    private List<FormatosM> listFormatos = new ArrayList<>();
-
-    ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
-
-//    private ImageIcon iconoVer = new ImageIcon(cds.getImage("/jc/img/ver2.png"));
+    private List<FormatosM> listaFormatos = new ArrayList<>();
+    private List<DocumentosM> listaDocumentos = new ArrayList<>();
+    private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
 
     public FormatosGUI() {
-        initComponents();
+        try {
+            inicializarVentanaYComponentes();
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    public FormatosGUI(Usuarios usr, ProcesosM proceso) {
-
-//        try {
-//            this.usr = usr;
-//            this.proceso = proceso;
-//
-////            inicializarVentanaYComponentes();
-//        } catch (ClassNotFoundException ex) {
-//            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+    public FormatosGUI(Usuarios usr, ProcedimientosM procedimiento) {
+        this.usr = usr;
+        this.procedimiento = procedimiento;
+        try {
+            inicializarVentanaYComponentes();
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -125,35 +128,42 @@ public class FormatosGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
-//        cerrarVentana();
-//        cds.abrirProcedimientosGUI(usr, proceso);
+        cerrarVentana();
+        cds.abrirProcedimientosGUI(usr, procedimiento);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void tblFormatosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblFormatosMouseClicked
-//        int column = tblFormatos.getColumnModel().getColumnIndexAtX(evt.getX());
-//        int row = tblFormatos.rowAtPoint(evt.getPoint());
-//
-//        if (row < tblFormatos.getRowCount() && row >= 0 && column < tblFormatos.getColumnCount() && column >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
-//            String id = (String) tblFormatos.getValueAt(row, 0); // Se guarda el valor de la celda (row,0) en la primera columna
-//
-//            Object value = tblFormatos.getValueAt(row, column); 
-//            if (value instanceof JButton) {
-//                JButton boton = (Button) value;
-//                String textoBoton = boton.getText();
-//                switch (textoBoton) {
-//                    case "Vacío":
-//                        JOptionPane.showMessageDialog(null, "No hay archivo");
-//                        break;
-//                    default:
-//                        try {
-//                            cds.ejecutarArchivo(id);
-//                        } catch (ClassNotFoundException | SQLException ex) {
-//                            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
-//                        }
-//                        break;
-//                }
-//            }
-//        }
+        int columnaSeleccionada = tblFormatos.getColumnModel().getColumnIndexAtX(evt.getX());
+        int filaSeleccionada = tblFormatos.rowAtPoint(evt.getPoint());
+        String textoPrimeraCelda = "";
+
+        if (filaSeleccionada < tblFormatos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblFormatos.getColumnCount() && columnaSeleccionada >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
+            String id = (String) tblFormatos.getValueAt(filaSeleccionada, 0); // Se guarda el valor de la celda (row,0) en la primera columna
+
+            Object value = tblFormatos.getValueAt(filaSeleccionada, columnaSeleccionada);
+            if (value instanceof JButton) {
+                JButton boton = (Button) value;
+                String textoBoton = boton.getText();
+
+                // Get the text from the first cell (column 0) of the selected row
+                Object firstCellValue = tblFormatos.getValueAt(filaSeleccionada, 0);
+                if (firstCellValue != null) {
+                    textoPrimeraCelda = firstCellValue.toString();
+                }
+                switch (textoBoton) {
+                    case "Vacío":
+                        JOptionPane.showMessageDialog(null, "No hay archivo");
+                        break;
+                    default:
+                        try {
+                            cds.ejecutarFormato(id);
+                        } catch (ClassNotFoundException | SQLException ex) {
+                            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        break;
+                }
+            }
+        }
     }//GEN-LAST:event_tblFormatosMouseClicked
 
     public void cerrarVentana() {
@@ -161,30 +171,29 @@ public class FormatosGUI extends javax.swing.JFrame {
     }
 
     public void inicializarVentanaYComponentes() throws ClassNotFoundException {
-//        try {
-//            initComponents();
-//            this.setResizable(false);
-//            this.setLocationRelativeTo(null);
-//            this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-//            lblFormato.setText("<html>FORMATOS DEL PROCESO: <br>" + proceso.getProcedimiento() + "</html>");
-//
-//            this.modeloTabla = new DefaultTableModel() {
-//                @Override
-//                public boolean isCellEditable(int row, int column) {
-//                    return false;
-//                }
-//            };
-//
-//            this.conexion = Conexion.getInstance().getConnection();
-//            listFormatos = cds.recuperarFormatos(conexion, proceso.getId());
-//            DefaultTableModel tableModel = construirModeloTabla();
-//            tblFormatos.setModel(tableModel);
-//            tblFormatos.setRowHeight(40);
-//            mostrarDatosTabla();
-//        } catch (SQLException ex) {
-//            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+        try {
+            initComponents();
+            this.setResizable(false);
+            this.setLocationRelativeTo(null);
+            this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            this.conexion = Conexion.getInstance().getConnection();
+            lblFormato.setText("<html>FORMATOS DEL PROCESO: <br>" + procedimiento.getProcedimiento() + "</html>");
 
+            this.modeloTabla = new DefaultTableModel() {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+
+            listaFormatos = cds.recuperarFormatos(conexion, procedimiento.getId());
+            DefaultTableModel tableModel = construirModeloTabla();
+            tblFormatos.setModel(tableModel);
+            tblFormatos.setRowHeight(40);
+            mostrarDatosTabla();
+        } catch (SQLException ex) {
+            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private DefaultTableModel construirModeloTabla() {
@@ -194,20 +203,20 @@ public class FormatosGUI extends javax.swing.JFrame {
     }
 
     public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-//        modeloTabla.setRowCount(0);
-//        Button boton = new Button();
-//        boton.setIcon(iconoVer);
-//        if (this.listFormatos != null) {
-//            listFormatos.stream().map((pro) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-//                Object fila[] = new Object[2];
-//                fila[0] = pro.getNombre();
-//                fila[1] = cds.crearBoton(pro.getContenido(), iconoVer, "Vacío");
-//                return fila;
-//            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
-//                modeloTabla.addRow(fila);
-//            });
-//        }
-//        tblFormatos.setDefaultRenderer(Object.class, new imgTabla());
+        modeloTabla.setRowCount(0);
+        Button boton = new Button();
+        boton.setIcon(Iconos.ICONO_VER);
+        if (this.listaFormatos != null) {
+            listaFormatos.stream().map((formato) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
+                Object fila[] = new Object[2];
+                fila[0] = formato.getNombre();
+                fila[1] = cds.crearBoton(formato.getContenido(), Iconos.ICONO_VER, "Vacío");
+                return fila;
+            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
+                modeloTabla.addRow(fila);
+            });
+        }
+        tblFormatos.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     /**

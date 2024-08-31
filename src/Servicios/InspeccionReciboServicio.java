@@ -1,5 +1,6 @@
 package Servicios;
 
+import InspeccionRecibo.AgregarIrGUI;
 import InspeccionRecibo.HojaInstruccionGUI;
 import InspeccionRecibo.HojaInstruccionGUI2;
 import InspeccionRecibo.InspeccionReciboGUI;
@@ -21,14 +22,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import jnafilechooser.api.JnaFileChooser;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -229,6 +234,20 @@ public class InspeccionReciboServicio {
         return listaIr;
     }
 
+    public List<String> recuperarProveedores(Connection conexion) throws SQLException {
+        List<String> proveedores = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_NOMBRE_PROVEEDORES_SQL);
+                ResultSet resultado = consulta.executeQuery()) {
+            while (resultado.next()) {
+                String proveedor = resultado.getString("nombre");
+                proveedores.add(proveedor);
+            }
+        } catch (SQLException ex) {
+            throw new SQLException("Error al recuperar proveedores: " + ex.getMessage(), ex);
+        }
+        return proveedores;
+    }
+
     public void eliminar(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) throws SQLException, ClassNotFoundException {
         PreparedStatement ps = conexion.prepareStatement(DELETE_INSPECCION_RECIBO_SQL);
         ps.setString(1, noHoja);
@@ -367,7 +386,7 @@ public class InspeccionReciboServicio {
 
     public File seleccionarArchivo(Component parentComponent) {
         JnaFileChooser jfc = new JnaFileChooser();
-        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx");
+        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx", "doc", "docx");
         boolean action = jfc.showOpenDialog((Window) parentComponent);
         if (action) {
             return jfc.getSelectedFile();
@@ -461,16 +480,32 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public void goToInspeccionRecibo(Usuarios usr) {
+    public void abrirInspeccionReciboGUI(Usuarios usuario) {
+        InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usuario);
+        irGUI.setVisible(true);
+        irGUI.setLocationRelativeTo(null);
+    }
+
+    public void abrirAgregarIrGUI(Usuarios usuario) {
         try {
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); //Se crea la instancia de la clase
-            irGUI.setVisible(true); //Se hace visible la ventana
-            irGUI.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+            AgregarIrGUI agregarGUI = new AgregarIrGUI(usuario);
+            agregarGUI.setVisible(true);
+            agregarGUI.setLocationRelativeTo(null);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+            manejarExcepcion("Surgio un error al abrir AGREGAR: ", ex);
         }
     }
 
+    public String formatearFecha(Date fecha) {
+        if (fecha == null) {
+            return "";
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        return dateFormat.format(fecha);
+    }
+
+    // Manejar Excepciones
     public void agregarEspecificacion(Connection conexion, String especificacion) {
         try (PreparedStatement insertEspecificacion = conexion.prepareStatement("INSERT INTO especificacionesir(Especificacion) VALUES (?)")) {
             insertEspecificacion.setString(1, especificacion);
@@ -570,4 +605,13 @@ public class InspeccionReciboServicio {
         }
         return hojaNueva;
     }
+
+    public String obtenerValorComboBox(JComboBox<String> comboBox) {
+        return comboBox.getSelectedItem() != null ? comboBox.getSelectedItem().toString() : "";
+    }
+
+    public String obtenerTexto(JTextField textField) {
+        return textField.getText().trim();
+    }
+
 }

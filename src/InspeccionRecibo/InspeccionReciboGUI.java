@@ -1,5 +1,6 @@
 package InspeccionRecibo;
 
+import Modelos.Iconos;
 import Servicios.imgTabla;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
@@ -23,6 +24,7 @@ import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.RowFilter;
@@ -32,21 +34,32 @@ import swing.Button;
 
 public class InspeccionReciboGUI extends javax.swing.JFrame {
 
-    private final InspeccionReciboServicio irs = new InspeccionReciboServicio();
-    private List<InspeccionReciboM> irm; 
+    // Usuario y Conexión a la base de datos
+    private Usuarios usuario;
     private Connection conexion;
-    private Usuarios usr; 
-    private final toExcel excel = new toExcel();
+
+    // Definición de la estructura de la tabla
+    private DefaultTableModel modeloTabla;
+
+    // Servicios y Utilidades
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+
+    // Lista de registros de Inspección Recibo
+    private List<InspeccionReciboM> listaInspeccionRecibo;
+
+    // Objeto filtrador de campos de la tabla
     private TableRowSorter<DefaultTableModel> trs;
 
-    // Constantes para los índices de columnas
+    private toExcel excel = new toExcel();
+
+    // Columnas de la tabla
     private static final int COLUMN_NO_HOJA = 0;
     private static final int COLUMN_FECHA = 1;
     private static final int COLUMN_PROVEEDOR = 2;
     private static final int COLUMN_NO_FACTURA = 3;
     private static final int COLUMN_NO_PEDIDO = 4;
     private static final int COLUMN_CALIBRE = 5;
-    private static final int COLUMN_P_LAMINA = 6;
+    private static final int COLUMN_PRESENTACION_LAMINA = 6;
     private static final int COLUMN_NO_ROLLO = 7;
     private static final int COLUMN_PZKG = 8;
     private static final int COLUMN_ESTATUS = 9;
@@ -54,127 +67,19 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private static final int COLUMN_VER_CERTIFICADO = 11;
     private static final int COLUMN_VER_HOJA_INSTRUCCION = 12;
 
-    public InspeccionReciboGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
-        initComponentes();
-        this.usr = usr;
-        try {
-            this.InspeccionReciboGUI();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public InspeccionReciboGUI() {
+        inicializarVentanaYComponentes();
     }
 
-    public InspeccionReciboGUI() throws SQLException, ClassNotFoundException {
-        initComponentes(); // Se inicializan los componente principales
-    }
-
-    private void InspeccionReciboGUI() throws SQLException, ClassNotFoundException {
-        tblInspeccionRecibo.setDefaultRenderer(Object.class, new imgTabla()); //Se configura el renderizador de la tabla
-
-        txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
-        txtBuscador.setHint("Buscar...");
-
-        // Construir el modelo de tabla
-        DefaultTableModel dt = buildTableModel(); // Se asigna la tabla con el modelo por default
-
-        // Se obtienen los iconos 
-        ImageIcon iconoPdf = new ImageIcon(getImage("/jc/img/PDF.png"));
-        ImageIcon iconoExcel = new ImageIcon(getImage("/jc/img/excelC.png"));
-
-        this.irm = this.irs.recuperarTodas(conexion); // Se recupera la información de la BD de la tabla "inspeccionrecibo"
-        if (this.irm.size() > 0) { // Si el tamaño de la lista es mayor a 0
-            for (int i = 0; i < this.irm.size(); i++) { // Se recorren todos los elementos de la lista
-                Object fila[] = new Object[13]; // Se crea el arreglo para guardar los valores
-
-                // Se captura la información en el arreglo
-                fila[COLUMN_NO_HOJA] = this.irm.get(i).getNoHoja();
-                fila[COLUMN_FECHA] = this.irm.get(i).getFechaFactura();
-                fila[COLUMN_PROVEEDOR] = this.irm.get(i).getProveedor();
-                fila[COLUMN_NO_FACTURA] = this.irm.get(i).getNoFactura();
-                fila[COLUMN_NO_PEDIDO] = this.irm.get(i).getNoPedido();
-                fila[COLUMN_CALIBRE] = this.irm.get(i).getCalibre();
-                fila[COLUMN_P_LAMINA] = this.irm.get(i).getpLamina();
-                fila[COLUMN_NO_ROLLO] = this.irm.get(i).getNoRollo();
-                fila[COLUMN_PZKG] = this.irm.get(i).getPzKg();
-                fila[COLUMN_ESTATUS] = this.irm.get(i).getEstatus();
-
-                // Se crean los botones para el resto de campos
-                fila[COLUMN_VER_FACTURA] = this.irs.crearBoton(this.irm.get(i).getFacturapdf(), iconoPdf, "Vacío");
-                fila[COLUMN_VER_CERTIFICADO] = this.irs.crearBoton(this.irm.get(i).getCertificadopdf(), iconoPdf, "Vacío");
-                fila[COLUMN_VER_HOJA_INSTRUCCION] = this.irs.crearBoton(this.irm.get(i).getHojaIns(), iconoExcel, "Realizar");
-                dt.addRow(fila); // Se añade la fila 
-            }
-
-            tblInspeccionRecibo.setModel(dt); // Se define el modelo para la tabla de la ventana principal
-            trs = new TableRowSorter<>(dt);
-            tblInspeccionRecibo.setRowSorter(trs); // Se establece el objeto que filtra la tabla
-            tblInspeccionRecibo.setRowHeight(27); // Se define el tamaño de la altura de las filas
-            tblInspeccionRecibo.setPreferredSize(new Dimension(4500, 4500)); // Aumentar la altura; // Se define el tamaño de la altura de las filas
-            tblInspeccionRecibo.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // Se define el tamaño de la altura de las filas
-
-        }
-    }
-
-    public final void initComponentes() throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setDefaultCloseOperation(0); // Se deshabilita el boton de cerrar de la ventana
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
+    public InspeccionReciboGUI(Usuarios usuario) {
+        this.usuario = usuario;
+        inicializarVentanaYComponentes();
     }
 
     @Override
-    public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
-    }
-
-    private DefaultTableModel buildTableModel() {
-        DefaultTableModel dt = new DefaultTableModel() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        String[] columnNames = {"NO.", "FECHA DE FACTURA", "PROVEEDOR", "FACTURA", "PEDIDO",
-            "CALIBRE", "PRESENTACIÓN", "ROLLO", "Pz/Kg.", "ESTATUS",
-            "VER FACTURA", "VER CERTIFICADO", "VER HOJA DE INSTRUCCIONES"}; // Columnas de la tabla
-
-        dt.setColumnIdentifiers(columnNames); // Establecer los nombres de las columnas en el modelo de tabla.
-
-        return dt;
-    }
-
-    public Image getImage(String ruta) {
-        try {
-            ImageIcon imageIcon = new ImageIcon(getClass().getResource(ruta)); //Se crea un objeto de la clase ImageIcon y se obtiene la dirección de la ruta
-            Image mainIcon = imageIcon.getImage(); // Se obtiene la imagen
-            return mainIcon; // Se retorna 
-        } catch (Exception e) {
-        }
-        return null;
-    }
-
-    private void eliminarRegistro(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) {
-        try {
-            this.irs.eliminar(noHoja, fechaFactura, noFactura, noPedido, pzKg); // Se llama el método de eliminar
-            InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana
-            JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS"); // Se muestra el mensaje de confirmación de la eliminación
-            this.irs.goToInspeccionRecibo(usr);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void filtroBuscador() {
-        String filtro = txtBuscador.getText();
-        try {
-            RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(filtro, 2, 3, 5, 7); // Crea un filtro que coincida en cualquier columna con el texto ingresado
-            trs.setRowFilter(rowFilter); // Aplica el filtro al TableRowSorter
-        } catch (PatternSyntaxException e) {
-            // Si la expresión regular es inválida, no aplicar ningún filtro
-            trs.setRowFilter(null);
-        }
     }
 
     /**
@@ -344,38 +249,32 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
-        InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana actual
+        cerrarVentana();
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnAgregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarActionPerformed
-        InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana actual
-        try {
-            AgregarIrGUI agregarGUI = new AgregarIrGUI(usr); // Se crea la instancia de la clase AgregarIr
-            agregarGUI.setVisible(true); // Se muestra la ventana visible
-            agregarGUI.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana();
+        irs.abrirAgregarIrGUI(usuario);
     }//GEN-LAST:event_btnAgregarActionPerformed
 
     private void btnActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarActionPerformed
-        InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana 
-        JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS"); // Se muestra el mensaje de actualización
-        irs.goToInspeccionRecibo(this.usr);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS");
+        irs.abrirInspeccionReciboGUI(usuario);
     }//GEN-LAST:event_btnActualizarActionPerformed
 
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
-        int filaSeleccionada = tblInspeccionRecibo.getSelectedRow(); // Se obtiene la fila seleccionada
-        if (filaSeleccionada != -1) { // Si el indice de la fila es diferente de -1
+        int filaSeleccionada = tblInspeccionRecibo.getSelectedRow();
+        if (filaSeleccionada != -1) {
 
             String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_HOJA);
             String fechaFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_FECHA);
             String noFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_FACTURA);
             String noPedido = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_PEDIDO);
             String pzKg = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_PZKG);
-          
-            int resp = JOptionPane.showConfirmDialog(null, "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ,¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-            if (resp == JOptionPane.YES_NO_OPTION) {
+
+            int respuesta = JOptionPane.showConfirmDialog(this, "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ,¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+            if (respuesta == JOptionPane.YES_NO_OPTION) {
                 eliminarRegistro(noHoja, fechaFactura, noFactura, noPedido, pzKg);
             }
         } else {
@@ -384,19 +283,19 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarActionPerformed
-        int fila_seleccionada = tblInspeccionRecibo.getSelectedRow(); // Se obtiene el indice de la fila seleccionada ... 
-        if (fila_seleccionada >= 0) { // Si la fila seleccionada es mayor o igual a 0
-            InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana
+        int filaSeleccionada = tblInspeccionRecibo.getSelectedRow();
+        if (filaSeleccionada != -1) {
+            cerrarVentana();
+            irs.abrirModi
 
             try {
-                ModificarIr modificar = new ModificarIr(this.irm.get(fila_seleccionada), usr); // Se crea la instancia de la clase ModificarIr
+                ModificarIrGUI modificar = new ModificarIrGUI(listaInspeccionRecibo.get(filaSeleccionada), usuario); // Se crea la instancia de la clase ModificarIrGUI
                 modificar.setVisible(true); // Se muestra visible la ventana 
                 modificar.setLocationRelativeTo(null); // Se coloca en el centro de la pantalla
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-        } else { // Si no se selecciona ninguna fila...
+        } else {
             JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
         }
     }//GEN-LAST:event_btnModificarActionPerformed
@@ -428,7 +327,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                     case "Realizar":
                         InspeccionReciboGUI.this.dispose(); // Se liberan los recursos del sistema
                         try {
-                            HojaInstruccionGUI hj = new HojaInstruccionGUI(usr, this.irm.get(posicion)); // Se crea la instancia para ir a la ventana de HojaInstruccionGUI
+                            HojaInstruccionGUI hj = new HojaInstruccionGUI(usuario, this.irm.get(posicion)); // Se crea la instancia para ir a la ventana de HojaInstruccionGUI
                             hj.setVisible(true); // Se pone en visible la ventana
                             hj.setLocationRelativeTo(null);   // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema
                         } catch (SQLException | ClassNotFoundException ex) {
@@ -458,7 +357,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         } catch (SQLException | ParseException ex) {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
-        JOptionPane.showMessageDialog(this, "Datos Exportados."); 
+        JOptionPane.showMessageDialog(this, "Datos Exportados.");
     }//GEN-LAST:event_btnToExcelActionPerformed
 
     private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
@@ -476,13 +375,112 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void btnAgregarCalibreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCalibreActionPerformed
         try {
-            AgregarCalibreHIGUI irGUI = new AgregarCalibreHIGUI(usr); 
-            irGUI.setVisible(true); 
-            irGUI.setLocationRelativeTo(null); 
+            AgregarCalibreHIGUI irGUI = new AgregarCalibreHIGUI(usuario);
+            irGUI.setVisible(true);
+            irGUI.setLocationRelativeTo(null);
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnAgregarCalibreActionPerformed
+
+    private void inicializarVentanaYComponentes() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
+
+        txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
+        txtBuscador.setHint("Buscar...");
+
+        modeloTabla = construirModeloTabla();
+
+        tblInspeccionRecibo.setModel(modeloTabla);
+        trs = new TableRowSorter<>(modeloTabla);
+        tblInspeccionRecibo.setRowSorter(trs);
+        tblInspeccionRecibo.setRowHeight(27);
+        tblInspeccionRecibo.setPreferredSize(new Dimension(4500, 4500));  // CONSIDERAR QUITARLAS
+        tblInspeccionRecibo.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // CONSIDERAR QUITARLAS
+        mostrarDatosTabla();
+    }
+
+    private DefaultTableModel construirModeloTabla() {
+        modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        String[] nombresColumnas = {"NO.", "FECHA DE FACTURA", "PROVEEDOR", "FACTURA", "PEDIDO",
+            "CALIBRE", "PRESENTACIÓN", "ROLLO", "Pz/Kg.", "ESTATUS",
+            "VER FACTURA", "VER CERTIFICADO", "VER HOJA DE INSTRUCCIONES"};
+
+        modeloTabla.setColumnIdentifiers(nombresColumnas); // Establecer los nombres de las columnas en el modelo de tabla.
+
+        return modeloTabla;
+    }
+
+    public void mostrarDatosTabla() {
+        try {
+            modeloTabla.setRowCount(0);
+            listaInspeccionRecibo = irs.recuperarTodas(conexion);
+
+            if (listaInspeccionRecibo != null) {
+                listaInspeccionRecibo.stream().map((ir) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
+                    Object fila[] = new Object[13];
+                    fila[COLUMN_NO_HOJA] = ir.getNoHoja();
+                    fila[COLUMN_FECHA] = ir.getFechaFactura();
+                    fila[COLUMN_PROVEEDOR] = ir.getProveedor();
+                    fila[COLUMN_NO_FACTURA] = ir.getNoFactura();
+                    fila[COLUMN_NO_PEDIDO] = ir.getNoPedido();
+                    fila[COLUMN_CALIBRE] = ir.getCalibre();
+                    fila[COLUMN_PRESENTACION_LAMINA] = ir.getpLamina();
+                    fila[COLUMN_NO_ROLLO] = ir.getNoRollo();
+                    fila[COLUMN_PZKG] = ir.getPzKg();
+                    fila[COLUMN_ESTATUS] = ir.getEstatus();
+
+                    // Se crean los botones para el resto de campos
+                    fila[COLUMN_VER_FACTURA] = irs.crearBoton(ir.getFacturapdf(), Iconos.ICONO_PDF, "Vacío");
+                    fila[COLUMN_VER_CERTIFICADO] = irs.crearBoton(ir.getCertificadopdf(), Iconos.ICONO_PDF, "Vacío");
+                    fila[COLUMN_VER_HOJA_INSTRUCCION] = irs.crearBoton(ir.getHojaIns(), Iconos.ICONO_EXCEL, "Realizar");
+                    return fila;
+                }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
+                    modeloTabla.addRow(fila);
+                });
+            }
+            tblInspeccionRecibo.setDefaultRenderer(Object.class, new imgTabla());
+        } catch (SQLException ex) {
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, "Error al cargar los registros de inspección Recibo: " + ex);
+        }
+    }
+
+    public void cerrarVentana() {
+        InspeccionReciboGUI.this.dispose();
+    }
+
+    private void eliminarRegistro(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) {
+        try {
+            this.irs.eliminar(noHoja, fechaFactura, noFactura, noPedido, pzKg); // Se llama el método de eliminar
+            InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana
+            JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS"); // Se muestra el mensaje de confirmación de la eliminación
+            this.irs.abrirInspeccionReciboGUI(usuario);
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void filtroBuscador() {
+        String filtro = txtBuscador.getText();
+        try {
+            RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(filtro, 2, 3, 5, 7); // Crea un filtro que coincida en cualquier columna con el texto ingresado
+            trs.setRowFilter(rowFilter); // Aplica el filtro al TableRowSorter
+        } catch (PatternSyntaxException e) {
+            // Si la expresión regular es inválida, no aplicar ningún filtro
+            trs.setRowFilter(null);
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -507,14 +505,10 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            try {
-                new InspeccionReciboGUI().setVisible(true);
-            } catch (SQLException | ClassNotFoundException ex) {
-                Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            new InspeccionReciboGUI().setVisible(true);
         });
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnActualizar;
     private javax.swing.JButton btnAgregar;

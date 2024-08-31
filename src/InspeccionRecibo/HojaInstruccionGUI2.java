@@ -347,7 +347,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
             this.dispose();
             try {
-                ModificarIr modificar = new ModificarIr(irm, usr, guardarCambios(rutaArchivo)); // Se crea la instancia de la clase ModificarIr
+                ModificarIrGUI modificar = new ModificarIrGUI(irm, usr, guardarCambios(rutaArchivo)); // Se crea la instancia de la clase ModificarIrGUI
                 modificar.setVisible(true); // Se muestra visible la ventana 
                 modificar.setLocationRelativeTo(null); // Se coloca en el centro de la pantalla
             } catch (ClassNotFoundException ex) {

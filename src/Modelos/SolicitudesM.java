@@ -2,36 +2,40 @@ package Modelos;
 
 public class SolicitudesM {
 
-    private int idp;
+    private int id;
     private String codigo;
+    private String proceso;
     private String procedimiento;
-    private String nombre;
     private String revAnterior;
     private String revNueva;
     private String encargado;
-    private String tipoArchivo;
-    private byte[] archivo;
     private String accion;
+    private String tipoArchivo;
+    private String nombreD;
+    private String nombre;
+    private byte[] archivo;
 
-    public SolicitudesM(int idp, String codigo, String procedimiento, String nombre, String revAnterior, String revNueva, String encargado, String tipoArchivo, byte[] archivo, String accion) {
-        this.idp = idp;
+    public SolicitudesM(int id, String codigo, String proceso, String procedimiento, String revAnterior, String revNueva, String encargado, String accion, String tipoArchivo, String nombreD, String nombre, byte[] archivo) {
+        this.id = id;
         this.codigo = codigo;
+        this.proceso = proceso;
         this.procedimiento = procedimiento;
-        this.nombre = nombre;
         this.revAnterior = revAnterior;
         this.revNueva = revNueva;
         this.encargado = encargado;
-        this.tipoArchivo = tipoArchivo;
-        this.archivo = archivo;
         this.accion = accion;
+        this.tipoArchivo = tipoArchivo;
+        this.nombreD = nombreD;
+        this.nombre = nombre;
+        this.archivo = archivo;
     }
 
-    public int getIdp() {
-        return idp;
+    public int getId() {
+        return id;
     }
 
-    public void setIdp(int idp) {
-        this.idp = idp;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getCodigo() {
@@ -42,20 +46,20 @@ public class SolicitudesM {
         this.codigo = codigo;
     }
 
+    public String getProceso() {
+        return proceso;
+    }
+
+    public void setProceso(String proceso) {
+        this.proceso = proceso;
+    }
+
     public String getProcedimiento() {
         return procedimiento;
     }
 
     public void setProcedimiento(String procedimiento) {
         this.procedimiento = procedimiento;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
     }
 
     public String getRevAnterior() {
@@ -82,12 +86,36 @@ public class SolicitudesM {
         this.encargado = encargado;
     }
 
+    public String getAccion() {
+        return accion;
+    }
+
+    public void setAccion(String accion) {
+        this.accion = accion;
+    }
+
     public String getTipoArchivo() {
         return tipoArchivo;
     }
 
     public void setTipoArchivo(String tipoArchivo) {
         this.tipoArchivo = tipoArchivo;
+    }
+
+    public String getNombreD() {
+        return nombreD;
+    }
+
+    public void setNombreD(String nombreD) {
+        this.nombreD = nombreD;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
     public byte[] getArchivo() {
@@ -98,13 +126,4 @@ public class SolicitudesM {
         this.archivo = archivo;
     }
 
-    public String getAccion() {
-        return accion;
-    }
-
-    public void setAccion(String accion) {
-        this.accion = accion;
-    }
-    
-    
 }

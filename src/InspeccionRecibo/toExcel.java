@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package InspeccionRecibo;
 
 import Servicios.Conexion;
@@ -30,10 +25,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-/**
- *
- * @author JC
- */
 public class toExcel {
 
     //Direccion para guardar el archivo, con su nombre
@@ -42,18 +33,10 @@ public class toExcel {
     Connection conexion; // Objeto de tipo Connection para realizar la conexión a la bd
     ExcelFormato formato = new ExcelFormato();
 
-    /**
-     * Constructor de clase
-     */
     public toExcel() {
-        // Obtenemos la conexión
         this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
     }
 
-    /**
-     * Metodo para obtener los registros de la base de datos y crear el archivo
-     * excel
-     */
     public void WriteExcelIR() throws SQLException, ParseException {
 
         // Crear un nuevo libro de trabajo en formato XLSX
@@ -162,18 +145,6 @@ public class toExcel {
             int rowIndex = 2;
             String mesActual = null;
             int primeraFilaMes = 2;
-            
-            /*
-            // Crear un estilo de celda
-            CellStyle style = workbook.createCellStyle();
-            
-            // Establecer la alineación vertical en "vertical"
-            style.setVerticalAlignment(VerticalAlignment.VERTICAL_TEXT);
-
-            // Aplicar el estilo a la celda
-            cell.setCellStyle(style);
-            
-            */
             
             XSSFCellStyle style = workbook.createCellStyle();
             style.setVerticalAlignment(VerticalAlignment.CENTER);

@@ -1,5 +1,6 @@
 package Documentos;
 
+import Modelos.Iconos;
 import Modelos.ProcesosM;
 import Modelos.SolicitudesM;
 import Modelos.Usuarios;
@@ -30,10 +31,6 @@ public class SolicitudesGUI extends javax.swing.JFrame {
     private DefaultTableModel modeloTabla;
     private List<SolicitudesM> listSolicitudes = new ArrayList<>();
     private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
-    
-//    private ImageIcon iconoVer = new ImageIcon(cds.getImage("/jc/img/ver2.png"));
-//    private ImageIcon iconoAceptar = new ImageIcon(cds.getImage("/jc/img/ok2.png"));
-//    private ImageIcon iconoRechazar = new ImageIcon(cds.getImage("/jc/img/cancelar.png"));
 
     public SolicitudesGUI() {
         initComponents();
@@ -85,17 +82,17 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         lblSolicitudesCambios.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
         lblSolicitudesCambios.setForeground(new java.awt.Color(10, 110, 255));
         lblSolicitudesCambios.setText("SOLICITUDES DE CAMBIO:");
-        jPanel1.add(lblSolicitudesCambios, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 50, -1, -1));
+        jPanel1.add(lblSolicitudesCambios, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 30, -1, -1));
 
         tblSolicitudes.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "CÓDIGO", "NOMBRE", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO", "TIPO DE ARCHIVO", "ARCHIVO", "APROBAR", "RECHAZAR"
+                "CÓDIGO", "PROCESO", "PROCEDIMIENTO", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO", "ACCION", "TIPO DE ARCHIVO", "NOMBRE", "ARCHIVO", "APROBAR", "RECHAZAR"
             }
         ));
         tblSolicitudes.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -106,11 +103,9 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         jScrollPane1.setViewportView(tblSolicitudes);
         if (tblSolicitudes.getColumnModel().getColumnCount() > 0) {
             tblSolicitudes.getColumnModel().getColumn(4).setResizable(false);
-            tblSolicitudes.getColumnModel().getColumn(7).setResizable(false);
-            tblSolicitudes.getColumnModel().getColumn(8).setResizable(false);
         }
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 940, 300));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 1270, 330));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -123,73 +118,73 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 470, 130, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 960, 540));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, 540));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void tblSolicitudesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblSolicitudesMouseClicked
-//        int column = tblSolicitudes.getColumnModel().getColumnIndexAtX(evt.getX());
-//        int row = tblSolicitudes.rowAtPoint(evt.getPoint());
-//
-//        if (row < tblSolicitudes.getRowCount() && row >= 0 && column < tblSolicitudes.getColumnCount() && column >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
-//            String id = (String) tblSolicitudes.getValueAt(row, 0); // Se guarda el valor de la celda (row,0) en la primera columna
-//
-//            int posicion = -1; // Variable para almacenar la posición del elemento encontrado
-//
-//            for (int i = 0; i < this.listSolicitudes.size(); i++) {
-//                SolicitudesM elemento = this.listSolicitudes.get(i);
-//                if (elemento.getCodigo().equals(id)) {
-//                    posicion = i;
-//                    break;
-//                }
-//            }
-//            
-//            Object value = tblSolicitudes.getValueAt(row, column); // Se obtiene el valor de la celda en la columna y fila especificados
-//            if (value instanceof JButton) { // Si el valor de la celda es un boton...
-//                JButton boton = (Button) value;
-//                String textoBoton = boton.getText(); // Se obtiene el texto del boton
-//                switch (textoBoton) { // Según el texto del boton...
-//                    case "Vacío":
-//                        JOptionPane.showMessageDialog(null, "No hay archivo");
-//                        break;
-//                    default:
-//                        try {
-//                            switch (column) {
-//                                case 6:
-//                                    cds.ejecutarArchivoSC(id);
-//                                    break;
-//                                case 7:
-//                                    int respuestaA = JOptionPane.showConfirmDialog(this, "LA ACTUALIZACIÓN DE DOCUMENTOS SERÁ IRREVERSIBLE, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-//                                    if (respuestaA == JOptionPane.YES_OPTION) {
-//                                        cds.aceptarSolicitud(listSolicitudes.get(posicion));
-//                                        JOptionPane.showMessageDialog(null, "LA SOLICITUD DE CAMBIO FUE APROBADA");
-//                                        cerrarVentana();
-//                                        cds.abrirSolicitudCambioGUI(usr);
-//                                    }
-//                                    break;
-//                                case 8:
-//                                    int respuestaE = JOptionPane.showConfirmDialog(this, "LA INFORMACIÓN DE LA SOLICITUD DE CAMBIO SERÁ ELIMINADA, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-//                                    if (respuestaE == JOptionPane.YES_OPTION) {
-//                                        cds.eliminarSolicitud(id);
-//                                        cerrarVentana();
-//                                        JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
-//                                        cds.abrirSolicitudCambioGUI(usr);
-//                                    }
-//                                    break;
-//                            }
-//                        } catch (ClassNotFoundException | SQLException ex) {
-//                            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
-//                        }
-//                        break;
-//                }
-//            }
-//        }
+        int column = tblSolicitudes.getColumnModel().getColumnIndexAtX(evt.getX());
+        int row = tblSolicitudes.rowAtPoint(evt.getPoint());
+
+        if (row < tblSolicitudes.getRowCount() && row >= 0 && column < tblSolicitudes.getColumnCount() && column >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
+            String id = (String) tblSolicitudes.getValueAt(row, 0); // Se guarda el valor de la celda (row,0) en la primera columna
+
+            int posicion = -1; // Variable para almacenar la posición del elemento encontrado
+
+            for (int i = 0; i < this.listSolicitudes.size(); i++) {
+                SolicitudesM elemento = this.listSolicitudes.get(i);
+                if (elemento.getCodigo().equals(id)) {
+                    posicion = i;
+                    break;
+                }
+            }
+
+            Object value = tblSolicitudes.getValueAt(row, column); // Se obtiene el valor de la celda en la columna y fila especificados
+            if (value instanceof JButton) { // Si el valor de la celda es un boton...
+                JButton boton = (Button) value;
+                String textoBoton = boton.getText(); // Se obtiene el texto del boton
+                switch (textoBoton) { // Según el texto del boton...
+                    case "Vacío":
+                        JOptionPane.showMessageDialog(null, "No hay archivo");
+                        break;
+                    default:
+                        try {
+                            switch (column) {
+                                case 9:
+                                    cds.ejecutarArchivoSC(id);
+                                    break;
+                                case 10:
+                                    int respuestaA = JOptionPane.showConfirmDialog(this, "LA ACTUALIZACIÓN DE DOCUMENTOS SERÁ IRREVERSIBLE, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+                                    if (respuestaA == JOptionPane.YES_OPTION) {
+                                        cds.aceptarSolicitud(listSolicitudes.get(posicion));
+                                        JOptionPane.showMessageDialog(null, "LA SOLICITUD DE CAMBIO FUE APROBADA");
+                                        cerrarVentana();
+                                        cds.abrirSolicitudCambioGUI(usr);
+                                    }
+                                    break;
+                                case 11:
+                                    int respuestaE = JOptionPane.showConfirmDialog(this, "LA INFORMACIÓN DE LA SOLICITUD DE CAMBIO SERÁ ELIMINADA, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+                                    if (respuestaE == JOptionPane.YES_OPTION) {
+                                        cds.eliminarSolicitud(id);
+                                        cerrarVentana();
+                                        JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
+                                        cds.abrirSolicitudCambioGUI(usr);
+                                    }
+                                    break;
+                            }
+                        } catch (ClassNotFoundException | SQLException ex) {
+                            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        break;
+                }
+            }
+        }
     }//GEN-LAST:event_tblSolicitudesMouseClicked
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
-//        cerrarVentana();
-//        cds.abrirControlDocumentosGUI(usr);
+        cerrarVentana();
+        cds.abrirControlDocumentosGUI(usr);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     public void cerrarVentana() {
@@ -211,7 +206,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
             };
 
             this.conexion = Conexion.getInstance().getConnection();
-//            listSolicitudes = cds.recuperarSolicitudes(conexion);
+            listSolicitudes = cds.recuperarSolicitudes(conexion);
             DefaultTableModel tableModel = construirModeloTabla();
             tblSolicitudes.setModel(tableModel);
             tblSolicitudes.setRowHeight(40);
@@ -223,11 +218,14 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
     private DefaultTableModel construirModeloTabla() {
         modeloTabla.addColumn("CÓDIGO");
-        modeloTabla.addColumn("NOMBRE");
+        modeloTabla.addColumn("PROCESO");
+        modeloTabla.addColumn("PROCEDIMIENTO");
         modeloTabla.addColumn("REV. ANTERIOR");
         modeloTabla.addColumn("REV. NUEVA");
         modeloTabla.addColumn("ENCARGADO");
+        modeloTabla.addColumn("ACCIÓN");
         modeloTabla.addColumn("TIPO DE ARCHIVO");
+        modeloTabla.addColumn("NOMBRE NUEVO");
         modeloTabla.addColumn("ARCHIVO");
         modeloTabla.addColumn("ACEPTAR");
         modeloTabla.addColumn("DENEGAR");
@@ -235,33 +233,36 @@ public class SolicitudesGUI extends javax.swing.JFrame {
     }
 
     public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-//        modeloTabla.setRowCount(0);
-//        Button boton = new Button();
-//        Button btnAceptar = new Button();
-//        Button btnRechazar = new Button();
-//
-//        boton.setIcon(iconoVer);
-//        btnAceptar.setIcon(iconoAceptar);
-//        btnRechazar.setIcon(iconoRechazar);
-//
-//        if (this.listSolicitudes != null) {
-//            listSolicitudes.stream().map((pro) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-//                Object fila[] = new Object[9];
-//                fila[0] = pro.getCodigo();
-//                fila[1] = pro.getNombre();
-//                fila[2] = pro.getRevAnterior();
-//                fila[3] = pro.getRevNueva();
-//                fila[4] = pro.getEncargado();
-//                fila[5] = pro.getTipoArchivo();
-//                fila[6] = cds.crearBoton(pro.getArchivo(), iconoVer, "Vacío");
-//                fila[7] = btnAceptar;
-//                fila[8] = btnRechazar;
-//                return fila;
-//            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
-//                modeloTabla.addRow(fila);
-//            });
-//        }
-//        tblSolicitudes.setDefaultRenderer(Object.class, new imgTabla());
+        modeloTabla.setRowCount(0);
+        Button boton = new Button();
+        Button btnAceptar = new Button();
+        Button btnRechazar = new Button();
+
+        boton.setIcon(Iconos.ICONO_VER);
+        btnAceptar.setIcon(Iconos.ICONO_ACEPTAR);
+        btnRechazar.setIcon(Iconos.ICONO_RECHAZAR);
+
+        if (this.listSolicitudes != null) {
+            listSolicitudes.stream().map((pro) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
+                Object fila[] = new Object[12];
+                fila[0] = pro.getCodigo();
+                fila[1] = pro.getProceso();
+                fila[2] = pro.getProcedimiento();
+                fila[3] = pro.getRevAnterior();
+                fila[4] = pro.getRevNueva();
+                fila[5] = pro.getEncargado();
+                fila[6] = pro.getAccion();
+                fila[7] = pro.getTipoArchivo();
+                fila[8] = pro.getNombre();
+                fila[9] = cds.crearBoton(pro.getArchivo(), Iconos.ICONO_VER, "Vacío");
+                fila[10] = btnAceptar;
+                fila[11] = btnRechazar;
+                return fila;
+            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
+                modeloTabla.addRow(fila);
+            });
+        }
+        tblSolicitudes.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     /**

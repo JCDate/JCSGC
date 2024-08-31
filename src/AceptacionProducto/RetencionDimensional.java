@@ -34,18 +34,22 @@ import javax.swing.table.TableColumn;
 
 public class RetencionDimensional extends javax.swing.JFrame {
 
+    // Usuario y Conexión a la Base de Datos
     private Usuarios usr;
     private Connection conexion;
 
-    private AceptacionPc1 apc1, apc1Auxiliar;
+    // Objetos para manejar la información de Aceptación Producto
+    private AceptacionPc1 apc1;
+    private AceptacionPc1 apc1Auxiliar;
     private AceptacionPc2 apc2;
-    private AceptacionPc3 apc3, nuevosDatos;
-    private ExcelEditor xls = new ExcelEditor();
-
+    private AceptacionPc3 apc3;
+    private AceptacionPc3 nuevosDatos;
     private AceptacionProducto ap = new AceptacionProducto();
+    
+    // Servicios y Utilidades
+    private ExcelEditor xls = new ExcelEditor();
     private AceptacionProductoServicio aps = new AceptacionProductoServicio();
 
-    private List<AceptacionPc1> ap1m = new ArrayList<>();
     private List<AceptacionPc2> ap2m = new ArrayList<>();
     private List<AceptacionPc3> ap3m = new ArrayList<>();
     private List<AceptacionPc3> listNuevosDatos = new ArrayList<>();
@@ -224,12 +228,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
         });
         jPanel3.add(txtTamLote, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 50, 90, -1));
         jPanel3.add(txtTamMta, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 90, 90, -1));
-
-        txtInspector.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtInspectorActionPerformed(evt);
-            }
-        });
         jPanel3.add(txtInspector, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 10, 80, -1));
         jPanel3.add(txtTurno, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 50, 80, -1));
 
@@ -305,11 +303,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
         pnlPC.add(lblValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
         pnlPC.add(txtFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 90, 280, -1));
 
-        cbxVariable.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cbxVariableActionPerformed(evt);
-            }
-        });
         pnlPC.add(cbxVariable, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 170, 260, -1));
         pnlPC.add(txtValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 250, 290, -1));
 
@@ -401,10 +394,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void txtInspectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtInspectorActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtInspectorActionPerformed
 
     private void txtTamLoteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTamLoteActionPerformed
         // TODO add your handling code here:
@@ -556,10 +545,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Por favor seleccione una fila, es posible que necesite guardar primero la información");
         }
     }//GEN-LAST:event_btnModificarActionPerformed
-
-    private void cbxVariableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxVariableActionPerformed
-
-    }//GEN-LAST:event_cbxVariableActionPerformed
 
     private void inicializarVentanaYComponentes() {
         initComponents();
@@ -760,9 +745,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
         aps.abrirRetencionDimensionalGUI(usr, apc1, apc2);
     }
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">

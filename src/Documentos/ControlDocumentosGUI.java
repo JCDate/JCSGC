@@ -275,8 +275,8 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnDocMejoraContinuaActionPerformed
 
     private void btnSolicitudCambioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudCambioActionPerformed
-//        cds.abrirSolicitudCambioGUI(usr);
-//        cerrarVentana();
+        cds.abrirSolicitudCambioGUI(usr);
+        cerrarVentana();
     }//GEN-LAST:event_btnSolicitudCambioActionPerformed
 
     private void cerrarVentana() {
@@ -289,8 +289,10 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.conexion = Conexion.getInstance().getConnection();
-//        listSolicitudes = cds.recuperarSolicitudes(conexion);
+        listSolicitudes = cds.recuperarSolicitudes(conexion);
 
+        btnSolicitudCambio.setVisible(false);
+        
         if (usr.getId() == 12 || usr.getId() == 8) {
             if (listSolicitudes.isEmpty()) {
                 btnSolicitudCambio.setVisible(false);

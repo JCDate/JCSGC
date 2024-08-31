@@ -254,6 +254,13 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         this.conexion = Conexion.getInstance().getConnection();
+        
+        this.modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
         this.listAP = aps.recuperarAPs(conexion);
 
@@ -314,9 +321,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         return filaSeleccionada < tblAceptacionProducto.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblAceptacionProducto.getColumnCount() && columnaSeleccionada >= 0;
     }
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
