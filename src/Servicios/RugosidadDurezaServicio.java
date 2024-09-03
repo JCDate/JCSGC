@@ -8,11 +8,22 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 public class RugosidadDurezaServicio {
-    
+
     private JTable tbl; // Atributo de la clase
 
+    public RugosidadDurezaServicio() {
+    }
+
     public RugosidadDurezaServicio(JTable tbl) {
-        this.tbl = tbl; // Asignación de la Tabla Ancho/Largo al Atributo
+        this.tbl = tbl; 
+    }
+
+    public JTable getTbl() {
+        return tbl;
+    }
+
+    public void setTbl(JTable tbl) {
+        this.tbl = tbl;
     }
 
     public List<RugosidadDurezaM> recuperarTodas(int a, int b) {
@@ -29,5 +40,5 @@ public class RugosidadDurezaServicio {
         }
         return listaAnchoLargo;
     }
-    
+
 }

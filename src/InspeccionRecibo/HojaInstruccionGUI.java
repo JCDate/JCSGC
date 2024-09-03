@@ -1,170 +1,92 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package InspeccionRecibo;
 
-import InspeccionRecibo.AgregarIrGUI;
-import InspeccionRecibo.InspeccionReciboGUI;
 import Modelos.AnchoLargoM;
 import Modelos.DatosIRM;
 import Modelos.InspeccionReciboM;
 import Modelos.RugosidadDurezaM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
-import Servicios.SQL;
+import Servicios.InspeccionReciboServicio;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
+import javax.swing.JFrame;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author JC
- */
 public class HojaInstruccionGUI extends javax.swing.JFrame {
 
-    Usuarios usr; // Instancia de la clase Usuarios
-    private InspeccionReciboM irm; // Se crea la instancia de inspeccionReciboM
-    private DatosIRM dirm; // Se crea la instancia de datosIRM
-    //Conexion con = new Conexion(); // Se crea la instancia de la clase Conexion
-    Connection conexion; // Se define un objeto de la clase Connection
-    List<AnchoLargoM> listaALM = new ArrayList<>();
-    final String SQL_CONSULTA_INSPECTORES = "SELECT nombre FROM usuarios WHERE id_tipo=?";
-    final String SQL_CONSULTA_CALIBRE = "SELECT DISTINCT medidas FROM calibresir WHERE calibre LIKE ?";
+    // Usuario y Conexión a la base de datos
+    private Usuarios usuario;
+    private Connection conexion;
 
-    /**
-     * Creates new form hojaInstruccion
-     *
-     * @throws java.sql.SQLException
-     * @throws java.lang.ClassNotFoundException
-     */
+    // Objetos para la manipulación de los datos
+    private InspeccionReciboM inspeccionRecibo;
+    private DatosIRM dirm = new DatosIRM();
+
+    // Lista de datos
+    List<AnchoLargoM> listaAnchoLargo = new ArrayList<>();
+    List<String> listaInspectores = new ArrayList<>();
+    List<String> listaDescripcionesMP = new ArrayList<>();
+    List<String> listaMedidas = new ArrayList<>();
+
+    // Servicios y Utilidades
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+
     public HojaInstruccionGUI() throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        inicializarVentana(); // Se inicializan los componente principales
+        inicializarVentanaYComponentes();
     }
 
-    public HojaInstruccionGUI(Usuarios usr, InspeccionReciboM irm) throws SQLException, ClassNotFoundException {
-        initComponents(); 
-        inicializarVentana();
-        this.usr = usr; 
-        this.irm = irm; 
-        this.dirm = new DatosIRM(); // Se crea la instancia de la clase DatosIRM
-        txtHojaInstrucciones.setText(String.valueOf(irm.getNoHoja())); // Se muestra el no. que tiene la hoja de instrucción        
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-        try {
+    public HojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException {
+        inicializarVentanaYComponentes();
+        this.usuario = usuario;
+        this.inspeccionRecibo = inspeccionRecibo;
 
-            PreparedStatement slqNomProv = conexion.prepareStatement(SQL_CONSULTA_INSPECTORES); // Se define la consulta preparada
-            slqNomProv.setInt(1, 5);
-            ResultSet registro = slqNomProv.executeQuery(); // Se ejecuta la consulta preparada
-            while (registro.next()) { // Mientras haya información...
-                String columna = registro.getString("nombre"); // Variable que almacena los diferentes nombres encontrados
-                cbxNombreInspector.addItem(columna); // Se agrega al comboBox
-            }
-        } catch (SQLException ex) { // Se captura la excepción SQLException
-            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        // Obtener la fecha actual
-        Calendar cal = Calendar.getInstance();
-        Date fechaActual = cal.getTime();
-
-        // Establecer la fecha actual como valor predeterminado en el JDateChooser
+        Date fechaActual = Calendar.getInstance().getTime(); // Obtener la fecha actual
         dchFechaInspeccion.setDate(fechaActual);
 
-        try {
-            // Se realizan las consultas SQL
-            PreparedStatement consulta2 = conexion.prepareStatement("SELECT * FROM materiaprimasc WHERE calibre LIKE ? AND descripcionMP LIKE ?");
-            consulta2.setString(1, "%" + irm.getCalibre().substring(0, 2) + "%"); // Establece el valor del marcador de posición
-            consulta2.setString(2, "%" + irm.getpLamina() + "%"); // Establece el valor del marcador de posición
-            ResultSet resultado2 = consulta2.executeQuery();
+        listaDescripcionesMP = irs.recuperarDescripciones(conexion, inspeccionRecibo);
+        listaDescripcionesMP.forEach(cbxDescripcionMP::addItem);
 
-            while (resultado2.next()) {
-                cbxDescripcionMP.addItem(resultado2.getString("descripcionMP"));
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this,"Surgio un error al cargar la información");
-        }
+        listaMedidas = irs.recuperarMedidas(conexion, inspeccionRecibo);
+        listaMedidas.forEach(cbxLamina::addItem);
 
-        try {
-            // Se realizan las consultas SQL
-            PreparedStatement consulta2 = conexion.prepareStatement(SQL_CONSULTA_CALIBRE);
-            consulta2.setString(1, "%" + irm.getCalibre().substring(0, 2) + "%"); // Establece el valor del marcador de posición
-            ResultSet resultado2 = consulta2.executeQuery();
-
-            while (resultado2.next()) {
-
-                cbxLamina.addItem(resultado2.getString("medidas"));
-            }
-        } catch (SQLException e) {
-            // Muestra información detallada del error
-            System.out.println("error");
-        }
-       
     }
 
-    public HojaInstruccionGUI(Usuarios usr, InspeccionReciboM irm, DatosIRM dirm, List<AnchoLargoM> anchoLargoList, List<RugosidadDurezaM> rdList) throws SQLException, ClassNotFoundException {
-        initComponents();
-        inicializarVentana();
-        this.usr = usr; 
-        this.irm = irm; 
-        this.dirm = dirm; 
-        txtHojaInstrucciones.setText(String.valueOf(irm.getNoHoja()));   
+    public HojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo, DatosIRM dirm, List<AnchoLargoM> anchoLargoList, List<RugosidadDurezaM> rdList) throws SQLException, ClassNotFoundException {
+        inicializarVentanaYComponentes();
+        this.usuario = usuario;
+        this.inspeccionRecibo = inspeccionRecibo;
+        this.dirm = dirm;
+
         cbxDescripcionMP.setSelectedItem(dirm.getDescripcionMP());
         cbxLamina.setSelectedItem(dirm.getCalibreLamina());
 
-        try {
-            PreparedStatement slqNomProv = conexion.prepareStatement(SQL_CONSULTA_INSPECTORES); 
-            slqNomProv.setInt(1, 5);
-            ResultSet registro = slqNomProv.executeQuery(); 
-            while (registro.next()) { 
-                String columna = registro.getString("nombre");
-                cbxNombreInspector.addItem(columna);
-            }
-
-        } catch (SQLException ex) {
-            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
-        try {
-            Date fechaInspeccion = formato.parse(dirm.getFechaInspeccion());
-            dchFechaInspeccion.setDate(fechaInspeccion);
-        } catch (ParseException ex) {
-            Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Date fechaInspeccion = irs.formatearFecha(dirm.getFechaInspeccion());
+        dchFechaInspeccion.setDate(fechaInspeccion);
 
         // Obtener el modelo de tabla existente
-        DefaultTableModel modelo = (DefaultTableModel) tblAnchoLargo.getModel();
-        DefaultTableModel modelo2 = (DefaultTableModel) tblRugosidadDureza.getModel();
+        DefaultTableModel modeloTblAnchoLargo = (DefaultTableModel) tblAnchoLargo.getModel();
+        DefaultTableModel modeloTblRugosidadDureza = (DefaultTableModel) tblRugosidadDureza.getModel();
 
         // Limpiar el modelo de tabla
-        modelo.setRowCount(0);
-        modelo2.setRowCount(0);
+        modeloTblAnchoLargo.setRowCount(0);
+        modeloTblRugosidadDureza.setRowCount(0);
 
-        for (AnchoLargoM medida : anchoLargoList) {
-            Object[] fila = {medida.getAncho(), medida.getLargo()};
-            modelo.addRow(fila);
-        }
-        
-        for (RugosidadDurezaM rd : rdList) {
-            Object[] fila = {rd.getRugosidad(), rd.getDureza()};
-            modelo2.addRow(fila);
-        }
+        anchoLargoList.stream().map(medida -> new Object[]{medida.getAncho(), medida.getLargo()}).forEachOrdered(fila -> {
+            modeloTblAnchoLargo.addRow(fila);
+        });
+
+        rdList.stream().map(rd -> new Object[]{rd.getRugosidad(), rd.getDureza()}).forEachOrdered(fila -> {
+            modeloTblRugosidadDureza.addRow(fila);
+        });
 
         if (dirm.getAceptacion() == 1) {
             chkAceptacion.setSelected(true);
@@ -173,21 +95,30 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
             chkAceptacion.setSelected(false);
             chkRechazo.setSelected(true);
         }
-        tblAnchoLargo.setModel(modelo);
-        tblRugosidadDureza.setModel(modelo2);
+        tblAnchoLargo.setModel(modeloTblAnchoLargo);
+        tblRugosidadDureza.setModel(modeloTblRugosidadDureza);
+
     }
 
-    public final void inicializarVentana() throws SQLException, ClassNotFoundException {
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setDefaultCloseOperation(0); // Se deshabilita el boton de cerrar de la ventana
+    public final void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
+
+        txtHojaInstrucciones.setText(String.valueOf(inspeccionRecibo.getNoHoja()));
+
+        listaInspectores = irs.recuperarInspectores(conexion);
+        listaInspectores.forEach(cbxNombreInspector::addItem);
+
     }
 
     @Override
     public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().
-                getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
-        return retValue; // Se retorna la imagen
+                getImage(ClassLoader.getSystemResource("jc/img/jc.png")); 
+        return retValue; 
     }
 
     /**
@@ -370,11 +301,6 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         jLabel2.setText("INSPECTOR:");
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 120, -1, -1));
 
-        cbxNombreInspector.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cbxNombreInspectorActionPerformed(evt);
-            }
-        });
         jPanel1.add(cbxNombreInspector, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 110, 270, 30));
 
         cbxObservacionesMP.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MATERIAL DENTRO DE ESPECIFICACIÓN", "MATERIAL FUERA DE ESPECIFICACIÓN (CUARENTENA)", "MATERIAL DAÑADO DE ESPECIFICACIÓN (CUARENTENA)" }));
@@ -419,61 +345,36 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void chkAceptacionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkAceptacionActionPerformed
-        chkRechazo.setSelected(false); // Se cambia el estado del checkbox de rechazo
+        chkRechazo.setSelected(false);
     }//GEN-LAST:event_chkAceptacionActionPerformed
 
     private void btnContinuarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContinuarActionPerformed
-        // Agregar Campos
-        String fechaInspeccion = "";
         if (dchFechaInspeccion.getDate() != null) {
-            Date selectedDate = dchFechaInspeccion.getDate(); // Obtén la fecha seleccionada
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Crea un objeto SimpleDateFormat para el formato deseado
-            String formattedDate = dateFormat.format(selectedDate); // Formatea la fecha y guárdala en una variable String
-            fechaInspeccion = formattedDate; // Se almacenan los datos capturados en las variable
+            Date fechaSeleccionada = dchFechaInspeccion.getDate();
+            String fechaFormateada = irs.formatearFecha(fechaSeleccionada);
+            dirm.setFechaInspeccion(fechaFormateada);
         }
 
-        dirm.setFechaInspeccion(fechaInspeccion); // Se guarda la fecha
-        dirm.setObsMP(cbxObservacionesMP.getSelectedItem().toString()); // Se guarda los comentarios del apartado "Disposición de Materia Prima"
-        dirm.setObservacionesRD(txtObservacionesRD.getText()); // Se guarda los comentarios del apartado "Observaciones a los resultados Dimensionales
-        dirm.setAceptacion(chkAceptacion.isSelected() ? 1 : 0); // Si el checkbox de Aceptación es seleccionado, el valor de aceptación es 1, sino, es 0
-        dirm.setNoHoja(txtHojaInstrucciones.getText()); // Se Captura el No. de Hoja de Instrucción
-        dirm.setDescripcionMP(cbxDescripcionMP.getSelectedItem().toString()); // Se Captura la descripción de materia prima
-        dirm.setCalibreLamina(cbxLamina.getSelectedItem().toString()); // Se Captura el calibre de la lamina
+        dirm.setObsMP(cbxObservacionesMP.getSelectedItem().toString());
+        dirm.setObservacionesRD(txtObservacionesRD.getText());
+        dirm.setAceptacion(chkAceptacion.isSelected() ? 1 : 0);
+        dirm.setNoHoja(txtHojaInstrucciones.getText());
+        dirm.setDescripcionMP(cbxDescripcionMP.getSelectedItem().toString());
+        dirm.setCalibreLamina(cbxLamina.getSelectedItem().toString());
         dirm.setInspector(cbxNombreInspector.getSelectedItem().toString());
 
-        /* SQL s = new SQL(); // Se crea la instancia de la clase SQL para que el idAnchoLargo se genere automáticamente
-        int codigo = s.autoIncremento("SELECT MAX(idAnchoLargo) FROM datosir"); // Se obitene el máximo valor del campo idAnchoLargo y se le aumenta 1
-
-        dirm.setAnchoLargo(codigo); // Se guarda el valor capturado.    */
-        HojaInstruccionGUI.this.dispose(); // Se liberan los recursos de la ventana
-
-        try {
-            EspecificacionesGUI ir = new EspecificacionesGUI(usr, this.dirm, this.irm, tblAnchoLargo, tblRugosidadDureza); // Se crea la instancia de la clase EspecificacionesGUI y se mandan los objetos de las clases  datosIRM, inspeccionReciboM y AnchoLargoM
-            ir.setVisible(true); // Se muestra visible la ventana
-            ir.setLocationRelativeTo(null); // La ventana se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) { // Atrapa los errores definidos
-            Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana();
+        irs.abrirEspecificacionesGUI(usuario, dirm, inspeccionRecibo, tblAnchoLargo, tblRugosidadDureza);
     }//GEN-LAST:event_btnContinuarActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        HojaInstruccionGUI.this.dispose(); // Se liberan los recursos de la interfaz
-        try {
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); // Se crea una instancia de la interfaz gráfica
-            irGUI.setVisible(true); // Se hace visible la ventana
-            irGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        } catch (SQLException | ClassNotFoundException ex) { // Atrapa los errores definidos
-            Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana();
+        irs.abrirInspeccionReciboGUI(usuario);
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void chkRechazoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRechazoActionPerformed
         chkAceptacion.setSelected(false); // Se cambia el estado del checkbox de aceptación
     }//GEN-LAST:event_chkRechazoActionPerformed
-
-    private void cbxNombreInspectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxNombreInspectorActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cbxNombreInspectorActionPerformed
 
     private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
         if (chkHoy.isSelected()) {
@@ -482,6 +383,10 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
             dchFechaInspeccion.setDate(null);
         }
     }//GEN-LAST:event_chkHoyActionPerformed
+
+    public void cerrarVentana() {
+        HojaInstruccionGUI.this.dispose();
+    }
 
     /**
      * @param args the command line arguments

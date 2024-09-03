@@ -5,16 +5,14 @@ import Servicios.imgTabla;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
+import Servicios.GeneradorExcel;
 import Servicios.InspeccionReciboServicio;
 import java.awt.Color;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -43,14 +41,13 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     // Servicios y Utilidades
     private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private GeneradorExcel excel = new GeneradorExcel();
 
     // Lista de registros de Inspección Recibo
     private List<InspeccionReciboM> listaInspeccionRecibo;
 
     // Objeto filtrador de campos de la tabla
     private TableRowSorter<DefaultTableModel> trs;
-
-    private toExcel excel = new toExcel();
 
     // Columnas de la tabla
     private static final int COLUMN_NO_HOJA = 0;
@@ -74,6 +71,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     public InspeccionReciboGUI(Usuarios usuario) {
         this.usuario = usuario;
         inicializarVentanaYComponentes();
+        
     }
 
     @Override
@@ -286,63 +284,49 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         int filaSeleccionada = tblInspeccionRecibo.getSelectedRow();
         if (filaSeleccionada != -1) {
             cerrarVentana();
-            irs.abrirModi
-
-            try {
-                ModificarIrGUI modificar = new ModificarIrGUI(listaInspeccionRecibo.get(filaSeleccionada), usuario); // Se crea la instancia de la clase ModificarIrGUI
-                modificar.setVisible(true); // Se muestra visible la ventana 
-                modificar.setLocationRelativeTo(null); // Se coloca en el centro de la pantalla
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            irs.abrirModificarIrGUI(listaInspeccionRecibo.get(filaSeleccionada), usuario);
         } else {
             JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
         }
     }//GEN-LAST:event_btnModificarActionPerformed
 
     private void tblInspeccionReciboMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblInspeccionReciboMouseClicked
-        int column = tblInspeccionRecibo.getColumnModel().getColumnIndexAtX(evt.getX());
-        int row = tblInspeccionRecibo.rowAtPoint(evt.getPoint()); // Obtener la fila en base a las coordenadas del evento
+        int columnaSeleccionada = tblInspeccionRecibo.getColumnModel().getColumnIndexAtX(evt.getX());
+        int filaSeleccionada = tblInspeccionRecibo.rowAtPoint(evt.getPoint());
 
-        if (row < tblInspeccionRecibo.getRowCount() && row >= 0 && column < tblInspeccionRecibo.getColumnCount() && column >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
-            String id = (String) tblInspeccionRecibo.getValueAt(row, 0); // Se guarda el valor de la celda (row,0) en la primera columna
-            int posicion = -1; // Variable para almacenar la posición del elemento encontrado
+        if (esCeldaValida(filaSeleccionada, columnaSeleccionada)) {
+            String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, 0);
+            int posicion = -1;
 
-            for (int i = 0; i < this.irm.size(); i++) {
-                InspeccionReciboM elemento = this.irm.get(i);
-                if (elemento.getNoHoja().equals(id)) {
+            for (int i = 0; i < listaInspeccionRecibo.size(); i++) {
+                InspeccionReciboM elemento = listaInspeccionRecibo.get(i);
+                if (elemento.getNoHoja().equals(noHoja)) {
                     posicion = i;
-                    break; // Si solo quieres encontrar la primera posición coincidente, puedes salir del bucle
+                    break;
                 }
             }
 
-            Object value = tblInspeccionRecibo.getValueAt(row, column); // Se obtiene el valor de la celda en la columna y fila especificados
-            if (value instanceof JButton) { // Si el valor de la celda es un boton...
+            Object value = tblInspeccionRecibo.getValueAt(filaSeleccionada, columnaSeleccionada);
+
+            if (value instanceof JButton) {
                 JButton boton = (Button) value;
-                String textoBoton = boton.getText(); // Se obtiene el texto del boton
-                switch (textoBoton) { // Según el texto del boton...
+                String textoBoton = boton.getText();
+                switch (textoBoton) {
                     case "Vacio":
                         JOptionPane.showMessageDialog(null, "No hay archivo");
                         break;
                     case "Realizar":
-                        InspeccionReciboGUI.this.dispose(); // Se liberan los recursos del sistema
-                        try {
-                            HojaInstruccionGUI hj = new HojaInstruccionGUI(usuario, this.irm.get(posicion)); // Se crea la instancia para ir a la ventana de HojaInstruccionGUI
-                            hj.setVisible(true); // Se pone en visible la ventana
-                            hj.setLocationRelativeTo(null);   // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema
-                        } catch (SQLException | ClassNotFoundException ex) {
-                            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+                        cerrarVentana();
+                        irs.abrirHojaInstruccionGUI(usuario, listaInspeccionRecibo.get(posicion));
                         break;
                     default:
                         try {
-                            if (column == 10 || column == 11) { // Si le dio a ver factura o ver certificado
-                                irs.ejecutarArchivoPDF(id, column);
-                                Desktop.getDesktop().open(new File("nuevoArchivo.pdf"));
-                            } else if (column == 12) {
-                                irs.ejecutarArchivoXLSX(id, column);
+                            if (columnaSeleccionada == 10 || columnaSeleccionada == 11) {
+                                irs.ejecutarArchivoPDF(noHoja, columnaSeleccionada);
+                            } else if (columnaSeleccionada == 12) {
+                                irs.ejecutarArchivoXLSX(noHoja, columnaSeleccionada);
                             }
-                        } catch (ClassNotFoundException | SQLException | IOException ex) {
+                        } catch (ClassNotFoundException | SQLException ex) {
                             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
                         }
                         break;
@@ -353,7 +337,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void btnToExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnToExcelActionPerformed
         try {
-            excel.WriteExcelIR(); // Generar el excel
+            excel.generarInspeccionReciboXLS(); // Generar el excel
         } catch (SQLException | ParseException ex) {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -366,7 +350,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             public void keyReleased(final KeyEvent ke) {
                 String cadena = (txtBuscador.getText());
                 txtBuscador.setText(cadena);
-                filtroBuscador();
+                filtrarTabla();
             }
         });
         trs = new TableRowSorter(tblInspeccionRecibo.getModel());
@@ -471,15 +455,19 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         }
     }
 
-    public void filtroBuscador() {
+    public void filtrarTabla() {
         String filtro = txtBuscador.getText();
         try {
-            RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(filtro, 2, 3, 5, 7); // Crea un filtro que coincida en cualquier columna con el texto ingresado
-            trs.setRowFilter(rowFilter); // Aplica el filtro al TableRowSorter
+            RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter(filtro, 2, 3, 5, 7);
+            trs.setRowFilter(filtroFila);
         } catch (PatternSyntaxException e) {
-            // Si la expresión regular es inválida, no aplicar ningún filtro
             trs.setRowFilter(null);
         }
+    }
+
+    private boolean esCeldaValida(int fila, int columna) {
+        return fila >= 0 && fila < tblInspeccionRecibo.getRowCount()
+                && columna >= 0 && columna < tblInspeccionRecibo.getColumnCount();
     }
 
     /**

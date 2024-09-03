@@ -7,7 +7,6 @@ import Servicios.ExcelFormato;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.InspeccionReciboServicio;
-import Servicios.SQL;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -17,11 +16,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
@@ -31,84 +27,55 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import Servicios.AnchoLargoServicio;
-import Servicios.HojaInstruccionServicio;
+import Servicios.GeneradorExcel;
 import java.util.Date;
 import java.util.List;
+import javax.swing.JFrame;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 
-/**
- *
- * @author JC
- */
 public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
-    Usuarios usr; // Instancia de la clase Usuarios
-    public String rutaArchivo, patron;
-    final String SQL_CONSULTA_INSPECTORES = "SELECT nombre FROM usuarios WHERE id_tipo=?";
-    private Cell celdaFecha, cellObservacionesMP, cellObservaciones, cellDescripcionMP, cellCalibreLamina, cellInspector, cellAR, cellAR2, cellNoHoja;
-    private DatosIRM dirm; // Se crea la instancia de datosIRM
-    Connection conexion; // Se define un objeto de la clase Connection
-    SQL s = new SQL();
-    ExcelFormato formato = new ExcelFormato(); // Clase para aplicar formatos de Excel
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Instancia de la clase InspeccionReciboServicio
-    FileOutputStream fos;
-    private HojaInstruccionServicio his = new HojaInstruccionServicio();
-    FileInputStream fileInputStream;
-    XSSFWorkbook workbook;
-    InspeccionReciboM irm;
+    // Usuario y Conexión a la base de datos
+    private Usuarios usuario;
+    private Connection conexion;
 
-    private List al = new ArrayList<>();
-    private AnchoLargoServicio als;
+    // Lista de proveedores
+    List<String> listaInspectores = new ArrayList<>();
 
-    /**
-     * Creates new form hojaInstruccion
-     *
-     * @throws java.sql.SQLException
-     * @throws java.lang.ClassNotFoundException
-     */
+    // Servicios y Utilidades
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private AnchoLargoServicio als = new AnchoLargoServicio();
+    private GeneradorExcel excel = new GeneradorExcel();
+    private ExcelFormato formato = new ExcelFormato();
+
+    // Objetos para la manipulación de los datos
+    private InspeccionReciboM inspeccionRecibo;
+    private DatosIRM dirm = new DatosIRM();
+    
+    // Objetos para editar el archivo Excel
+    private XSSFWorkbook workbook;
+    private Sheet hoja1;
+    
+    // Objetos para el formato de la fecha y para guardar la ruta del archivo Excel
+    private String formatoFecha;
+    private String rutaArchivo;
+
     public HojaInstruccionGUI2() throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        inicializarVentanaYComponentes(); // Se inicializan los componente principales
-    }
-
-    public HojaInstruccionGUI2(Usuarios usr, String rutaArchivo, InspeccionReciboM irm) throws SQLException, ClassNotFoundException, IOException {
         inicializarVentanaYComponentes();
-        this.usr = usr; // Se asigna el valor de la instancia de usuarios
-        this.irm = irm;
-        this.rutaArchivo = rutaArchivo; // Se asigna el valor de la instancia de InspeccionReciboM
-        this.dirm = new DatosIRM(); // Se crea la instancia de la clase DatosIRM
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-        this.als = new AnchoLargoServicio(tblAnchoLargo);
-        fileInputStream = new FileInputStream(new File(rutaArchivo));
-        workbook = new XSSFWorkbook(fileInputStream);
-        leerYModificarExcel();
     }
 
-    public final void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        this.setResizable(false); // Se define que no se puede redimensionar
-        this.setDefaultCloseOperation(0); // Se deshabilita el boton de cerrar de la ventana
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-
-        try {
-
-            PreparedStatement slqNomProv = conexion.prepareStatement(SQL_CONSULTA_INSPECTORES); // Se define la consulta preparada
-            slqNomProv.setInt(1, 5);
-            ResultSet registro = slqNomProv.executeQuery(); // Se ejecuta la consulta preparada
-            while (registro.next()) { // Mientras haya información...
-                String columna = registro.getString("nombre"); // Variable que almacena los diferentes nombres encontrados
-                cbxNombreInspector.addItem(columna); // Se agrega al comboBox
-            }
-        } catch (SQLException ex) { // Se captura la excepción SQLException
-            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public HojaInstruccionGUI2(Usuarios usuario, String rutaArchivo, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException, IOException {
+        this.usuario = usuario;
+        this.inspeccionRecibo = inspeccionRecibo;
+        this.rutaArchivo = rutaArchivo;
+        inicializarVentanaYComponentes();
     }
 
     @Override
     public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
-        return retValue; // Se retorna la imagen
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
+        return retValue;
     }
 
     /**
@@ -280,11 +247,6 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         jLabel2.setText("INSPECTOR:");
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 120, -1, -1));
 
-        cbxNombreInspector.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cbxNombreInspectorActionPerformed(evt);
-            }
-        });
         jPanel1.add(cbxNombreInspector, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 110, 270, 30));
 
         cbxObservacionesMP.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MATERIAL DENTRO DE ESPECIFICACIÓN", "MATERIAL FUERA DE ESPECIFICACIÓN (CUARENTENA)", "MATERIAL DAÑADO DE ESPECIFICACIÓN (CUARENTENA)" }));
@@ -320,42 +282,25 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void chkAceptacionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkAceptacionActionPerformed
-        chkRechazo.setSelected(false); // Se cambia el estado del checkbox de rechazo
+        chkRechazo.setSelected(false);
     }//GEN-LAST:event_chkAceptacionActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        HojaInstruccionGUI2.this.dispose(); // Se liberan los recursos de la interfaz
-        try {
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); // Se crea una instancia de la interfaz gráfica
-            irGUI.setVisible(true); // Se hace visible la ventana
-            irGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        } catch (SQLException | ClassNotFoundException ex) { // Atrapa los errores definidos
-            Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana();
+        irs.abrirInspeccionReciboGUI(usuario);
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void chkRechazoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRechazoActionPerformed
-        chkAceptacion.setSelected(false); // Se cambia el estado del checkbox de aceptación
+        chkAceptacion.setSelected(false);
     }//GEN-LAST:event_chkRechazoActionPerformed
-
-    private void cbxNombreInspectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxNombreInspectorActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cbxNombreInspectorActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         try {
-
-            this.dispose();
-            try {
-                ModificarIrGUI modificar = new ModificarIrGUI(irm, usr, guardarCambios(rutaArchivo)); // Se crea la instancia de la clase ModificarIrGUI
-                modificar.setVisible(true); // Se muestra visible la ventana 
-                modificar.setLocationRelativeTo(null); // Se coloca en el centro de la pantalla
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
+            cerrarVentana();
+            irs.abrirModificarIrGUI(inspeccionRecibo, usuario, guardarCambios(rutaArchivo));
         } catch (IOException | ParseException ex) {
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
+            irs.manejarExcepcion("Error al abrir ModificarGUI", ex);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
@@ -367,70 +312,59 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_chkHoyActionPerformed
 
-    private void leerYModificarExcel() throws IOException {
-        fileInputStream = new FileInputStream(new File(rutaArchivo));
-        workbook = new XSSFWorkbook(fileInputStream);
-        Sheet sheet = workbook.getSheetAt(0); // Obtener la primera hoja
+    public final void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
 
-        // Se obtienen los datos y se muestran
-        Row fila1 = sheet.getRow(5);
-        cellNoHoja = fila1.getCell(2);
-        int year = Calendar.getInstance().get(Calendar.YEAR);
-        String codigoHoja = s.getCodigoHoja(irs.SELECT_NO_HOJA_INSTRUCCION_SQL, year);
-        String nuevoCodigo = s.obtenerSiguiente(codigoHoja, String.valueOf(year));
-        txtHojaInstrucciones.setText(irm.getNoHoja()); // Se genera automaticamente el no. de hoja de Instrucción
+        listaInspectores = irs.recuperarInspectores(conexion);
+        listaInspectores.forEach(cbxNombreInspector::addItem);
 
-        // Patrón de formato de fecha
-        patron = "d 'de' MMMM 'de' yyyy";
+        als.setTbl(tblAnchoLargo);
 
-        // Crear un objeto SimpleDateFormat con el patrón
-        SimpleDateFormat sdf = new SimpleDateFormat(patron);
-
-        celdaFecha = fila1.getCell(6);
         try {
-            dchFechaInspeccion.setDate(sdf.parse(celdaFecha.getStringCellValue()));
+            leerDatosExcel();
+        } catch (IOException ex) {
+            Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
+            irs.manejarExcepcion("Error al cargar el archivo excel: ", ex);
+        }
+    }
+
+    private void leerDatosExcel() throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(new File(rutaArchivo));
+        workbook = new XSSFWorkbook(fileInputStream);
+        hoja1 = workbook.getSheetAt(0); // Obtener la primera hoja        
+
+        txtHojaInstrucciones.setText(inspeccionRecibo.getNoHoja());
+        formatoFecha = "d 'de' MMMM 'de' yyyy";
+        SimpleDateFormat sdf = new SimpleDateFormat(formatoFecha);
+
+        try {
+            dchFechaInspeccion.setDate(sdf.parse(excel.getDatosCeldas(hoja1, 5, 6)));
         } catch (ParseException ex) {
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        Row fila2 = sheet.getRow(9);
-        cellDescripcionMP = fila2.getCell(1);
-
-        Row fila3 = sheet.getRow(13);
-        cellCalibreLamina = fila3.getCell(1);
-
-        Row fila5 = sheet.getRow(34);
-        cellObservaciones = fila5.getCell(1);
-
-        Row fila6 = sheet.getRow(42);
-        cellObservacionesMP = fila6.getCell(1);
-
-        Row fila7 = sheet.getRow(60);
-        cellInspector = fila7.getCell(1);
-
-        cbxNombreInspector.setSelectedItem(cellInspector.getStringCellValue());
-
-        txtDescripcionMP.setText(cellDescripcionMP.getStringCellValue());
-        txtToleranciaLamina.setText(cellCalibreLamina.getStringCellValue());
-        txtObservacionesRD.setText(cellObservaciones.getStringCellValue());
-        cbxObservacionesMP.setSelectedItem(cellObservacionesMP.getStringCellValue());
+        txtDescripcionMP.setText(excel.getDatosCeldas(hoja1, 9, 1));
+        txtToleranciaLamina.setText(excel.getDatosCeldas(hoja1, 13, 1));
+        txtObservacionesRD.setText(excel.getDatosCeldas(hoja1, 34, 1));
+        cbxObservacionesMP.setSelectedItem(excel.getDatosCeldas(hoja1, 42, 1));
+        cbxNombreInspector.setSelectedItem(excel.getDatosCeldas(hoja1, 60, 1));
 
         // Tabla Ancho/Largo
         int numFila = 20;
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 2; j++) {
-                Row fila4 = sheet.getRow(numFila);
-                Cell cellAnchoLargo = fila4.getCell(1);
+                Row filaAnchoLargo = hoja1.getRow(numFila);
+                Cell cellAnchoLargo = filaAnchoLargo.getCell(1);
                 tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, j);
             }
             numFila++;
         }
 
-        Row fila8 = sheet.getRow(39);
-        cellAR = fila8.getCell(2);
-        cellAR2 = fila8.getCell(7);
-
-        if (cellAR.getStringCellValue().equalsIgnoreCase("√")) {
+        if (excel.isAceptacion(hoja1, 39, 2)) {
             chkAceptacion.setSelected(true);
             chkRechazo.setSelected(false);
         } else {
@@ -440,71 +374,62 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     }
 
     public String guardarCambios(String nuevaRutaArchivo) throws FileNotFoundException, IOException, ParseException {
-        // Agregar Campos
         String fechaInspeccion = "";
         if (dchFechaInspeccion.getDate() != null) {
-            Date selectedDate = dchFechaInspeccion.getDate(); // Obtén la fecha seleccionada
-            SimpleDateFormat dateFormat = new SimpleDateFormat(patron); // Crea un objeto SimpleDateFormat para el formato deseado
-            String formattedDate = dateFormat.format(selectedDate); // Formatea la fecha y guárdala en una variable String
-            fechaInspeccion = formattedDate; // Se almacenan los datos capturados en las variable
+            Date selectedDate = dchFechaInspeccion.getDate();
+            SimpleDateFormat dateFormat = new SimpleDateFormat(formatoFecha);
+            String formattedDate = dateFormat.format(selectedDate);
+            fechaInspeccion = formattedDate;
         }
 
-        celdaFecha.setCellValue(fechaInspeccion); // Se guarda la fecha
-        cellObservacionesMP.setCellValue(cbxObservacionesMP.getSelectedItem().toString()); // Se guarda los comentarios del apartado "Disposición de Materia Prima"
-        cellObservaciones.setCellValue(txtObservacionesRD.getText()); // Se guarda los comentarios del apartado "Observaciones a los resultados Dimensionales
-
-        cellDescripcionMP.setCellValue(txtDescripcionMP.getText()); // Se Captura la descripción de materia prima
-        cellCalibreLamina.setCellValue(txtToleranciaLamina.getText()); // Se Captura el calibre de la lamina
-        cellInspector.setCellValue(cbxNombreInspector.getSelectedItem().toString());
+        excel.setDatosCeldas(hoja1, 5, 6, fechaInspeccion); // Fecha de Inspección
+        excel.setDatosCeldas(hoja1, 9, 1, txtDescripcionMP.getText()); // DescripciónMP
+        excel.setDatosCeldas(hoja1, 13, 1, txtToleranciaLamina.getText()); // Calibre Lamina
+        excel.setDatosCeldas(hoja1, 34, 1, txtObservacionesRD.getText()); // ObservacionesRD
+        excel.setDatosCeldas(hoja1, 42, 1, cbxObservacionesMP.getSelectedItem().toString()); // ObservacionesMP
+        excel.setDatosCeldas(hoja1, 60, 1, cbxNombreInspector.getSelectedItem().toString()); // Inspector
 
         if (chkAceptacion.isSelected()) {
-            cellAR.setCellValue("√");
-            cellAR2.setCellValue("");
+            excel.setDatosCeldas(hoja1, 39, 2, "√"); // Aceptación
+            excel.setDatosCeldas(hoja1, 39, 7, ""); // Rechazo
         } else {
-            cellAR.setCellValue("");
-            cellAR2.setCellValue("√");
+            excel.setDatosCeldas(hoja1, 39, 2, ""); // Aceptación
+            excel.setDatosCeldas(hoja1, 39, 7, "√"); // Rechazo
         }
 
         String[] partes = txtHojaInstrucciones.getText().split("/"); // Se divide el valor de NoHoja para solo obtener el número
         String numeroStr = partes[1];
         int numero = Integer.parseInt(numeroStr);
-        if (numero < 10) { // Eliminar ceros a la izquierda
+        if (numero < 10) {
             numeroStr = String.valueOf(numero);
         }
-        int numeroFila = 20; // Tabla Ancho/Largo
+        int numeroFila = 20; // indice de la Tabla Ancho/Largo
         try {
-            Sheet sheet = workbook.getSheetAt(0); // Obtener la primera hoja
-            int idIR = his.getId(conexion, this.irm); // Se obtiene el id de la hoja de instrucción
-            al = als.recuperarTodas(idIR, dirm.getAnchoLargo());
+            int idHojaInstruccion = irs.getIdHI(conexion, inspeccionRecibo);
+            List anchoLargo = als.capturarValores(idHojaInstruccion, dirm.getAnchoLargo());
 
-            for (int i = 0; i < al.size(); i++) { // Se imprimen los valores de ancho y largo del componente
-                AnchoLargoM medida = (AnchoLargoM) al.get(i);
-                Row row = sheet.getRow(numeroFila);
-                if (row == null) {
-                    row = sheet.createRow(numeroFila);
-                }
+            for (int i = 0; i < anchoLargo.size(); i++) {
+                AnchoLargoM medida = (AnchoLargoM) anchoLargo.get(i);
+                Row row = hoja1.getRow(numeroFila);
 
-                Cell cellAncho = row.createCell(1); // Celda para el ancho
-                cellAncho.setCellValue(medida.getAncho());
-
-                Cell cellLargo = row.createCell(2); // Celda para el largo
-                cellLargo.setCellValue(medida.getLargo());
+                excel.setDatosCeldas(hoja1, numeroFila, 1, medida.getAncho()); // Ancho
+                excel.setDatosCeldas(hoja1, numeroFila, 2, medida.getLargo()); // Largo
 
                 numeroFila++;
 
                 //Aplicación del formato
-                cellAncho.setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
-                cellLargo.setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+                row.getCell(1).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+                row.getCell(2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
             }
         } catch (SQLException ex) {
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        Date selectedDate = dchFechaInspeccion.getDate(); // Obtén la fecha seleccionada
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy"); // Crea un objeto SimpleDateFormat para el formato deseado
-        String formattedDate = dateFormat.format(selectedDate); // Formatea la fecha y guárdala en una variable String
-        cellNoHoja.setCellValue(numeroStr); // Cambiar el nombre de la Hoja con el número previamente obtenido
-        nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(formattedDate) + ".xlsx ";  // Ruta del nuevo archivo de Excel
+        Date fechaSeleccionada = dchFechaInspeccion.getDate();
+        String fechaFormateada = irs.formatearFecha(fechaSeleccionada);
+        excel.setDatosCeldas(hoja1, 5, 1, numeroStr);
+
+        nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(fechaFormateada) + ".xlsx ";
 
         try (FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo)) {
             workbook.write(fos);
@@ -512,11 +437,11 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
         return nuevaRutaArchivo;
     }
-
-    public FileOutputStream getFos() {
-        return fos;
+    
+    public void cerrarVentana() {
+        HojaInstruccionGUI2.this.dispose();
     }
-
+    
     public String getRutaArchivo() {
         return rutaArchivo;
     }

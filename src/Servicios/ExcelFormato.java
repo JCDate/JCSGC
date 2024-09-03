@@ -185,5 +185,21 @@ public class ExcelFormato {
         
         return estilo;
     }
+    
+    
+    
+    public XSSFCellStyle formatoMeses(XSSFWorkbook workbook) {
+        XSSFCellStyle estilo = workbook.createCellStyle();
+        estilo.setVerticalAlignment(VerticalAlignment.CENTER);
+        estilo.setAlignment(HorizontalAlignment.CENTER);
+        estilo.setRotation((short) 180);
+        
+        return estilo;
+    }
+    
+    
+    
+    
+    
 
 }

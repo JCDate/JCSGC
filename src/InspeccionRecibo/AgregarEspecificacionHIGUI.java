@@ -12,21 +12,24 @@ import javax.swing.JOptionPane;
 
 public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
+    // Usuario y Conexión a la base de datos
+    private Usuarios usuario;
     private Connection conexion;
+    
+    // Servicios y Utilidades
     private InspeccionReciboServicio irs = new InspeccionReciboServicio();
 
     public AgregarEspecificacionHIGUI() {
         inicializarVentanaYComponentes();
     }
 
-    public AgregarEspecificacionHIGUI(Connection conexion, Usuarios usr) {
-        this.usr = usr;
+    public AgregarEspecificacionHIGUI(Connection conexion, Usuarios usuario) {
+        this.usuario = usuario;
         inicializarVentanaYComponentes();
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); 
         return retValue;
     }
@@ -102,7 +105,7 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         String especificacion = txtNuevaEspecificacion.getText();
-        this.irs.agregarEspecificacion(conexion, especificacion);
+        irs.agregarEspecificacion(conexion, especificacion);
         JOptionPane.showMessageDialog(this, "Se añadio la nueva especificación correctamente");
     }//GEN-LAST:event_btnGuardarActionPerformed
 

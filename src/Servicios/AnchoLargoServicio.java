@@ -19,12 +19,23 @@ import javax.swing.table.DefaultTableModel;
 public class AnchoLargoServicio {
 
     private JTable tbl; // Atributo de la clase
+    
+    public AnchoLargoServicio() {
+    }
 
     public AnchoLargoServicio(JTable tbl) {
         this.tbl = tbl; // Asignación de la Tabla Ancho/Largo al Atributo
     }
 
-    public List<AnchoLargoM> recuperarTodas(int a, int b) {
+    public JTable getTbl() {
+        return tbl;
+    }
+
+    public void setTbl(JTable tbl) {
+        this.tbl = tbl;
+    }
+
+    public List<AnchoLargoM> capturarValores(int a, int b) {
         List<AnchoLargoM> listaAnchoLargo = new ArrayList<>(); // La lista para almacenar los valores de ancho y largo
         DefaultTableModel model = (DefaultTableModel) tbl.getModel(); // Se obtiene el modelo de la tabla
 

@@ -306,44 +306,6 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         rutaArchivoHojaInstruccion = irs.abrirHojaInstruccionGUI2(usuario, rutaAuxiliar, inspeccionRecibo);
     }//GEN-LAST:event_btnAgregarHojaInstruccionesActionPerformed
 
-    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
-        File archivoSeleccionado = this.irs.seleccionarArchivo(this);
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName();
-            rutaArchivo = archivoSeleccionado.getAbsolutePath();
-            textField.setText(nombreArchivo);
-        }
-        return rutaArchivo;
-    }
-
-    public void cerrarVentana() {
-        ModificarIrGUI.this.dispose();
-    }
-
-    private void modificarDatos() {
-        try {
-            irs.modificar(conexion, inspeccionRecibo, inspeccionReciboOriginal);
-            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
-            cerrarVentana();
-            irs.abrirInspeccionReciboGUI(usuario);
-        } catch (SQLException ex) {
-            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Ha surgido un error al actualizar el registro: " + ex);
-        }
-    }
-
-    public void seleccionarCertificado() {
-        rutaArchivoCertificado = seleccionarArchivoCertificado(txtNombreCertificado, rutaArchivoCertificado);
-    }
-
-    public void seleccionarFactura() {
-        rutaArchivoFactura = seleccionarArchivoCertificado(txtNombreFactura, rutaArchivoFactura);
-    }
-
-    public void seleccionarHojaInstruccion() {
-        rutaArchivoHojaInstruccion = seleccionarArchivoCertificado(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
-    }
-
     private void inicializarVentanaYComponentes() {
         initComponents();
         this.setResizable(false);
@@ -379,13 +341,8 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     }
 
     private void establecerFechaFactura() {
-        try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            Date fechaFactura = dateFormat.parse(inspeccionRecibo.getFechaFactura());
-            dchFechaFactura.setDate(fechaFactura);
-        } catch (ParseException e) {
-            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.WARNING, "Error al parsear la fecha de la factura", e);
-        }
+        Date fechaFactura = irs.formatearFecha(inspeccionRecibo.getFechaFactura());
+        dchFechaFactura.setDate(fechaFactura);
     }
 
     private InspeccionReciboM clonarInspeccionRecibo(InspeccionReciboM original) {
@@ -405,6 +362,10 @@ public class ModificarIrGUI extends javax.swing.JFrame {
                 original.getNombreFact(),
                 original.getNombreCert()
         );
+    }
+
+    public void cerrarVentana() {
+        ModificarIrGUI.this.dispose();
     }
 
     public boolean camposCompletos(String... campos) {
@@ -436,6 +397,40 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         irs.cargarArchivo(rutaArchivoFactura, inspeccionRecibo::setFacturapdf);
         irs.cargarArchivo(rutaArchivoCertificado, inspeccionRecibo::setCertificadopdf);
         irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
+    }
+
+    private void modificarDatos() {
+        try {
+            irs.modificar(conexion, inspeccionRecibo, inspeccionReciboOriginal);
+            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
+            cerrarVentana();
+            irs.abrirInspeccionReciboGUI(usuario);
+        } catch (SQLException ex) {
+            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, "Ha surgido un error al actualizar el registro: " + ex);
+        }
+    }
+
+    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
+        File archivoSeleccionado = this.irs.seleccionarArchivo(this);
+        if (archivoSeleccionado != null) {
+            String nombreArchivo = archivoSeleccionado.getName();
+            rutaArchivo = archivoSeleccionado.getAbsolutePath();
+            textField.setText(nombreArchivo);
+        }
+        return rutaArchivo;
+    }
+
+    public void seleccionarFactura() {
+        rutaArchivoFactura = seleccionarArchivoCertificado(txtNombreFactura, rutaArchivoFactura);
+    }
+
+    public void seleccionarCertificado() {
+        rutaArchivoCertificado = seleccionarArchivoCertificado(txtNombreCertificado, rutaArchivoCertificado);
+    }
+
+    public void seleccionarHojaInstruccion() {
+        rutaArchivoHojaInstruccion = seleccionarArchivoCertificado(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
     }
 
     /**

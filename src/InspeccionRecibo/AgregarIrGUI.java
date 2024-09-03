@@ -4,6 +4,7 @@ import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ContadorAnual;
+import Servicios.GeneradorExcel;
 import Servicios.InspeccionReciboServicio;
 import Servicios.SQL;
 import java.awt.Color;
@@ -14,17 +15,18 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -33,55 +35,44 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class AgregarIrGUI extends javax.swing.JFrame {
 
-    private final InspeccionReciboServicio irs = new InspeccionReciboServicio();
-    private final InspeccionReciboM irm;
+    // Usuario y Conexión a la base de datos
+    private Usuarios usuario;
+    private Connection conexion;
 
-    String rutaArchivoCertificado = "";
-    String rutaArchivoFactura = "";
-    String rutaArchivoHojaInstruccion = "";
+    // Servicios y Utilidades
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private GeneradorExcel excel = new GeneradorExcel();
 
-    Usuarios usr;
-    Connection conexion;
+    // Objeto para la manipulación de datos
+    private final InspeccionReciboM inspeccionRecibo = new InspeccionReciboM();
 
-    ContadorAnual contador = new ContadorAnual();
+    // Rutas de los archivos de la inspección
+    private String rutaArchivoCertificado;
+    private String rutaArchivoFactura;
+    private String rutaArchivoHojaInstruccion;
+
+    // Listas
+    private List<String> proveedores = new ArrayList<>();
 
     public AgregarIrGUI() throws ClassNotFoundException {
         inicializarVentanaYComponentes();
-        this.irm = new InspeccionReciboM();
     }
 
-    public AgregarIrGUI(Usuarios usr) throws ClassNotFoundException {
-        inicializarVentanaYComponentes();
-        this.irm = new InspeccionReciboM();
+    public AgregarIrGUI(Usuarios usuario) throws ClassNotFoundException {
         try {
-            Statement slqNombreProveedor = conexion.createStatement();
-            ResultSet registro = slqNombreProveedor.executeQuery(this.irs.SELECT_NOMBRE_PROVEEDORES_SQL);
-            while (registro.next()) {
-                String columna = registro.getString("nombre");
-                cbxProveedor.addItem(columna);
-            }
+            inicializarVentanaYComponentes();
+            cargarProveedores();
+            generarCodigoHoja();
         } catch (SQLException ex) {
             Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+            irs.manejarExcepcion("ERROR al inicializar AgregarIrGUI", ex);
         }
-        SQL s = new SQL();
-        int year = Calendar.getInstance().get(Calendar.YEAR);
-        String codigoHoja = s.getCodigoHoja(this.irs.SELECT_NO_HOJA_INSTRUCCION_SQL, year);
-        String nuevoCodigo = s.obtenerSiguiente(codigoHoja, String.valueOf(year));
-        txtNoHoja.setText(nuevoCodigo); // Se genera automaticamente el no. de hoja de Instrucción
     }
 
     @Override
     public Image getIconImage() {
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
-    }
-
-    public final void inicializarVentanaYComponentes() {
-        initComponents();
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(0);
-        this.conexion = Conexion.getInstance().getConnection();
     }
 
     /**
@@ -244,19 +235,9 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         jPanel1.add(txtNoPedido, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 180, 250, -1));
 
         txtNoHoja.setEditable(false);
-        txtNoHoja.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtNoHojaActionPerformed(evt);
-            }
-        });
         jPanel1.add(txtNoHoja, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 340, 210, -1));
 
         txtNombreCertificado.setEditable(false);
-        txtNombreCertificado.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtNombreCertificadoActionPerformed(evt);
-            }
-        });
         jPanel1.add(txtNombreCertificado, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 440, 180, 30));
 
         txtNombreFactura.setEditable(false);
@@ -304,151 +285,14 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnAgregarFacturaActionPerformed
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
-        goToIspeccionRecibo();
+        cerrarVentana();
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-
-        Date selectedDate = dchFechaFactura.getDate();
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        String estatus = cbxEstatus.getSelectedItem().toString();
-        String calibre = txtCalibre.getText().trim();
-        String pLamina = cbxPresentacionLamina.getSelectedItem().toString();
-        String proveedor = cbxProveedor.getSelectedItem().toString();
-        String noFactura = txtNoFactura.getText().trim();
-        String noPedido = txtNoPedido.getText().trim();
-        String noRollo = txtNoRollo.getText().trim();
-        String pzKg = txtPzKg.getText().trim();
-
-        String noHoja = txtNoHoja.getText().trim();
-        String[] partes = noHoja.split("/");
-        String numeroStr = partes[1];
-        int numero = Integer.parseInt(numeroStr);
-
-        numeroStr = String.valueOf(numero);
-
-        String nomHJ = txtNombreHojaInstruccion.getText();
-        String nomFactura = txtNombreFactura.getText();
-        String nomCert = txtNombreCertificado.getText();
-
         if (txtCalibre.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Por favor, ingresa el componente");
+            JOptionPane.showMessageDialog(this, "Por favor, ingresa el componente");
         } else {
-            if (selectedDate == null) {
-                try {
-                    File archivoSeleccionado = new File(rutaArchivoHojaInstruccion);
-                    XSSFWorkbook workbook;
-                    try (FileInputStream fis = new FileInputStream(archivoSeleccionado)) {
-                        workbook = new XSSFWorkbook(fis);
-                        Sheet sheet = workbook.getSheetAt(0); // Obtener la primera hoja del libro (índice 0)
-                        // Modificar el contenido del archivo de Excel aquí
-                        // No. de Hoja
-                        Row rowNoHoja = sheet.getRow(5); // Obtén la fila
-                        Cell cellNoHoja = rowNoHoja.getCell(2); // Obtén la celda en la fila
-                        // Modifica el valor de la celda
-                        cellNoHoja.setCellValue(numeroStr);
-
-                        // Proveedor
-                        Row rowProveedor = sheet.getRow(9); // Obtén la fila
-                        Cell cellProveedor = rowProveedor.getCell(4); // Obtén la celda en la fila
-
-                        // No Factura
-                        Row rowNoFactura = sheet.getRow(9); // Obtén la fila
-                        Cell cellNoFactura = rowNoFactura.getCell(6); // Obtén la celda en la fila
-
-                        // Fecha Factura
-                        Row rowFechaFactura = sheet.getRow(9); // Obtén la fila
-                        Cell cellFechaFactura = rowFechaFactura.getCell(8); // Obtén la celda en la fila
-
-                        // No. Pedido
-                        Row rowNoPedido = sheet.getRow(13); // Obtén la fila
-                        Cell cellNoPedido = rowNoPedido.getCell(3); // Obtén la celda en la fila
-
-                        // No Rollo
-                        Row rowNoRollo = sheet.getRow(13); // Obtén la fila
-                        Cell cellNoRollo = rowNoRollo.getCell(5); // Obtén la celda en la fila
-
-                        // No PZKG
-                        Row rowNoPzKg = sheet.getRow(13); // Obtén la fila
-                        Cell cellNoPzKg = rowNoPzKg.getCell(7); // Obtén la celda en la fila
-
-                        DataFormatter formatter = new DataFormatter();
-                        Cell cell = sheet.getRow(9).getCell(8);
-                        String formatoFecha = formatter.formatCellValue(cell);
-
-                        irm.setFechaFactura(formatoFecha);
-                        irm.setProveedor(cellProveedor.getStringCellValue());
-                        irm.setNoFactura(cellNoFactura.getStringCellValue());
-                        irm.setNoPedido(cellNoPedido.getStringCellValue());
-                        irm.setCalibre(calibre);
-                        irm.setpLamina(pLamina);
-                        irm.setNoRollo(cellNoRollo.getStringCellValue());
-                        irm.setPzKg(cellNoPzKg.getStringCellValue());
-                        irm.setEstatus(estatus);
-                        irm.setNoHoja(noHoja);
-
-                    }
-
-                    try (FileOutputStream fos = new FileOutputStream(archivoSeleccionado)) { // Guardar los cambios en el archivo
-                        workbook.write(fos);
-                    }
-
-                    try {
-                        // Archivo de Hoja de Instrucción
-                        irs.cargarArchivo(rutaArchivoHojaInstruccion, irm::setHojaIns);
-
-                        if (irs.existeNoRollo(txtNoRollo.getText())) {
-                            JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
-                        }
-                        guardarDatos(); // Se guardan los datos
-
-                    } catch (ClassNotFoundException ex) {
-                        JOptionPane.showMessageDialog(this, "El documento esta abierto o esta siendo utilizado por otro proceso");
-                    }
-
-                } catch (IOException e) {
-                    Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, e);
-                }
-            } else {
-                // Se almacenan los datos capturados en las variable
-                String fechaFactura = dateFormat.format(selectedDate); // Formatea la fecha y guárdala en una variable String
-
-                // Si los campos no estan vacios
-                if (!proveedor.isEmpty() || !noFactura.isEmpty() || !noPedido.isEmpty() || !calibre.isEmpty() || !pLamina.isEmpty() || !noRollo.isEmpty() || !pzKg.isEmpty() || !fechaFactura.isEmpty()) {
-                    irs.cargarArchivo(rutaArchivoCertificado, irm::setCertificadopdf);
-                    irs.cargarArchivo(rutaArchivoFactura, irm::setFacturapdf);
-
-                    // Archivo de Hoja de Instrucción
-                    irs.cargarArchivo(rutaArchivoHojaInstruccion, irm::setHojaIns);
-                    // Se guardan el resto de los atributos de la instancia
-                    irm.setFechaFactura(fechaFactura);
-                    irm.setProveedor(proveedor);
-                    irm.setNoFactura(noFactura);
-                    irm.setNoPedido(noPedido);
-                    irm.setCalibre(calibre);
-                    irm.setpLamina(pLamina);
-                    irm.setNoRollo(noRollo);
-                    irm.setPzKg(pzKg);
-                    irm.setEstatus(estatus);
-                    irm.setNoHoja(noHoja);
-                    irm.setNombreHJ(nomHJ);
-                    irm.setNombreFact(nomFactura);
-                    irm.setNombreCert(nomCert);
-
-                    try {
-                        if (irs.existeNoRollo(txtNoRollo.getText())) {
-                            JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
-                        }
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    guardarDatos(); // Se guardan los datos
-
-                } else { // Si el calibre esta vacío se muestra el mensaje
-                    JOptionPane.showMessageDialog(null, "DATOS INCOMPLETOS");
-                }
-            }
+            procesarArchivoXLS();
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
@@ -456,17 +300,9 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         seleccionarCertificado();
     }//GEN-LAST:event_btnAgregarCertificadoActionPerformed
 
-    private void txtNombreCertificadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreCertificadoActionPerformed
-
-    }//GEN-LAST:event_txtNombreCertificadoActionPerformed
-
     private void btnAgregarHojaInstruccionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarHojaInstruccionActionPerformed
         seleccionarHojaInstruccion();
     }//GEN-LAST:event_btnAgregarHojaInstruccionActionPerformed
-
-    private void txtNoHojaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNoHojaActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtNoHojaActionPerformed
 
     private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
         if (chkHoy.isSelected()) {
@@ -476,48 +312,57 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_chkHoyActionPerformed
 
-    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
-        File archivoSeleccionado = this.irs.seleccionarArchivo(this); // Se selecciona el archivo
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
-            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
-            textField.setText(nombreArchivo);
-        }
-        return rutaArchivo;
+    public final void inicializarVentanaYComponentes() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(0);
+        this.conexion = Conexion.getInstance().getConnection();
+    }
+
+    private void cargarProveedores() throws SQLException {
+        proveedores = irs.recuperarProveedores(conexion);
+        proveedores.forEach(cbxProveedor::addItem);
+    }
+
+    private void generarCodigoHoja() throws SQLException {
+        SQL sql = new SQL();
+        int year = obtenerAnoActual();
+        String codigoHoja = sql.getCodigoHoja(irs.SELECT_NO_HOJA_INSTRUCCION_SQL, year);
+        String nuevoCodigo = sql.obtenerSiguiente(codigoHoja, String.valueOf(year));
+        txtNoHoja.setText(nuevoCodigo);
+    }
+
+    private int obtenerAnoActual() {
+        return Calendar.getInstance().get(Calendar.YEAR);
     }
 
     public void seleccionarCertificado() {
-        rutaArchivoCertificado = seleccionarArchivoCertificado(txtNombreCertificado, rutaArchivoCertificado);
+        rutaArchivoCertificado = irs.seleccionarArchivoCertificado(txtNombreCertificado, rutaArchivoCertificado);
     }
 
     public void seleccionarFactura() {
-        rutaArchivoFactura = seleccionarArchivoCertificado(txtNombreFactura, rutaArchivoFactura);
+        rutaArchivoFactura = irs.seleccionarArchivoCertificado(txtNombreFactura, rutaArchivoFactura);
     }
 
     public void seleccionarHojaInstruccion() {
-        rutaArchivoHojaInstruccion = seleccionarArchivoCertificado(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
+        rutaArchivoHojaInstruccion = irs.seleccionarArchivoCertificado(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
     }
 
     private void guardarDatos() {
         try {
-            this.irs.agregar(conexion, irm); // Se manda a llamar el metodo guardar para almacenar la información en la bd
-            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS."); // Si todo salio bien, mandara este mensaje
-            goToIspeccionRecibo();
+            irs.agregar(conexion, inspeccionRecibo);
+            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
+            cerrarVentana();
+            irs.abrirInspeccionReciboGUI(usuario);
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
-            JOptionPane.showMessageDialog(this, "Ha surgido un error y no se ha podido guardar el registro.");
+            irs.manejarExcepcion("Error al guardar la información: ", ex);
         }
     }
 
-    private void goToIspeccionRecibo() {
-        this.dispose(); // Se liberan los recursos de la interfaz
-        try {
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); // Se crea una instancia de la interfaz gráfica
-            irGUI.setVisible(true); // Se hace visible la ventana
-            irGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    private void cerrarVentana() {
+        AgregarIrGUI.this.dispose();
     }
 
     /**
@@ -587,4 +432,118 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     private javax.swing.JTextField txtNombreHojaInstruccion;
     private javax.swing.JTextField txtPzKg;
     // End of variables declaration//GEN-END:variables
+
+    private void procesarArchivoXLS() {
+
+        Date fechaSeleccionada = dchFechaFactura.getDate();
+
+        String noHoja = txtNoHoja.getText().trim();
+        String[] partes = noHoja.split("/");
+        String numeroStr = partes[1];
+        int numero = Integer.parseInt(numeroStr);
+
+        numeroStr = String.valueOf(numero);
+
+        String nomHJ = txtNombreHojaInstruccion.getText();
+        String nomFactura = txtNombreFactura.getText();
+        String nomCert = txtNombreCertificado.getText();
+
+        String estatus = cbxEstatus.getSelectedItem().toString();
+        String calibre = txtCalibre.getText().trim();
+        String pLamina = cbxPresentacionLamina.getSelectedItem().toString();
+        String proveedor = cbxProveedor.getSelectedItem().toString();
+        String noFactura = txtNoFactura.getText().trim();
+        String noPedido = txtNoPedido.getText().trim();
+        String noRollo = txtNoRollo.getText().trim();
+        String pzKg = txtPzKg.getText().trim();
+
+        if (fechaSeleccionada == null) {
+            try {
+                File archivoSeleccionado = new File(rutaArchivoHojaInstruccion);
+                XSSFWorkbook workbook;
+                try (FileInputStream fis = new FileInputStream(archivoSeleccionado)) {
+                    workbook = new XSSFWorkbook(fis);
+                    Sheet hoja1 = workbook.getSheetAt(0); // Obtener la primera hoja del libro (índice 0)                    
+
+                    excel.setDatosCeldas(hoja1, 5, 2, numeroStr); // No. de Hoja
+                    
+                    excel.getDatosCeldas(hoja1, 13, 5); 
+                    excel.getDatosCeldas(hoja1, 13, 7); 
+
+                    DataFormatter formatter = new DataFormatter();
+                    Cell celdaFechaFactura = hoja1.getRow(9).getCell(8); // Fecha Factura
+                    String formatoFecha = formatter.formatCellValue(celdaFechaFactura);
+
+                    inspeccionRecibo.setFechaFactura(formatoFecha);
+                    inspeccionRecibo.setProveedor(excel.getDatosCeldas(hoja1, 9, 4)); // Proveedor
+                    inspeccionRecibo.setNoFactura(excel.getDatosCeldas(hoja1, 9, 6)); // No. Factura
+                    inspeccionRecibo.setNoPedido(excel.getDatosCeldas(hoja1, 13, 3)); // No. Pedido
+                    inspeccionRecibo.setCalibre(calibre);
+                    inspeccionRecibo.setpLamina(pLamina);
+                    inspeccionRecibo.setNoRollo(excel.getDatosCeldas(hoja1, 13, 5)); // No Rollo
+                    inspeccionRecibo.setPzKg(excel.getDatosCeldas(hoja1, 13, 7)); // No PZKG
+                    inspeccionRecibo.setEstatus(estatus);
+                    inspeccionRecibo.setNoHoja(noHoja);
+
+                }
+
+                try (FileOutputStream fos = new FileOutputStream(archivoSeleccionado)) { // Guardar los cambios en el archivo
+                    workbook.write(fos);
+                }
+
+                try {
+ 
+                    irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
+
+                    if (irs.existeNoRollo(txtNoRollo.getText())) {
+                        JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
+                    }
+                    guardarDatos(); // Se guardan los datos
+
+                } catch (ClassNotFoundException ex) {
+                    JOptionPane.showMessageDialog(this, "El documento esta abierto o esta siendo utilizado por otro proceso");
+                }
+
+            } catch (IOException e) {
+                Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, e);
+            }
+        } else {
+            String fechaFactura = irs.formatearFecha(fechaSeleccionada);
+
+            // Si los campos no estan vacios
+            if (!proveedor.isEmpty() || !noFactura.isEmpty() || !noPedido.isEmpty() || !calibre.isEmpty() || !pLamina.isEmpty() || !noRollo.isEmpty() || !pzKg.isEmpty() || !fechaFactura.isEmpty()) {
+                irs.cargarArchivo(rutaArchivoCertificado, inspeccionRecibo::setCertificadopdf);
+                irs.cargarArchivo(rutaArchivoFactura, inspeccionRecibo::setFacturapdf);
+
+                // Archivo de Hoja de Instrucción
+                irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
+                // Se guardan el resto de los atributos de la instancia
+                inspeccionRecibo.setFechaFactura(fechaFactura);
+                inspeccionRecibo.setProveedor(proveedor);
+                inspeccionRecibo.setNoFactura(noFactura);
+                inspeccionRecibo.setNoPedido(noPedido);
+                inspeccionRecibo.setCalibre(calibre);
+                inspeccionRecibo.setpLamina(pLamina);
+                inspeccionRecibo.setNoRollo(noRollo);
+                inspeccionRecibo.setPzKg(pzKg);
+                inspeccionRecibo.setEstatus(estatus);
+                inspeccionRecibo.setNoHoja(noHoja);
+                inspeccionRecibo.setNombreHJ(nomHJ);
+                inspeccionRecibo.setNombreFact(nomFactura);
+                inspeccionRecibo.setNombreCert(nomCert);
+
+                try {
+                    if (irs.existeNoRollo(txtNoRollo.getText())) {
+                        JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
+                    }
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                guardarDatos(); // Se guardan los datos
+
+            } else { // Si el calibre esta vacío se muestra el mensaje
+                JOptionPane.showMessageDialog(null, "DATOS INCOMPLETOS");
+            }
+        }
+    }
 }

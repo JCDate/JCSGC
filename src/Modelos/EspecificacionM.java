@@ -1,6 +1,6 @@
 package Modelos;
 
-public class Especificacion {
+public class EspecificacionM {
 
     private int id;
     private String especificacion;
@@ -12,7 +12,12 @@ public class Especificacion {
     private int fila;
     private int numFila;
 
-    public Especificacion(int id, String especificacion, String codigo, String fechaEmision, String fechaRevision, String noRev, int idDatosIR, int fila, int numFila) {
+    public EspecificacionM() {
+    }
+    
+    
+
+    public EspecificacionM(int id, String especificacion, String codigo, String fechaEmision, String fechaRevision, String noRev, int idDatosIR, int fila, int numFila) {
         this.id = id;
         this.especificacion = especificacion;
         this.codigo = codigo;

@@ -3,8 +3,8 @@ package InspeccionRecibo;
 import Modelos.CalibreIRM;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
-import Servicios.CalibreIrmServicio;
 import Servicios.Conexion;
+import Servicios.InspeccionReciboServicio;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -17,11 +17,15 @@ import javax.swing.JOptionPane;
 
 public class AgregarCalibreHIGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
+    // Usuario y Conexión a la base de datos
+    private Usuarios usuario;
     private Connection conexion;
-    private InspeccionReciboM irm;
-    private CalibreIRM cirm = new CalibreIRM();
-    private CalibreIrmServicio cirms = new CalibreIrmServicio();
+
+    private InspeccionReciboM inspeccionRecibo;
+    private CalibreIRM calibreIRM = new CalibreIRM();
+
+    // Servicios y Utilidades
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
 
     public AgregarCalibreHIGUI() {
         try {
@@ -31,34 +35,14 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         }
     }
 
-    public AgregarCalibreHIGUI(Usuarios usr, InspeccionReciboM irm) throws SQLException, ClassNotFoundException {
-        this.usr = usr;
-        this.irm = irm;
-        inicializarVentanaYComponentes();
-
-        cbxEspecificaciones.addItem("");
-        cirms.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem);
-
-        chkDescripcionMP.addActionListener(e -> {
-            if (chkDescripcionMP.isSelected()) {
-                txtDescripcionMP.setText("Lamina en Hoja. Cal. " + txtCalibre.getText());
-            } else {
-                txtDescripcionMP.setText("Lamina en Cinta. Cal." + txtCalibre.getText());
-            }
-        });
-    }
-
     public AgregarCalibreHIGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
         inicializarVentanaYComponentes();
-        cirms.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem);
+    }
 
-        chkDescripcionMP.addActionListener(e -> {
-            if (chkDescripcionMP.isSelected()) {
-                txtDescripcionMP.setText("Lamina en Hoja. Cal. " + txtCalibre.getText());
-            } else {
-                txtDescripcionMP.setText("Lamina en Cinta. Cal." + txtCalibre.getText());
-            }
-        });
+    public AgregarCalibreHIGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException {
+        this.usuario = usuario;
+        this.inspeccionRecibo = inspeccionRecibo;
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -166,9 +150,10 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
         try {
             cerrarVentana();
-            cirms.abrirEspecificacionesGUI(usr, irm);
+            irs.abrirEspecificacionesGUI(usuario, inspeccionRecibo);
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
+            irs.manejarExcepcion("ERROR al abrir EspecificacionesGUI", ex);
         }
     }//GEN-LAST:event_btnCancelarActionPerformed
 
@@ -177,19 +162,19 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         String medidas = txtEspecificacion.getText();
         String especificacion = cbxEspecificaciones.getSelectedItem().toString();
         String descripcion = txtDescripcionMP.getText();
-        
+
         if (!calibres.trim().equals("") || !medidas.trim().equals("")) {
-            cirm.setCalibre(calibres);
-            cirm.setMedidas(medidas);
-            cirm.setEspecificacion(especificacion);
-            cirm.setDescripcionMP(descripcion);
+            calibreIRM.setCalibre(calibres);
+            calibreIRM.setMedidas(medidas);
+            calibreIRM.setEspecificacion(especificacion);
+            calibreIRM.setDescripcionMP(descripcion);
             try {
-                this.cirms.agregar(conexion, cirm);
-                this.cirms.agregarDMP(conexion, cirm);
+                irs.agregar(conexion, calibreIRM);
+                irs.agregarDMP(conexion, calibreIRM);
                 JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
                 cerrarVentana();
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Ha surgido un error y no se ha podido guardar el registro.");
+                irs.manejarExcepcion("Error al agregar la información del calibre", ex);
             }
         } else {
             JOptionPane.showMessageDialog(this, "HAY CAMPOS INCOMPLETOS.");
@@ -202,6 +187,17 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.conexion = Conexion.getInstance().getConnection();
+
+        chkDescripcionMP.addActionListener(e -> {
+            if (chkDescripcionMP.isSelected()) {
+                txtDescripcionMP.setText("Lamina en Hoja. Cal. " + txtCalibre.getText());
+            } else {
+                txtDescripcionMP.setText("Lamina en Cinta. Cal." + txtCalibre.getText());
+            }
+        });
+
+        cbxEspecificaciones.addItem("");
+        irs.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem);
     }
 
     private void cerrarVentana() {

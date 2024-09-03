@@ -1,20 +1,18 @@
 package InspeccionRecibo;
 
-import InspeccionRecibo.HojaInstruccionGUI;
-import InspeccionRecibo.InspeccionReciboGUI;
 import Modelos.ComposicionQuimicaM;
 import Modelos.CustomTableCellRenderer;
 import Servicios.CheckBoxEditor;
 import Servicios.CheckBoxRenderer;
-import Servicios.ExcelEditor;
+import Servicios.GeneradorExcel;
 import Modelos.DatosIRM;
+import Modelos.EspecificacionM;
 import Modelos.InspeccionReciboM;
 import Modelos.PropiedadMecanicaM;
 import Modelos.Usuarios;
 import Servicios.AnchoLargoServicio;
 import Servicios.Conexion;
 import Servicios.EspecificacionesServicio;
-import Servicios.HojaInstruccionServicio;
 import Servicios.InspeccionReciboServicio;
 import Servicios.RugosidadDurezaServicio;
 import java.awt.Color;
@@ -23,8 +21,6 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,256 +36,64 @@ import javax.swing.table.TableColumnModel;
 
 public class EspecificacionesGUI extends JFrame {
 
-    private Usuarios usr;
+    // Usuario y Conexión a la base de datos
+    private Usuarios usuario;
     private Connection conexion;
-    private DatosIRM dirm;
-    private JTable tableAnchoLargo, tableRD;
-    private List<JTable> tableList = new ArrayList<>();
-    private InspeccionReciboM irm;
-    private final InspeccionReciboServicio irs = new InspeccionReciboServicio();
-    private List<JTable> tables;
-    private HojaInstruccionServicio his = new HojaInstruccionServicio();
-    private AnchoLargoServicio als;
-    private RugosidadDurezaServicio rds;
+
+    // Objetos para manipulación de los datos
+    private DatosIRM datosIR;
+    private EspecificacionM especificacion;
+    private InspeccionReciboM inspeccionRecibo;
+
+    // Servicios y Utilidades
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private AnchoLargoServicio als = new AnchoLargoServicio();
+    private RugosidadDurezaServicio rds = new RugosidadDurezaServicio();
     private EspecificacionesServicio es = new EspecificacionesServicio();
-    private ExcelEditor xls = new ExcelEditor();
-    private List al = new ArrayList<>();
-    private List rd = new ArrayList<>();
+    private GeneradorExcel xls = new GeneradorExcel();
 
-    // Consultas
-    final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";
-    final String SQL_CONSULTA_CALIBRE = "SELECT DISTINCT calibre, medidas FROM calibresir WHERE calibre LIKE ? ORDER BY calibre";
-    final String SQL_CONSULTA_REF_ESPECIFICACION = "SELECT codigoET, fechaEmision, fechaRevision, noRev FROM especificacionesir WHERE Especificacion=?";
+    // Tablas para controlar la rugosidad y el ancho
+    private JTable tblRugosidadDureza;
+    private JTable tblAnchoLargo;
 
-    /**
-     * Creates new form EspecificacionesGUI
-     *
-     * @throws java.sql.SQLException
-     * @throws java.lang.ClassNotFoundException
-     */
+    // Listas de datos
+    private List<JTable> listaTablas = new ArrayList<>();
+    private List<String> listaMedidasCalibre = new ArrayList<>();
+    private List<String> listaEspecificacion = new ArrayList<>();
+    private List listaAnchoLargo = new ArrayList<>();
+    private List listaRugosidadDureza = new ArrayList<>();
+    private List<JTable> tablas;
+
     public EspecificacionesGUI() throws SQLException, ClassNotFoundException {
-        initComponents(); // Inicialización de Componentes
-        inicializarVentana(); // Se definen algunas propiedades para las ventanas
+        inicializarVentanaYComponentes();
     }
 
-    public EspecificacionesGUI(Usuarios usr, DatosIRM dirm, InspeccionReciboM irm, JTable tableal, JTable tablerd) throws SQLException, ClassNotFoundException {
-        initComponents();
-        this.usr = usr;
-        this.dirm = dirm;
-        this.irm = irm;
-        this.tableAnchoLargo = tableal;
-        this.tableRD = tablerd;
-        this.als = new AnchoLargoServicio(tableAnchoLargo);
-        this.rds = new RugosidadDurezaServicio(tableRD);
-        inicializarVentana(); // Se definen algunas propiedades para las ventanas
+    public EspecificacionesGUI(Usuarios usuario) throws SQLException, ClassNotFoundException {
+        inicializarVentanaYComponentes();
+        this.usuario = usuario;
     }
 
-    public EspecificacionesGUI(Usuarios usr, InspeccionReciboM irm) throws SQLException, ClassNotFoundException {
-        initComponents();// Inicialización de Componentes
-        this.usr = usr;
-        this.irm = irm;
-        inicializarVentana(); // Se definen algunas propiedades para las ventanas
+    public EspecificacionesGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException {
+        inicializarVentanaYComponentes();
+        this.usuario = usuario;
+        this.inspeccionRecibo = inspeccionRecibo;
     }
 
-    public EspecificacionesGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
-        initComponents();// Inicialización de Componentes
-        inicializarVentana(); // Se definen algunas propiedades para las ventanas
-        this.usr = usr;
-    }
-
-    public final void inicializarVentana() throws SQLException, ClassNotFoundException {
-        this.setResizable(false); // Se especifica que la ventana no se puede redimensionar
-        this.setDefaultCloseOperation(0); // Se deshabilita el boton de cerrar de la ventana
-        tables = new ArrayList<>(); // Arreglo de las tablas
-        this.conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
-
-        pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS)); // Configuración del layout de las tablas
-
-        // Se realizan las consultas SQL
-        try (PreparedStatement consulta2 = conexion.prepareStatement(SQL_CONSULTA_CALIBRE)) {
-            consulta2.setString(1, "%" + irm.getCalibre().substring(0, 2) + "%");
-            ResultSet resultado2 = consulta2.executeQuery();
-
-            while (resultado2.next()) { // Se guardan los calibres en el comboBox
-                cbxCalibre.addItem(resultado2.getString("calibre") + "   " + resultado2.getString("medidas"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            cbxEspecificacionTecnica.removeAllItems();
-            // Utiliza una expresión regular para dividir el texto en dos partes: "Cal 20" y el resto.
-            String[] partes = cbxCalibre.getSelectedItem().toString().split("   ");
-
-            // Verifica si se obtuvieron dos partes (el texto "Cal 20" y el resto).
-            if (partes.length == 2) {
-                String cal20 = partes[0]; // Contiene "Cal x"
-                String restoDelTexto = partes[1]; // Contiene ", medidas"
-
-                // Continúa con el resto de tu código
-                PreparedStatement consulta3 = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACION);
-                consulta3.setString(1, partes[0]);
-                ResultSet resultado = consulta3.executeQuery();
-                while (resultado.next()) { // Se guardan las especificaciones en el comboBox
-                    cbxEspecificacionTecnica.addItem(resultado.getString("especificacion"));
-                }
-            } else {
-                // Maneja el caso en el que no se dividió correctamente el texto.
-                System.out.println("El texto no se dividió en dos partes correctamente.");
-            }
-
-        } catch (SQLException ex) {
-            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        cbxCalibre.addActionListener(e -> {
-            try {
-                cbxEspecificacionTecnica.removeAllItems();
-                // Utiliza una expresión regular para dividir el texto en dos partes: "Cal 20" y el resto.
-                String[] partes = cbxCalibre.getSelectedItem().toString().split("   ");
-
-                // Verifica si se obtuvieron dos partes (el texto "Cal 20" y el resto).
-                if (partes.length == 2) {
-                    String cal20 = partes[0]; // Contiene "Cal x"
-                    String restoDelTexto = partes[1]; // Contiene ", medidas"
-
-                    // Continúa con el resto de tu código
-                    PreparedStatement consulta3 = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACION);
-                    consulta3.setString(1, partes[0]);
-                    ResultSet resultado = consulta3.executeQuery();
-                    while (resultado.next()) { // Se guardan las especificaciones en el comboBox
-                        cbxEspecificacionTecnica.addItem(resultado.getString("especificacion"));
-                    }
-                } else {
-                    // Maneja el caso en el que no se dividió correctamente el texto.
-                    System.out.println("El texto no se dividió en dos partes correctamente.");
-                }
-
-            } catch (SQLException ex) {
-                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-        });
-        btnAceptar.addActionListener(e -> { // La escucha del boton para agregar las tablas
-            String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
-            String calibre = (String) cbxCalibre.getSelectedItem();
-            try {
-                crearTabla(espeTecnica, calibre);
-            } catch (SQLException | ClassNotFoundException ex) {
-                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
-
-        btnEliminar.addActionListener(ae -> eliminarUltimaTabla()); // La escucha del boton de eliminar tabla
-    }
-
-    private void crearTabla(String espeTecnica, String calibres) throws SQLException, ClassNotFoundException {
-        // Obtener la lista de propiedades mecánicas para la especificación técnica
-        List<PropiedadMecanicaM> propiedadesMecanicas = this.es.obtenerPropiedadesMecanicas(conexion, espeTecnica);
-        List<ComposicionQuimicaM> composicionQuimica = this.es.obtenerCM(conexion, espeTecnica);
-        // Variables donde se guardan los datos de la bd
-        String codigo = "";
-        String fechaEm = "";
-        String fechaRev = "";
-        String noRev = "";
-        // Se realiza la consulta
-        try {
-            PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_REF_ESPECIFICACION);
-            consulta.setString(1, espeTecnica);
-            ResultSet resultado = consulta.executeQuery();
-            if (resultado.next()) { // Se obtiene la información de la bd
-                codigo = resultado.getString("codigoET");
-                fechaEm = resultado.getString("fechaEmision");
-                fechaRev = resultado.getString("fechaRevision");
-                noRev = resultado.getString("noRev");
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        // Estructura de la tabla
-        Object[][] data = {
-            {espeTecnica, "Código: " + codigo, calibres, "", "", "", ""},
-            {"", "F. de emisión: " + fechaEm, "", "", "", "", ""},
-            {"", "Fecha de rev:" + fechaRev, "", "", "", "", ""},
-            {"", "No. de rev: " + noRev, "", "", "", "", ""},};
-
-        // Columnas de la tabla
-        String[] columnNames = {"Especificación Técnica", "Ref. del Documento", "Calibres Requeridos", "Propiedades Mecánicas", "CM", "Composición Química", "CM"};
-
-        // Modelo de tabla
-        DefaultTableModel tableModel = new DefaultTableModel(data, columnNames);
-
-        // Crear la tabla
-        JTable newTable = new JTable(tableModel);
-        CustomTableCellRenderer renderer = new CustomTableCellRenderer();
-        newTable.setDefaultRenderer(Object.class, renderer);
-        TableColumnModel columnModel = newTable.getColumnModel();
-
-        // Configuración de tamaño de columnas
-        final int COLUMN_CHECKBOX_1 = 4;
-        final int COLUMN_CHECKBOX_2 = 6;
-        columnModel.getColumn(COLUMN_CHECKBOX_1).setMinWidth(35);
-        columnModel.getColumn(COLUMN_CHECKBOX_1).setMaxWidth(35);
-        columnModel.getColumn(COLUMN_CHECKBOX_2).setMinWidth(35);
-        columnModel.getColumn(COLUMN_CHECKBOX_2).setMaxWidth(35);
-
-        // Agregar filas adicionales a la tabla si es necesario
-        this.es.agregarFilasTabla(tableModel, propiedadesMecanicas.size());
-        this.es.agregarFilasTabla(tableModel, composicionQuimica.size());
-
-        // Establecer valores en las celdas correspondientes
-        int columnaPropiedades = 3;
-        int columnaPropiedadesCM = 5;
-        for (int i = 0; i < propiedadesMecanicas.size(); i++) {
-            Object valorPropiedad = propiedadesMecanicas.get(i).getPm() + "   " + propiedadesMecanicas.get(i).getValor();
-            tableModel.setValueAt(valorPropiedad, i, columnaPropiedades);
-        }
-        for (int i = 0; i < composicionQuimica.size(); i++) {
-            Object valorPropiedadCM = composicionQuimica.get(i).getCq() + "   " + composicionQuimica.get(i).getValor();
-            tableModel.setValueAt(valorPropiedadCM, i, columnaPropiedadesCM);
-        }
-
-        // Configurar la combinación de celdas solo en la primera columna
-        int columnToCheckBox = 4; // Índice de la columna en la que deseas agregar el checkbox
-        columnModel.getColumn(columnToCheckBox).setCellRenderer(new CheckBoxRenderer(propiedadesMecanicas.size()));
-        columnModel.getColumn(columnToCheckBox).setCellEditor(new CheckBoxEditor());
-
-        int columnToCheckBox2 = 6; // Índice de la columna en la que deseas agregar el checkbox
-        columnModel.getColumn(columnToCheckBox2).setCellRenderer(new CheckBoxRenderer(composicionQuimica.size()));
-        columnModel.getColumn(columnToCheckBox2).setCellEditor(new CheckBoxEditor());
-        newTable.setPreferredScrollableViewportSize(new Dimension(100, 30));
-
-        // Tamaño de las columnas
-        newTable.getColumnModel().getColumn(4).setMinWidth(35);
-        newTable.getColumnModel().getColumn(4).setMaxWidth(35);
-        newTable.getColumnModel().getColumn(6).setMinWidth(35);
-        newTable.getColumnModel().getColumn(6).setMaxWidth(35);
-
-        // Añadir tabla a la lista
-        pnlTablas.add(new JScrollPane(newTable));
-        tableList.add(newTable);
-
-        // Actualizar la ventana
-        pnlTablas.revalidate();
-        pnlTablas.repaint();
+    public EspecificacionesGUI(Usuarios usuario, DatosIRM datosIR, InspeccionReciboM inspeccionRecibo, JTable tblRugosidadDureza, JTable tblAnchoLargo) throws SQLException, ClassNotFoundException {
+        inicializarVentanaYComponentes();
+        this.usuario = usuario;
+        this.datosIR = datosIR;
+        this.inspeccionRecibo = inspeccionRecibo;
+        this.tblRugosidadDureza = tblRugosidadDureza;
+        this.tblAnchoLargo = tblAnchoLargo;
+        als.setTbl(tblRugosidadDureza);
+        rds.setTbl(tblAnchoLargo);
     }
 
     @Override
-    public Image getIconImage() { // Método para obtener y cambiar el icono de la aplicación en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); // Se obtiene la imagen que se quiere poner como icono de la barra 
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
-    }
-
-    private void eliminarUltimaTabla() {
-        // Verificar si hay tablas para eliminar
-        // Remover la tabla de la lista
-        tableList.removeAll(tables);
-        // Eliminar la tabla del panel
-        pnlTablas.removeAll();
-        // Actualizar la ventana
-        pnlTablas.revalidate();
-        pnlTablas.repaint();
     }
 
     /**
@@ -304,7 +108,6 @@ public class EspecificacionesGUI extends JFrame {
         jPanel1 = new javax.swing.JPanel();
         lblJCIcono = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
         cbxEspecificacionTecnica = new swing.ComboBoxSuggestion();
         btnAceptar = new swing.Button(new Color(175, 255, 158),new Color(106, 223, 80));
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -335,28 +138,12 @@ public class EspecificacionesGUI extends JFrame {
         jLabel2.setText("<html>ESPECIFICACIONES TÉCNICAS DEL CLIENTE PARA INSPECCIÓN/RECIBO DE MATERIA PRIMA</html>");
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 10, 630, 70));
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/boton_regresar.png"))); // NOI18N
-        jButton1.setText("btnRegresar");
-        jButton1.setBorderPainted(false);
-        jButton1.setContentAreaFilled(false);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 630, 120, 50));
-
         jPanel1.add(cbxEspecificacionTecnica, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 100, 330, 30));
 
         btnAceptar.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         btnAceptar.setForeground(new java.awt.Color(255, 255, 255));
         btnAceptar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/ok2.png"))); // NOI18N
         btnAceptar.setText("ACEPTAR");
-        btnAceptar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAceptarActionPerformed(evt);
-            }
-        });
         jPanel1.add(btnAceptar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 60, 120, 30));
 
         pnlTablas.setLayout(new javax.swing.BoxLayout(pnlTablas, javax.swing.BoxLayout.LINE_AXIS));
@@ -414,60 +201,191 @@ public class EspecificacionesGUI extends JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void btnAceptarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAceptarActionPerformed
-
-    }//GEN-LAST:event_btnAceptarActionPerformed
-
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
-        EspecificacionesGUI.this.dispose(); // Se liberan los recursos de la ventana 
-        JOptionPane.showMessageDialog(this, "DATOS DE TABLA ELIMINADOS"); // Se muestra el mensaje de actualización
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "DATOS DE TABLA ELIMINADOS");
         eliminarUltimaTabla();
-        try {
-            EspecificacionesGUI esGUI = new EspecificacionesGUI(usr, dirm, irm, tableAnchoLargo, tableRD); //Se crea la instancia de la clase
-            esGUI.setVisible(true); //Se hace visible la ventana
-            esGUI.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        irs.abrirEspecificacionesGUI(usuario, datosIR, inspeccionRecibo, tblAnchoLargo, tblRugosidadDureza);
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        EspecificacionesGUI.this.dispose(); // Se liberan los recursos de la interfaz
-        try {
-            int idIR = his.getId(conexion, this.irm); // Se obtiene el id de la hoja de instrucción
-            al = als.recuperarTodas(idIR, dirm.getAnchoLargo());
-            rd = als.recuperarTodas(idIR, dirm.getAnchoLargo());
-            HojaInstruccionGUI hj = new HojaInstruccionGUI(usr, irm, dirm, al, rd); // Se crea una instancia de la interfaz gráfica
-            hj.setVisible(true); // Se hace visible la ventana
-            hj.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana();
+
+        int idIR = obtenerIdHojaInstruccion();
+
+        listaAnchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
+        listaRugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
+
+        irs.abrirHojaInstruccionGUI(usuario, inspeccionRecibo, datosIR, listaAnchoLargo, listaRugosidadDureza);
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
+
         try {
-            int idIR = his.getId(conexion, this.irm);
-            List ald = als.recuperarTodas(idIR, dirm.getAnchoLargo());
-            List rdd = rds.recuperarTodas(idIR, dirm.getAnchoLargo());
-            String HojaIns = this.xls.generarHojaInstruccion(conexion, this.dirm, this.irm, this.tableAnchoLargo, tableList, ald, rdd);
-            this.irm.setHojaIns(this.irs.leerArchivo(HojaIns));
-            this.irs.subirHI(conexion, this.irm);
+            int idIR = obtenerIdHojaInstruccion();
 
-            EspecificacionesGUI.this.dispose();
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr);
-            irGUI.setVisible(true);
-            irGUI.setLocationRelativeTo(null);
+            List ald = als.capturarValores(idIR, datosIR.getAnchoLargo());
+            List rdd = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
 
-        } catch (SQLException | ClassNotFoundException | IOException ex) {
-            JOptionPane.showMessageDialog(null, "Error al ejecutar al guardar la hoja de instrucción ESPECIFICACIONESGUI: " + ex.getMessage());
+            String HojaIns = xls.generarHojaInstruccion(conexion, datosIR, inspeccionRecibo, tblAnchoLargo, listaTablas, ald, rdd);
+
+            inspeccionRecibo.setHojaIns(this.irs.leerArchivo(HojaIns));
+
+            irs.subirHI(conexion, inspeccionRecibo);
+
+            cerrarVentana();
+
+            irs.abrirInspeccionReciboGUI(usuario);
+        } catch (IOException | SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+            irs.manejarExcepcion("ERROR al guarda la información: ", ex);
         }
-
     }//GEN-LAST:event_btnGuardarActionPerformed
+
+    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.conexion = Conexion.getInstance().getConnection();
+
+        pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
+
+        listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
+        listaMedidasCalibre.forEach(cbxCalibre::addItem);
+
+        actualizarEspecificacionesTecnicas();
+
+        cbxCalibre.addActionListener(e -> actualizarEspecificacionesTecnicas());
+
+        btnAceptar.addActionListener(e -> {
+            String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
+            String calibre = (String) cbxCalibre.getSelectedItem();
+            try {
+                crearTabla(espeTecnica, calibre);
+            } catch (SQLException | ClassNotFoundException ex) {
+                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
+            }
+        });
+
+        btnEliminar.addActionListener(ae -> eliminarUltimaTabla());
+    }
+
+    private void actualizarEspecificacionesTecnicas() {
+        cbxEspecificacionTecnica.removeAllItems();
+
+        String[] calibreYMedidas = cbxCalibre.getSelectedItem().toString().split("   ");
+
+        if (calibreYMedidas.length == 2) {
+            String calibre = calibreYMedidas[0];
+            listaEspecificacion = irs.recuperarEspecificaciones(conexion, calibre);
+            listaEspecificacion.forEach(cbxEspecificacionTecnica::addItem);
+        }
+    }
+
+    private void crearTabla(String especificacionTecnica, String calibres) throws SQLException, ClassNotFoundException {
+        // Obtener datos
+        List<PropiedadMecanicaM> propiedadesMecanicas = es.obtenerPropiedadesMecanicas(conexion, especificacionTecnica);
+        List<ComposicionQuimicaM> composicionQuimica = es.obtenerCM(conexion, especificacionTecnica);
+        especificacion = irs.recuperarReferenciasEspecificacion(conexion, especificacionTecnica);
+
+        // Crear modelo de tabla
+        DefaultTableModel modeloTabla = crearModeloTabla(especificacion, calibres);
+
+        // Configurar la tabla
+        JTable nuevaTabla = crearTablaConModelo(modeloTabla);
+        configurarColumnasTabla(nuevaTabla.getColumnModel(), propiedadesMecanicas.size(), composicionQuimica.size());
+
+        // Establecer valores en la tabla
+        establecerValoresEnTabla(modeloTabla, propiedadesMecanicas, composicionQuimica);
+
+        // Añadir tabla al panel
+        pnlTablas.add(new JScrollPane(nuevaTabla));
+        listaTablas.add(nuevaTabla);
+
+        // Actualizar la ventana
+        pnlTablas.revalidate();
+        pnlTablas.repaint();
+    }
+
+    private DefaultTableModel crearModeloTabla(EspecificacionM especificacionTecnica, String calibres) {
+        String codigo = especificacion.getCodigo();
+        String fechaEm = especificacion.getFechaEmision();
+        String fechaRev = especificacion.getFechaRevision();
+        String noRev = especificacion.getNoRev();
+      
+
+        Object[][] datos = {
+            {especificacionTecnica, "Código: " + codigo, calibres, "", "", "", ""},
+            {"", "F. de emisión: " + fechaEm, "", "", "", "", ""},
+            {"", "Fecha de rev:" + fechaRev, "", "", "", "", ""},
+            {"", "No. de rev: " + noRev, "", "", "", "", ""}
+        };
+
+        String[] nombresColumnas = {"Especificación Técnica", "Ref. del Documento", "Calibres Requeridos", "Propiedades Mecánicas", "CM", "Composición Química", "CM"};
+
+        return new DefaultTableModel(datos, nombresColumnas);
+    }
+
+    private JTable crearTablaConModelo(DefaultTableModel modeloTabla) {
+        JTable newTable = new JTable(modeloTabla);
+        CustomTableCellRenderer renderer = new CustomTableCellRenderer();
+        newTable.setDefaultRenderer(Object.class, renderer);
+        newTable.setPreferredScrollableViewportSize(new Dimension(100, 30));
+        return newTable;
+    }
+
+    private void configurarColumnasTabla(TableColumnModel columnModel, int numPropiedadesMecanicas, int numComposicionQuimica) {
+        configurarTamañoColumna(columnModel, 4, 35, 35);
+        configurarTamañoColumna(columnModel, 6, 35, 35);
+
+        columnModel.getColumn(4).setCellRenderer(new CheckBoxRenderer(numPropiedadesMecanicas));
+        columnModel.getColumn(4).setCellEditor(new CheckBoxEditor());
+
+        columnModel.getColumn(6).setCellRenderer(new CheckBoxRenderer(numComposicionQuimica));
+        columnModel.getColumn(6).setCellEditor(new CheckBoxEditor());
+    }
+
+    private void configurarTamañoColumna(TableColumnModel columnModel, int columnIndex, int minWidth, int maxWidth) {
+        columnModel.getColumn(columnIndex).setMinWidth(minWidth);
+        columnModel.getColumn(columnIndex).setMaxWidth(maxWidth);
+    }
+
+    private void establecerValoresEnTabla(DefaultTableModel modeloTabla, List<PropiedadMecanicaM> propiedadesMecanicas, List<ComposicionQuimicaM> composicionQuimica) {
+    int columnaPropiedades = 3;
+    int columnaPropiedadesCM = 5;
+
+    for (int i = 0; i < propiedadesMecanicas.size(); i++) {
+        String valorPropiedad = propiedadesMecanicas.get(i).getPm() + "   " + propiedadesMecanicas.get(i).getValor();
+        modeloTabla.setValueAt(valorPropiedad, i, columnaPropiedades);
+    }
+    for (int i = 0; i < composicionQuimica.size(); i++) {
+        String valorPropiedadCM = composicionQuimica.get(i).getCq() + "   " + composicionQuimica.get(i).getValor();
+        modeloTabla.setValueAt(valorPropiedadCM, i, columnaPropiedadesCM);
+    }
+}
+    
+    private void eliminarUltimaTabla() {
+        listaTablas.removeAll(tablas);
+        pnlTablas.removeAll();
+        pnlTablas.revalidate();
+        pnlTablas.repaint();
+    }
+
+    private void cerrarVentana() {
+        EspecificacionesGUI.this.dispose();
+    }
+
+    private int obtenerIdHojaInstruccion() {
+        try {
+            return irs.getIdHI(conexion, inspeccionRecibo);
+        } catch (SQLException ex) {
+            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+            irs.manejarExcepcion("Error al Obtener el id de la hoja de instrución solicitada: ", ex);
+            return 0;
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -490,7 +408,6 @@ public class EspecificacionesGUI extends JFrame {
         }
         //</editor-fold>
 
-
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
             try {
@@ -508,7 +425,6 @@ public class EspecificacionesGUI extends JFrame {
     private javax.swing.JButton btnRegresar;
     private javax.swing.JComboBox<String> cbxCalibre;
     private javax.swing.JComboBox<String> cbxEspecificacionTecnica;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -517,5 +433,4 @@ public class EspecificacionesGUI extends JFrame {
     private javax.swing.JLabel lblJCIcono;
     private javax.swing.JPanel pnlTablas;
     // End of variables declaration//GEN-END:variables
-
 }

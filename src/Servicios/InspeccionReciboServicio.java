@@ -1,9 +1,14 @@
 package Servicios;
 
 import InspeccionRecibo.AgregarIrGUI;
+import InspeccionRecibo.EspecificacionesGUI;
 import InspeccionRecibo.HojaInstruccionGUI;
 import InspeccionRecibo.HojaInstruccionGUI2;
 import InspeccionRecibo.InspeccionReciboGUI;
+import InspeccionRecibo.ModificarIrGUI;
+import Modelos.CalibreIRM;
+import Modelos.DatosIRM;
+import Modelos.EspecificacionM;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
 import java.awt.Component;
@@ -22,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,6 +39,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import jnafilechooser.api.JnaFileChooser;
 import org.apache.poi.ss.usermodel.Cell;
@@ -46,7 +53,13 @@ public class InspeccionReciboServicio {
     private final String tabla = "inspeccionrecibo";
     private String numeroStr;
 
-    public final String SELECT_NOMBRE_PROVEEDORES_SQL = "SELECT DISTINCT nombre FROM proveedores"; // DISTINCT sirve para evitar que se muestren resultados duplicados
+    final String SQL_CONSULTA_REF_ESPECIFICACION = "SELECT codigoET, fechaEmision, fechaRevision, noRev FROM especificacionesir WHERE Especificacion=?";
+
+    private final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";
+    private final String SQL_CONSULTA_MEDIDAS_CALIBRE = "SELECT DISTINCT calibre, medidas FROM calibresir WHERE calibre LIKE ? ORDER BY calibre";
+    private final String SQL_CONSULTA_CALIBRE = "SELECT DISTINCT medidas FROM calibresir WHERE calibre LIKE ?";
+    private final String SQL_CONSULTA_INSPECTORES = "SELECT nombre FROM usuarios WHERE id_tipo=?";
+    private final String SELECT_NOMBRE_PROVEEDORES_SQL = "SELECT DISTINCT nombre FROM proveedores";
     public final String SELECT_NO_HOJA_INSTRUCCION_SQL = "SELECT noHoja FROM inspeccionrecibo WHERE noHoja LIKE ? ORDER BY noHoja DESC LIMIT 1";
     private final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id_ir FROM " + this.tabla + " WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
     private final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado FROM " + this.tabla + " WHERE noHoja = ?";
@@ -59,7 +72,74 @@ public class InspeccionReciboServicio {
     public String direcciomImg = "img\\jc.png";
 
     Connection conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos
+    
+    public final String DIRECCION_IMG = "img\\jc.png";
+    private static final String SQL_INSERCION_CALIBRE_IR = "INSERT INTO calibresir(calibre,medidas,especificacion) VALUES (?,?,?)";
+    private static final String SQL_INSERCION_DMP = "INSERT INTO materiaprimasc(calibre,descripcionMP,calibreLamina) VALUES (?,?,?)";
+    private static final String SQL_CONSULTA_INSPECCION_RECIBO = "SELECT * FROM inspeccionrecibo";
+    private final String SQL_CONSULTA_ESPECIFICACIONES_IR = "SELECT Especificacion FROM especificacionesir";
+    
+    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
+        File archivoSeleccionado = this.irs.seleccionarArchivo(this); 
+        if (archivoSeleccionado != null) {
+            String nombreArchivo = archivoSeleccionado.getName(); 
+            rutaArchivo = archivoSeleccionado.getAbsolutePath();
+            textField.setText(nombreArchivo);
+        }
+        return rutaArchivo;
+    }
+    
+    public void agregar(Connection conexion, CalibreIRM cirm) throws SQLException {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
+            sqlInsert.setString(1, cirm.getCalibre());
+            sqlInsert.setString(2, cirm.getMedidas());
+            sqlInsert.setString(3, cirm.getEspecificacion());
+            sqlInsert.executeUpdate();
+        } catch (SQLException ex) {
+            throw new SQLException(ex);
+        }
+    }
 
+    public void agregarDMP(Connection conexion, CalibreIRM cirm) throws SQLException {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
+            sqlInsert.setString(1, cirm.getCalibre());
+            sqlInsert.setString(2, cirm.getDescripcionMP());
+            sqlInsert.setString(3, cirm.getMedidas());
+            sqlInsert.executeUpdate();
+        } catch (SQLException ex) {
+            throw new SQLException(ex);
+        }
+    }
+
+    public List<CalibreIRM> recuperarTodasMedidasCalibre(Connection conexion) throws SQLException {
+        List<CalibreIRM> listaCalibreIRM = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_INSPECCION_RECIBO);
+                ResultSet resultado = consulta.executeQuery()) {
+            while (resultado.next()) {
+                listaCalibreIRM.add(new CalibreIRM(resultado.getString("calibre"), resultado.getString("medidas"), resultado.getString("especificacion"), ""));
+            }
+        }
+        return listaCalibreIRM;
+    }
+
+    public void abrirEspecificacionesGUI(Usuarios usr, InspeccionReciboM irm) throws SQLException, ClassNotFoundException {
+        EspecificacionesGUI esGUI = new EspecificacionesGUI(usr, irm); // Se crea una instancia de la interfaz gráfica
+        esGUI.setVisible(true); // Se hace visible la ventana
+        esGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
+    }
+
+    public List<String> obtenerEspecificaciones(Connection conexion) throws SQLException {
+        // Se realizan las consultas SQL
+        List<String> listaEspecificaciones = new ArrayList<>();
+        try (PreparedStatement consulta2 = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACION);
+                ResultSet resultado2 = consulta2.executeQuery()) {
+            while (resultado2.next()) { // Se guardan los calibres en el comboBox
+                listaEspecificaciones.add(resultado2.getString("Especificacion"));
+            }
+        }
+        return listaEspecificaciones;
+    }
+    
     public void agregar(Connection conexion, InspeccionReciboM irm) throws SQLException {
         try {
             // Inicia la transacción
@@ -160,6 +240,28 @@ public class InspeccionReciboServicio {
         }
     }
 
+    public Date formatearFecha(String fecha) {
+        try {
+            if (fecha == null) {
+                return null;
+            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            return dateFormat.parse(fecha);
+        } catch (ParseException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+            manejarExcepcion("Error al formatear la fecha: ", ex);
+            return null;
+        }
+    }
+
+    public String formatearFecha(Date fecha) {
+        if (fecha == null) {
+            return "";
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        return dateFormat.format(fecha);
+    }
+
     public Button crearBoton(Object object, ImageIcon icon, String texto) {
         Font fuentePersonalizada = new Font("Arial", Font.PLAIN, 10);
         Button boton = new Button();
@@ -232,6 +334,54 @@ public class InspeccionReciboServicio {
             throw new SQLException("Error al ejecutar la consulta SQL: " + ex.getMessage(), ex);
         }
         return listaIr;
+    }
+
+    public List<InspeccionReciboM> recuperarRegistrosIR(Connection conexion) throws SQLException {
+        List<InspeccionReciboM> listaIr = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL);
+                ResultSet resultado = consulta.executeQuery()) {
+            while (resultado.next()) {
+                InspeccionReciboM ir = new InspeccionReciboM(
+                        resultado.getInt("id_ir"),
+                        resultado.getString("fechaFactura"),//
+                        resultado.getString("Proveedor"), //
+                        resultado.getString("noFactura"), //
+                        resultado.getString("noPedido"), //
+                        resultado.getString("calibre"), //
+                        resultado.getString("pLamina"), //
+                        resultado.getString("noRollo"), //
+                        resultado.getString("pzKg"), // 
+                        resultado.getString("estatus"), //
+                        resultado.getString("noHoja"), //
+                        null,
+                        null,
+                        null,
+                        "",
+                        "",
+                        ""
+                );
+                listaIr.add(ir);
+            }
+        } catch (SQLException ex) {
+            throw new SQLException("Error al ejecutar la consulta SQL: " + ex.getMessage(), ex);
+        }
+        return listaIr;
+    }
+
+    public List<String> recuperarInspectores(Connection conexion) {
+        List<String> inspectores = new ArrayList<>();
+        try {
+            PreparedStatement slqNomProv = conexion.prepareStatement(SQL_CONSULTA_INSPECTORES);
+            slqNomProv.setInt(1, 5);
+            ResultSet registro = slqNomProv.executeQuery();
+            while (registro.next()) {
+                String inspector = registro.getString("nombre");
+                inspectores.add(inspector);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return inspectores;
     }
 
     public List<String> recuperarProveedores(Connection conexion) throws SQLException {
@@ -327,13 +477,13 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public void ejecutarArchivoPDF(String id, int column) throws ClassNotFoundException, SQLException {
+    public void ejecutarArchivoPDF(String id, int columna) throws ClassNotFoundException, SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            if (column == 10) {
+            if (columna == 10) {
                 ps = conexion.prepareStatement(SELECT_FACTURA_SQL);
-            } else if (column == 11) {
+            } else if (columna == 11) {
                 ps = conexion.prepareStatement(SELECT_CERTIFICADO_SQL);
             }
             ps.setString(1, id);
@@ -341,9 +491,10 @@ public class InspeccionReciboServicio {
 
             if (rs.next()) {
                 byte[] b = rs.getBytes(1);
+                String nombreArchivo = columna == 10 ? rs.getString("nombreFact") : rs.getString("nombreCert");
 
                 try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream("nuevoArchivo.pdf")) {
+                        OutputStream out = new FileOutputStream(nombreArchivo)) {
 
                     byte[] buffer = new byte[1024];
                     int bytesRead;
@@ -353,6 +504,14 @@ public class InspeccionReciboServicio {
                     }
 
                     System.out.println("Archivo PDF creado correctamente.");
+                }
+
+                File archivo = new File(nombreArchivo);
+                if (archivo.exists()) {
+                    Desktop.getDesktop().open(archivo);
+                    System.out.println("Archivo " + nombreArchivo + " abierto correctamente.");
+                } else {
+                    System.out.println("El archivo no se encontró.");
                 }
             } else {
                 System.out.println("No se encontraron datos para el ID proporcionado.");
@@ -493,19 +652,10 @@ public class InspeccionReciboServicio {
             agregarGUI.setLocationRelativeTo(null);
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-            manejarExcepcion("Surgio un error al abrir AGREGAR: ", ex);
+            manejarExcepcion("Surgio un error al abrir AgregarIrGUI: ", ex);
         }
     }
 
-    public String formatearFecha(Date fecha) {
-        if (fecha == null) {
-            return "";
-        }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        return dateFormat.format(fecha);
-    }
-
-    // Manejar Excepciones
     public void agregarEspecificacion(Connection conexion, String especificacion) {
         try (PreparedStatement insertEspecificacion = conexion.prepareStatement("INSERT INTO especificacionesir(Especificacion) VALUES (?)")) {
             insertEspecificacion.setString(1, especificacion);
@@ -520,7 +670,16 @@ public class InspeccionReciboServicio {
             HojaInstruccionGUI hjGUI = new HojaInstruccionGUI(usr, irm);
             mostrarVentana(hjGUI);
         } catch (SQLException | ClassNotFoundException ex) {
-            manejarExcepcion("Surgio un error al abrir ACEPTACION PRODUCTO", ex);
+            manejarExcepcion("Surgio un error al abrir HojaInstruccionGUI", ex);
+        }
+    }
+
+    public void abrirHojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo, DatosIRM datosIR, List listaAnchoLargo, List listaRugosidadDureza) {
+        try {
+            HojaInstruccionGUI hjGUI = new HojaInstruccionGUI(usuario, inspeccionRecibo, datosIR, listaAnchoLargo, listaRugosidadDureza);
+            mostrarVentana(hjGUI);
+        } catch (SQLException | ClassNotFoundException ex) {
+            manejarExcepcion("Surgio un error al abrir HojaInstruccionGUI", ex);
         }
     }
 
@@ -612,6 +771,157 @@ public class InspeccionReciboServicio {
 
     public String obtenerTexto(JTextField textField) {
         return textField.getText().trim();
+    }
+
+    public void abrirModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario) {
+        try {
+            ModificarIrGUI modificar = new ModificarIrGUI(inspeccionRecibo, usuario);
+            modificar.setVisible(true);
+            modificar.setLocationRelativeTo(null);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+            manejarExcepcion("Error al Abrir ModificarIrGUI", ex);
+        }
+    }
+
+    public int getIdHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
+        String sqlInsertIr = "SELECT id_ir FROM inspeccionrecibo WHERE fechaFactura=? AND noFactura=? AND noPedido=? AND noRollo=? AND pzKg=? AND noHoja=?";
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+            sqlInsert.setString(1, irm.getFechaFactura());
+            sqlInsert.setString(2, irm.getNoFactura());
+            sqlInsert.setString(3, irm.getNoPedido());
+            sqlInsert.setString(4, irm.getNoRollo());
+            sqlInsert.setString(5, irm.getPzKg());
+            sqlInsert.setString(6, irm.getNoHoja());
+            ResultSet rs = sqlInsert.executeQuery();
+            int id = 0;
+            if (rs.next()) {
+                id = rs.getInt("id_ir");
+            } else {
+                System.out.println("id =" + id);
+            }
+            return id;
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error al OBTERNER EL ID: " + ex.getMessage());
+        }
+        return 0;
+    }
+
+    public int getData(Connection conexion, int id) throws SQLException {
+        String sqlInsertIr = "SELECT * FROM inspeccionrecibo WHERE id_ir=?";
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+            sqlInsert.setInt(1, id);
+            ResultSet rs = sqlInsert.executeQuery();
+            return id;
+        } catch (SQLException ex) {
+            throw new SQLException("Error al ejecutar la consulta SQL de inserción: " + ex.getMessage(), ex);
+        }
+    }
+
+    public void abrirModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario, String rutaArchivo) {
+        try {
+            ModificarIrGUI modificar = new ModificarIrGUI(inspeccionRecibo, usuario, rutaArchivo);
+            modificar.setVisible(true);
+            modificar.setLocationRelativeTo(null);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void abrirEspecificacionesGUI(Usuarios usuario, DatosIRM dirm, InspeccionReciboM inspeccionRecibo, JTable tblAnchoLargo, JTable tblRugosidadDureza) {
+        try {
+            EspecificacionesGUI ir = new EspecificacionesGUI(usuario, dirm, inspeccionRecibo, tblAnchoLargo, tblRugosidadDureza);
+            ir.setVisible(true);
+            ir.setLocationRelativeTo(null);
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public List<String> recuperarDescripciones(Connection conexion, InspeccionReciboM inspeccionRecibo) {
+        List<String> descripciones = new ArrayList<>();
+        try {
+            PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM materiaprimasc WHERE calibre LIKE ? AND descripcionMP LIKE ?");
+            consulta.setString(1, "%" + inspeccionRecibo.getCalibre().substring(0, 2) + "%");
+            consulta.setString(2, "%" + inspeccionRecibo.getpLamina() + "%");
+            ResultSet resultado = consulta.executeQuery();
+
+            while (resultado.next()) {
+                String descripcion = resultado.getString(resultado.getString("descripcionMP"));
+                descripciones.add(descripcion);
+            }
+        } catch (SQLException e) {
+            manejarExcepcion("Error al cargar las descripciones: ", e);
+        }
+        return descripciones;
+    }
+
+    public List<String> recuperarMedidas(Connection conexion, InspeccionReciboM inspeccionRecibo) {
+        List<String> medidas = new ArrayList<>();
+        try {
+            PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_CALIBRE);
+            consulta.setString(1, "%" + inspeccionRecibo.getCalibre().substring(0, 2) + "%");
+            ResultSet resultado = consulta.executeQuery();
+
+            while (resultado.next()) {
+                String medida = resultado.getString("medidas");
+                medidas.add(medida);
+            }
+        } catch (SQLException e) {
+            manejarExcepcion("Error al cargar las medidas: ", e);
+        }
+
+        return medidas;
+    }
+
+    public List<String> recuperarMedidasCalibre(Connection conexion, InspeccionReciboM inspeccionRecibo) {
+        List<String> medidasCalibre = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_MEDIDAS_CALIBRE)) {
+            consulta.setString(1, "%" + inspeccionRecibo.getCalibre().substring(0, 2) + "%");
+            ResultSet resultado2 = consulta.executeQuery();
+
+            while (resultado2.next()) {
+                medidasCalibre.add(resultado2.getString("calibre") + "   " + resultado2.getString("medidas"));
+            }
+        } catch (SQLException e) {
+            manejarExcepcion("Error al cargar las medidas del calibre: ", e);
+        }
+
+        return medidasCalibre;
+    }
+
+    public List<String> recuperarEspecificaciones(Connection conexion, String calibre) {
+        List<String> especificaciones = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACION)) {
+            consulta.setString(1, calibre);
+            ResultSet resultado = consulta.executeQuery();
+            while (resultado.next()) {
+                String especificacion = resultado.getString("especificacion");
+                especificaciones.add(especificacion);
+            }
+        } catch (SQLException e) {
+            manejarExcepcion("Error al cargar las medidas del calibre: ", e);
+        }
+
+        return especificaciones;
+    }
+
+    public EspecificacionM recuperarReferenciasEspecificacion(Connection conexion, String especificacionTecnica) {
+        EspecificacionM especificacion = new EspecificacionM();
+        try {
+            PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_REF_ESPECIFICACION);
+            consulta.setString(1, especificacionTecnica);
+            ResultSet resultado = consulta.executeQuery();
+            if (resultado.next()) { // Se obtiene la información de la bd
+                especificacion.setCodigo(resultado.getString("codigoET"));
+                especificacion.setFechaEmision(resultado.getString("fechaEmision"));
+                especificacion.setFechaRevision(resultado.getString("fechaRevision"));
+                especificacion.setNoRev(resultado.getString("noRev"));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return especificacion;
     }
 
 }

@@ -7,7 +7,7 @@ import Modelos.AceptacionProducto;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
-import Servicios.ExcelEditor;
+import Servicios.GeneradorExcel;
 import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
@@ -47,7 +47,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
     private AceptacionProducto ap = new AceptacionProducto();
     
     // Servicios y Utilidades
-    private ExcelEditor xls = new ExcelEditor();
+    private GeneradorExcel xls = new GeneradorExcel();
     private AceptacionProductoServicio aps = new AceptacionProductoServicio();
 
     private List<AceptacionPc2> ap2m = new ArrayList<>();

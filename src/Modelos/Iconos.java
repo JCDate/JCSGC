@@ -2,6 +2,7 @@ package Modelos;
 
 import java.awt.Image;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 public class Iconos {
     
@@ -22,7 +23,7 @@ public class Iconos {
             Image mainIcon = imageIcon.getImage(); // Se obtiene la imagen
             return mainIcon; // Se retorna 
         } catch (Exception e) {
-            e.printStackTrace(); // Imprime el stack trace de la excepción
+           JOptionPane.showMessageDialog(null, "Error al cargar el icono: "+e);
         }
         return null;
     }
