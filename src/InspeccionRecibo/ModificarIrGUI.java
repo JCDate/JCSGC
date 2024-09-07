@@ -394,9 +394,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     }
 
     private void cargarArchivos() {
-        irs.cargarArchivo(rutaArchivoFactura, inspeccionRecibo::setFacturapdf);
-        irs.cargarArchivo(rutaArchivoCertificado, inspeccionRecibo::setCertificadopdf);
-        irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
+        irs.validarArchivos(rutaArchivoCertificado, rutaArchivoFactura, rutaArchivoHojaInstruccion, inspeccionRecibo);
     }
 
     private void modificarDatos() {

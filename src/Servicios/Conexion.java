@@ -11,7 +11,7 @@ public class Conexion {
     private Conexion() {
         try {
             String SERVER = "192.168.1.75";
-            String BASE_DATOS = "jc_mysql2";
+            String BASE_DATOS = "jc_mysql4";
             String url = "jdbc:mysql://" + SERVER + ":3306/" + BASE_DATOS + "?useUnicode=yes&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true";
             String usuario = "root";
             String contraseña = "";

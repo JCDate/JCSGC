@@ -291,7 +291,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
             listAP.stream().map((ap) -> {
                 Object fila[] = new Object[2];
                 fila[0] = ap.getComponente();
-                fila[1] = Utilidades.crearBoton(ap.getRdPdf(), Iconos.ICONO_EXCEL, "Vacio");
+                fila[1] = Utilidades.crearBoton(ap.getRdPdf(), Iconos.ICONO_EXCEL_2, "Vacio");
                 return fila;
             }).forEachOrdered((fila) -> {
                 modeloTabla.addRow(fila);

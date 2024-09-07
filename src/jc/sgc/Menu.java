@@ -14,14 +14,15 @@ import javax.swing.JButton;
 
 public class Menu extends javax.swing.JFrame {
 
-    Usuarios usr; 
+    private Usuarios usuario;
+
     public Menu() {
-        inicializarVentana();
+        inicializarVentanaYComponentes();
     }
 
-    public Menu(Usuarios usr) {
-        inicializarVentana();
-        this.usr = usr; 
+    public Menu(Usuarios usuario) {
+        inicializarVentanaYComponentes();
+        this.usuario = usuario;
 
         btnInspeccionRecibo.setEnabled(true);
         btnAceptacionProducto.setEnabled(true);
@@ -39,21 +40,9 @@ public class Menu extends javax.swing.JFrame {
         setColores(btnCtrlDocumentosYRegistros);
     }
 
-    public final void setColores(JButton btn) {
-        btn.setBackground(new Color(0, 139, 255));
-        btn.setForeground(new Color(250, 250, 250));
-    }
-
-    public final void inicializarVentana() {
-        initComponents(); 
-        this.setResizable(false); 
-        this.setDefaultCloseOperation(0);   
-        this.setLocationRelativeTo(null); 
-    }
-
     @Override
-    public Image getIconImage() { 
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));  
+    public Image getIconImage() {
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
 
@@ -70,7 +59,7 @@ public class Menu extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlMenu = new javax.swing.JPanel();
         lblJCIcono = new javax.swing.JLabel();
-        btnLogOut = new swing.Button(new Color(255, 202, 102), new Color(255, 166, 0));
+        btnCerrarSesion = new swing.Button(new Color(255, 202, 102), new Color(255, 166, 0));
         btnInspeccionRecibo = new swing.Button();
         btnAceptacionProducto = new swing.Button();
         btnInspeccionFinal = new javax.swing.JButton();
@@ -104,14 +93,14 @@ public class Menu extends javax.swing.JFrame {
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         pnlMenu.add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 10, -1, -1));
 
-        btnLogOut.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnLogOut.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Logout.png"))); // NOI18N
-        btnLogOut.addActionListener(new java.awt.event.ActionListener() {
+        btnCerrarSesion.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnCerrarSesion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Logout.png"))); // NOI18N
+        btnCerrarSesion.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLogOutActionPerformed(evt);
+                btnCerrarSesionActionPerformed(evt);
             }
         });
-        pnlMenu.add(btnLogOut, new org.netbeans.lib.awtextra.AbsoluteConstraints(3, 3, 40, 40));
+        pnlMenu.add(btnCerrarSesion, new org.netbeans.lib.awtextra.AbsoluteConstraints(3, 3, 40, 40));
 
         btnInspeccionRecibo.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
         btnInspeccionRecibo.setText("INSPECCIÓN/RECIBO");
@@ -207,38 +196,46 @@ public class Menu extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnLogOutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogOutActionPerformed
-        Login login = new Login(); 
-        login.setVisible(true); 
-        this.dispose(); 
-    }//GEN-LAST:event_btnLogOutActionPerformed
+    private void btnCerrarSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarSesionActionPerformed
+        Login login = new Login();
+        login.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnCerrarSesionActionPerformed
 
     private void btnAceptacionProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAceptacionProductoActionPerformed
         try {
-            AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr); 
-            apGUI.setVisible(true); 
+            AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usuario);
+            apGUI.setVisible(true);
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnAceptacionProductoActionPerformed
 
     private void btnInspeccionReciboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInspeccionReciboActionPerformed
-        try {
-            InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usr); 
-            irGUI.setVisible(true); 
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usuario);
+        irGUI.setVisible(true);
     }//GEN-LAST:event_btnInspeccionReciboActionPerformed
 
     private void btnCtrlDocumentosYRegistrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCtrlDocumentosYRegistrosActionPerformed
         try {
-            ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usr); 
-            docGUI.setVisible(true); 
+            ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usuario);
+            docGUI.setVisible(true);
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnCtrlDocumentosYRegistrosActionPerformed
+
+    private void inicializarVentanaYComponentes() {
+        initComponents();
+        this.setResizable(false);
+        this.setDefaultCloseOperation(0);
+        this.setLocationRelativeTo(null);
+    }
+
+    private void setColores(JButton btn) {
+        btn.setBackground(new Color(0, 139, 255));
+        btn.setForeground(new Color(250, 250, 250));
+    }
 
     /**
      * @param args the command line arguments
@@ -270,10 +267,10 @@ public class Menu extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAceptacionProducto;
     private javax.swing.JButton btnAnalisisSistemasMedicion;
+    private javax.swing.JButton btnCerrarSesion;
     private javax.swing.JButton btnCtrlDocumentosYRegistros;
     private javax.swing.JButton btnInspeccionFinal;
     private javax.swing.JButton btnInspeccionRecibo;
-    private javax.swing.JButton btnLogOut;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;

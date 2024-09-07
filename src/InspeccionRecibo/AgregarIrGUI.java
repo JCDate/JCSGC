@@ -3,7 +3,6 @@ package InspeccionRecibo;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
-import Servicios.ContadorAnual;
 import Servicios.GeneradorExcel;
 import Servicios.InspeccionReciboServicio;
 import Servicios.SQL;
@@ -15,10 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -26,10 +22,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-
+import javax.swing.JTextField;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -338,15 +333,15 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     }
 
     public void seleccionarCertificado() {
-        rutaArchivoCertificado = irs.seleccionarArchivoCertificado(txtNombreCertificado, rutaArchivoCertificado);
+        rutaArchivoCertificado = seleccionarArchivoCertificado(txtNombreCertificado, rutaArchivoCertificado);
     }
 
     public void seleccionarFactura() {
-        rutaArchivoFactura = irs.seleccionarArchivoCertificado(txtNombreFactura, rutaArchivoFactura);
+        rutaArchivoFactura = seleccionarArchivoCertificado(txtNombreFactura, rutaArchivoFactura);
     }
 
     public void seleccionarHojaInstruccion() {
-        rutaArchivoHojaInstruccion = irs.seleccionarArchivoCertificado(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
+        rutaArchivoHojaInstruccion = seleccionarArchivoCertificado(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
     }
 
     private void guardarDatos() {
@@ -466,9 +461,9 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                     Sheet hoja1 = workbook.getSheetAt(0); // Obtener la primera hoja del libro (índice 0)                    
 
                     excel.setDatosCeldas(hoja1, 5, 2, numeroStr); // No. de Hoja
-                    
-                    excel.getDatosCeldas(hoja1, 13, 5); 
-                    excel.getDatosCeldas(hoja1, 13, 7); 
+
+                    excel.getDatosCeldas(hoja1, 13, 5);
+                    excel.getDatosCeldas(hoja1, 13, 7);
 
                     DataFormatter formatter = new DataFormatter();
                     Cell celdaFechaFactura = hoja1.getRow(9).getCell(8); // Fecha Factura
@@ -492,7 +487,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                 }
 
                 try {
- 
+
                     irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
 
                     if (irs.existeNoRollo(txtNoRollo.getText())) {
@@ -508,15 +503,13 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                 Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, e);
             }
         } else {
-            String fechaFactura = irs.formatearFecha(fechaSeleccionada);
+            // Se almacenan los datos capturados en las variable
+            String fechaFactura = irs.formatearFecha(fechaSeleccionada); // Formatea la fecha y guárdala en una variable String
 
             // Si los campos no estan vacios
             if (!proveedor.isEmpty() || !noFactura.isEmpty() || !noPedido.isEmpty() || !calibre.isEmpty() || !pLamina.isEmpty() || !noRollo.isEmpty() || !pzKg.isEmpty() || !fechaFactura.isEmpty()) {
-                irs.cargarArchivo(rutaArchivoCertificado, inspeccionRecibo::setCertificadopdf);
-                irs.cargarArchivo(rutaArchivoFactura, inspeccionRecibo::setFacturapdf);
+                irs.validarArchivos(rutaArchivoCertificado, rutaArchivoFactura, rutaArchivoHojaInstruccion, inspeccionRecibo);
 
-                // Archivo de Hoja de Instrucción
-                irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
                 // Se guardan el resto de los atributos de la instancia
                 inspeccionRecibo.setFechaFactura(fechaFactura);
                 inspeccionRecibo.setProveedor(proveedor);
@@ -545,5 +538,15 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(null, "DATOS INCOMPLETOS");
             }
         }
+    }
+
+    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
+        File archivoSeleccionado = irs.seleccionarArchivo(this);
+        if (archivoSeleccionado != null) {
+            String nombreArchivo = archivoSeleccionado.getName();
+            rutaArchivo = archivoSeleccionado.getAbsolutePath();
+            textField.setText(nombreArchivo);
+        }
+        return rutaArchivo;
     }
 }

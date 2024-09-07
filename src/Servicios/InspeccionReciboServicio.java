@@ -53,7 +53,7 @@ public class InspeccionReciboServicio {
     private final String tabla = "inspeccionrecibo";
     private String numeroStr;
 
-    final String SQL_CONSULTA_REF_ESPECIFICACION = "SELECT codigoET, fechaEmision, fechaRevision, noRev FROM especificacionesir WHERE Especificacion=?";
+    final String SQL_CONSULTA_REF_ESPECIFICACION = "SELECT Especificacion, codigoET, fechaEmision, fechaRevision, noRev FROM especificacionesir WHERE Especificacion=?";
 
     private final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";
     private final String SQL_CONSULTA_MEDIDAS_CALIBRE = "SELECT DISTINCT calibre, medidas FROM calibresir WHERE calibre LIKE ? ORDER BY calibre";
@@ -62,8 +62,8 @@ public class InspeccionReciboServicio {
     private final String SELECT_NOMBRE_PROVEEDORES_SQL = "SELECT DISTINCT nombre FROM proveedores";
     public final String SELECT_NO_HOJA_INSTRUCCION_SQL = "SELECT noHoja FROM inspeccionrecibo WHERE noHoja LIKE ? ORDER BY noHoja DESC LIMIT 1";
     private final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id_ir FROM " + this.tabla + " WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
-    private final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado FROM " + this.tabla + " WHERE noHoja = ?";
-    private final String SELECT_FACTURA_SQL = "SELECT pdfFactura FROM " + this.tabla + " WHERE noHoja = ?";
+    private final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM " + this.tabla + " WHERE noHoja = ?";
+    private final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM " + this.tabla + " WHERE noHoja = ?";
     private final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM " + this.tabla;
     private final String INSERT_INSPECCION_RECIBO_SQL = "INSERT INTO " + this.tabla + "(fechaFactura,Proveedor,noFactura,noPedido,calibre,pLamina,noRollo,pzKg,estatus,noHoja,pdfFactura,pdfCertificado,hojaInstruccion,nombreHJ,nombreFact,nombreCert) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM " + this.tabla + " WHERE noHoja=? AND fechaFactura=? AND noFactura=? AND noPedido=? AND pzKg=?";
@@ -72,23 +72,13 @@ public class InspeccionReciboServicio {
     public String direcciomImg = "img\\jc.png";
 
     Connection conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos
-    
+
     public final String DIRECCION_IMG = "img\\jc.png";
     private static final String SQL_INSERCION_CALIBRE_IR = "INSERT INTO calibresir(calibre,medidas,especificacion) VALUES (?,?,?)";
     private static final String SQL_INSERCION_DMP = "INSERT INTO materiaprimasc(calibre,descripcionMP,calibreLamina) VALUES (?,?,?)";
     private static final String SQL_CONSULTA_INSPECCION_RECIBO = "SELECT * FROM inspeccionrecibo";
     private final String SQL_CONSULTA_ESPECIFICACIONES_IR = "SELECT Especificacion FROM especificacionesir";
-    
-    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
-        File archivoSeleccionado = this.irs.seleccionarArchivo(this); 
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName(); 
-            rutaArchivo = archivoSeleccionado.getAbsolutePath();
-            textField.setText(nombreArchivo);
-        }
-        return rutaArchivo;
-    }
-    
+
     public void agregar(Connection conexion, CalibreIRM cirm) throws SQLException {
         try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
             sqlInsert.setString(1, cirm.getCalibre());
@@ -131,7 +121,7 @@ public class InspeccionReciboServicio {
     public List<String> obtenerEspecificaciones(Connection conexion) throws SQLException {
         // Se realizan las consultas SQL
         List<String> listaEspecificaciones = new ArrayList<>();
-        try (PreparedStatement consulta2 = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACION);
+        try (PreparedStatement consulta2 = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACIONES_IR);
                 ResultSet resultado2 = consulta2.executeQuery()) {
             while (resultado2.next()) { // Se guardan los calibres en el comboBox
                 listaEspecificaciones.add(resultado2.getString("Especificacion"));
@@ -139,7 +129,7 @@ public class InspeccionReciboServicio {
         }
         return listaEspecificaciones;
     }
-    
+
     public void agregar(Connection conexion, InspeccionReciboM irm) throws SQLException {
         try {
             // Inicia la transacción
@@ -480,7 +470,9 @@ public class InspeccionReciboServicio {
     public void ejecutarArchivoPDF(String id, int columna) throws ClassNotFoundException, SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
+
         try {
+            // Prepara la consulta SQL basada en la columna
             if (columna == 10) {
                 ps = conexion.prepareStatement(SELECT_FACTURA_SQL);
             } else if (columna == 11) {
@@ -489,27 +481,31 @@ public class InspeccionReciboServicio {
             ps.setString(1, id);
             rs = ps.executeQuery();
 
+            // Procesa el ResultSet
             if (rs.next()) {
-                byte[] b = rs.getBytes(1);
-                String nombreArchivo = columna == 10 ? rs.getString("nombreFact") : rs.getString("nombreCert");
+                byte[] pdfBytes = rs.getBytes(1); // Reemplaza 'pdfColumn' con el nombre de la columna
+                String nombreArchivo = (columna == 10) ? rs.getString("nombreFact") : rs.getString("nombreCert");
+                String nombreDocto = (nombreArchivo != "") ? nombreArchivo : "nuevoArchivo.pdf";
 
-                try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream(nombreArchivo)) {
+                // Escribe el archivo PDF
+                try (InputStream inputStream = new ByteArrayInputStream(pdfBytes);
+                        OutputStream outputStream = new FileOutputStream(nombreDocto)) {
 
                     byte[] buffer = new byte[1024];
                     int bytesRead;
 
-                    while ((bytesRead = bos.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
                     }
 
                     System.out.println("Archivo PDF creado correctamente.");
                 }
 
-                File archivo = new File(nombreArchivo);
+                // Abre el archivo PDF
+                File archivo = new File(nombreDocto);
                 if (archivo.exists()) {
                     Desktop.getDesktop().open(archivo);
-                    System.out.println("Archivo " + nombreArchivo + " abierto correctamente.");
+                    System.out.println("Archivo " + nombreDocto + " abierto correctamente.");
                 } else {
                     System.out.println("El archivo no se encontró.");
                 }
@@ -517,8 +513,10 @@ public class InspeccionReciboServicio {
                 System.out.println("No se encontraron datos para el ID proporcionado.");
             }
         } catch (IOException | SQLException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Error al abrir o crear el archivo PDF: " + ex.getMessage());
         } finally {
+            // Cierra los recursos
             try {
                 if (rs != null) {
                     rs.close();
@@ -844,10 +842,11 @@ public class InspeccionReciboServicio {
             PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM materiaprimasc WHERE calibre LIKE ? AND descripcionMP LIKE ?");
             consulta.setString(1, "%" + inspeccionRecibo.getCalibre().substring(0, 2) + "%");
             consulta.setString(2, "%" + inspeccionRecibo.getpLamina() + "%");
+
             ResultSet resultado = consulta.executeQuery();
 
             while (resultado.next()) {
-                String descripcion = resultado.getString(resultado.getString("descripcionMP"));
+                String descripcion = resultado.getString("descripcionMP");
                 descripciones.add(descripcion);
             }
         } catch (SQLException e) {
@@ -913,6 +912,7 @@ public class InspeccionReciboServicio {
             consulta.setString(1, especificacionTecnica);
             ResultSet resultado = consulta.executeQuery();
             if (resultado.next()) { // Se obtiene la información de la bd
+                especificacion.setEspecificacion(resultado.getString("Especificacion"));
                 especificacion.setCodigo(resultado.getString("codigoET"));
                 especificacion.setFechaEmision(resultado.getString("fechaEmision"));
                 especificacion.setFechaRevision(resultado.getString("fechaRevision"));
@@ -922,6 +922,23 @@ public class InspeccionReciboServicio {
             Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
         return especificacion;
+    }
+
+    public void validarArchivos(String rutaArchivoCertificado, String rutaArchivoFactura, String rutaArchivoHojaInstruccion, InspeccionReciboM inspeccionRecibo) {
+        // Verifica si la ruta del archivo de certificado no es nula o vacía antes de cargar
+        if (rutaArchivoCertificado != null && !rutaArchivoCertificado.isEmpty()) {
+            cargarArchivo(rutaArchivoCertificado, inspeccionRecibo::setCertificadopdf);
+        }
+
+        // Verifica si la ruta del archivo de factura no es nula o vacía antes de cargar
+        if (rutaArchivoFactura != null && !rutaArchivoFactura.isEmpty()) {
+            cargarArchivo(rutaArchivoFactura, inspeccionRecibo::setFacturapdf);
+        }
+
+        if (rutaArchivoHojaInstruccion != null && !rutaArchivoFactura.isEmpty()) {
+            // Archivo de Hoja de Instrucción
+            cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
+        }
     }
 
 }

@@ -71,7 +71,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     public InspeccionReciboGUI(Usuarios usuario) {
         this.usuario = usuario;
         inicializarVentanaYComponentes();
-        
     }
 
     @Override
@@ -427,7 +426,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                     // Se crean los botones para el resto de campos
                     fila[COLUMN_VER_FACTURA] = irs.crearBoton(ir.getFacturapdf(), Iconos.ICONO_PDF, "Vacío");
                     fila[COLUMN_VER_CERTIFICADO] = irs.crearBoton(ir.getCertificadopdf(), Iconos.ICONO_PDF, "Vacío");
-                    fila[COLUMN_VER_HOJA_INSTRUCCION] = irs.crearBoton(ir.getHojaIns(), Iconos.ICONO_EXCEL, "Realizar");
+                    fila[COLUMN_VER_HOJA_INSTRUCCION] = irs.crearBoton(ir.getHojaIns(), Iconos.ICONO_EXCEL_2, "Realizar");
                     return fila;
                 }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
                     modeloTabla.addRow(fila);

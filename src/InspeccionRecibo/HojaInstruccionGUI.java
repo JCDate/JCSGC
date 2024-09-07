@@ -45,10 +45,11 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     }
 
     public HojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException {
-        inicializarVentanaYComponentes();
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
 
+        inicializarVentanaYComponentes();
+        
         Date fechaActual = Calendar.getInstance().getTime(); // Obtener la fecha actual
         dchFechaInspeccion.setDate(fechaActual);
 
@@ -57,14 +58,15 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
 
         listaMedidas = irs.recuperarMedidas(conexion, inspeccionRecibo);
         listaMedidas.forEach(cbxLamina::addItem);
-
     }
 
     public HojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo, DatosIRM dirm, List<AnchoLargoM> anchoLargoList, List<RugosidadDurezaM> rdList) throws SQLException, ClassNotFoundException {
-        inicializarVentanaYComponentes();
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
         this.dirm = dirm;
+        
+        inicializarVentanaYComponentes();
+        
 
         cbxDescripcionMP.setSelectedItem(dirm.getDescripcionMP());
         cbxLamina.setSelectedItem(dirm.getCalibreLamina());

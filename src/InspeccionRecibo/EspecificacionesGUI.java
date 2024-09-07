@@ -62,7 +62,7 @@ public class EspecificacionesGUI extends JFrame {
     private List<String> listaEspecificacion = new ArrayList<>();
     private List listaAnchoLargo = new ArrayList<>();
     private List listaRugosidadDureza = new ArrayList<>();
-    private List<JTable> tablas;
+    private List<JTable> tablas = new ArrayList<>();
 
     public EspecificacionesGUI() throws SQLException, ClassNotFoundException {
         inicializarVentanaYComponentes();
@@ -74,13 +74,14 @@ public class EspecificacionesGUI extends JFrame {
     }
 
     public EspecificacionesGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException {
-        inicializarVentanaYComponentes();
+
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
+        inicializarVentanaYComponentes();
     }
 
     public EspecificacionesGUI(Usuarios usuario, DatosIRM datosIR, InspeccionReciboM inspeccionRecibo, JTable tblRugosidadDureza, JTable tblAnchoLargo) throws SQLException, ClassNotFoundException {
-        inicializarVentanaYComponentes();
+
         this.usuario = usuario;
         this.datosIR = datosIR;
         this.inspeccionRecibo = inspeccionRecibo;
@@ -88,6 +89,7 @@ public class EspecificacionesGUI extends JFrame {
         this.tblAnchoLargo = tblAnchoLargo;
         als.setTbl(tblRugosidadDureza);
         rds.setTbl(tblAnchoLargo);
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -309,12 +311,12 @@ public class EspecificacionesGUI extends JFrame {
         pnlTablas.repaint();
     }
 
-    private DefaultTableModel crearModeloTabla(EspecificacionM especificacionTecnica, String calibres) {
+    private DefaultTableModel crearModeloTabla(EspecificacionM especificacion, String calibres) {
+        String especificacionTecnica = especificacion.getEspecificacion();
         String codigo = especificacion.getCodigo();
         String fechaEm = especificacion.getFechaEmision();
         String fechaRev = especificacion.getFechaRevision();
         String noRev = especificacion.getNoRev();
-      
 
         Object[][] datos = {
             {especificacionTecnica, "Código: " + codigo, calibres, "", "", "", ""},
@@ -353,19 +355,19 @@ public class EspecificacionesGUI extends JFrame {
     }
 
     private void establecerValoresEnTabla(DefaultTableModel modeloTabla, List<PropiedadMecanicaM> propiedadesMecanicas, List<ComposicionQuimicaM> composicionQuimica) {
-    int columnaPropiedades = 3;
-    int columnaPropiedadesCM = 5;
+        int columnaPropiedades = 3;
+        int columnaPropiedadesCM = 5;
 
-    for (int i = 0; i < propiedadesMecanicas.size(); i++) {
-        String valorPropiedad = propiedadesMecanicas.get(i).getPm() + "   " + propiedadesMecanicas.get(i).getValor();
-        modeloTabla.setValueAt(valorPropiedad, i, columnaPropiedades);
+        for (int i = 0; i < propiedadesMecanicas.size(); i++) {
+            String valorPropiedad = propiedadesMecanicas.get(i).getPm() + "   " + propiedadesMecanicas.get(i).getValor();
+            modeloTabla.setValueAt(valorPropiedad, i, columnaPropiedades);
+        }
+        for (int i = 0; i < composicionQuimica.size(); i++) {
+            String valorPropiedadCM = composicionQuimica.get(i).getCq() + "   " + composicionQuimica.get(i).getValor();
+            modeloTabla.setValueAt(valorPropiedadCM, i, columnaPropiedadesCM);
+        }
     }
-    for (int i = 0; i < composicionQuimica.size(); i++) {
-        String valorPropiedadCM = composicionQuimica.get(i).getCq() + "   " + composicionQuimica.get(i).getValor();
-        modeloTabla.setValueAt(valorPropiedadCM, i, columnaPropiedadesCM);
-    }
-}
-    
+
     private void eliminarUltimaTabla() {
         listaTablas.removeAll(tablas);
         pnlTablas.removeAll();

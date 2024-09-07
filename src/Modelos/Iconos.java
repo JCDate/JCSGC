@@ -9,6 +9,7 @@ public class Iconos {
     public static final ImageIcon ICONO_JC = new ImageIcon(getImage("/jc/img/jc.png"));
     public static final ImageIcon ICONO_WORD = new ImageIcon(getImage("/jc/img/word.png"));
     public static final ImageIcon ICONO_EXCEL = new ImageIcon(getImage("/jc/img/excel.png"));
+    public static final ImageIcon ICONO_EXCEL_2 = new ImageIcon(getImage("/jc/img/excelC.png"));
     public static final ImageIcon ICONO_POWER_POINT = new ImageIcon(getImage("/jc/img/powerpoint.png"));
     public static final ImageIcon ICONO_PDF = new ImageIcon(getImage("/jc/img/PDF.png"));
     public static final ImageIcon ICONO_VER = new ImageIcon(getImage("/jc/img/ver2.png"));

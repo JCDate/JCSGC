@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import Servicios.AnchoLargoServicio;
 import Servicios.GeneradorExcel;
+import Servicios.RugosidadDurezaServicio;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JFrame;
@@ -45,6 +46,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
     // Servicios y Utilidades
     private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private RugosidadDurezaServicio rds = new RugosidadDurezaServicio();
     private AnchoLargoServicio als = new AnchoLargoServicio();
     private GeneradorExcel excel = new GeneradorExcel();
     private ExcelFormato formato = new ExcelFormato();
@@ -52,11 +54,11 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     // Objetos para la manipulación de los datos
     private InspeccionReciboM inspeccionRecibo;
     private DatosIRM dirm = new DatosIRM();
-    
+
     // Objetos para editar el archivo Excel
     private XSSFWorkbook workbook;
     private Sheet hoja1;
-    
+
     // Objetos para el formato de la fecha y para guardar la ruta del archivo Excel
     private String formatoFecha;
     private String rutaArchivo;
@@ -116,6 +118,8 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         txtDescripcionMP = new swing.TextField();
         txtToleranciaLamina = new swing.TextField();
         chkHoy = new swing.JCheckBoxCustom(new Color(20, 134, 255));
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblRugosidadDureza = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -167,7 +171,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         lblDisposicionMateriaPrima.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblDisposicionMateriaPrima.setForeground(new java.awt.Color(76, 109, 255));
         lblDisposicionMateriaPrima.setText("OBSERVACIONES A LA DISPOSICION DE LA MATERIA PRIMA:");
-        jPanel1.add(lblDisposicionMateriaPrima, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 410, -1, -1));
+        jPanel1.add(lblDisposicionMateriaPrima, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 490, -1, -1));
 
         chkAceptacion.setText("Aceptación");
         chkAceptacion.addActionListener(new java.awt.event.ActionListener() {
@@ -175,7 +179,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
                 chkAceptacionActionPerformed(evt);
             }
         });
-        jPanel1.add(chkAceptacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 530, 100, 40));
+        jPanel1.add(chkAceptacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 580, 100, 40));
 
         chkRechazo.setText("Rechazo");
         chkRechazo.addActionListener(new java.awt.event.ActionListener() {
@@ -183,7 +187,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
                 chkRechazoActionPerformed(evt);
             }
         });
-        jPanel1.add(chkRechazo, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 530, 90, 40));
+        jPanel1.add(chkRechazo, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 580, 90, 40));
 
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         jPanel1.add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
@@ -222,7 +226,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
                 btnRegresarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 540, -1, -1));
+        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 570, -1, -1));
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(76, 109, 255));
@@ -250,7 +254,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         jPanel1.add(cbxNombreInspector, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 110, 270, 30));
 
         cbxObservacionesMP.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MATERIAL DENTRO DE ESPECIFICACIÓN", "MATERIAL FUERA DE ESPECIFICACIÓN (CUARENTENA)", "MATERIAL DAÑADO DE ESPECIFICACIÓN (CUARENTENA)" }));
-        jPanel1.add(cbxObservacionesMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 430, 440, 40));
+        jPanel1.add(cbxObservacionesMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 510, 440, 40));
         jPanel1.add(txtObservacionesRD, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 430, 420, 40));
 
         btnGuardar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
@@ -262,7 +266,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
                 btnGuardarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(840, 560, 150, 50));
+        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(840, 580, 150, 50));
         jPanel1.add(txtDescripcionMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, 350, 40));
         jPanel1.add(txtToleranciaLamina, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 290, 350, 40));
 
@@ -276,7 +280,23 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         });
         jPanel1.add(chkHoy, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 110, -1, 30));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1010, 630));
+        tblRugosidadDureza.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "RUGOSIDAD", "DUREZA"
+            }
+        ));
+        jScrollPane1.setViewportView(tblRugosidadDureza);
+
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 430, 400, 110));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1010, 660));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -323,6 +343,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         listaInspectores.forEach(cbxNombreInspector::addItem);
 
         als.setTbl(tblAnchoLargo);
+        rds.setTbl(tblRugosidadDureza);
 
         try {
             leerDatosExcel();
@@ -358,19 +379,30 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 2; j++) {
                 Row filaAnchoLargo = hoja1.getRow(numFila);
-                Cell cellAnchoLargo = filaAnchoLargo.getCell(1);
-                tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, j);
+                Cell cellAnchoLargo = filaAnchoLargo.getCell(2);
+                tblRugosidadDureza.setValueAt(cellAnchoLargo.getStringCellValue(), i, j);
             }
             numFila++;
         }
 
-        if (excel.isAceptacion(hoja1, 39, 2)) {
-            chkAceptacion.setSelected(true);
-            chkRechazo.setSelected(false);
-        } else {
-            chkAceptacion.setSelected(false);
-            chkRechazo.setSelected(true);
+        // Crea la tabla de destino
+        String[][] table = new String[5][2];
+
+        // Lee las filas y columnas de la tabla de Excel
+        for (int i = 0; i < 2; i++) {
+            Row row = hoja1.getRow(i + 42); // 42 y 43 son las filas que deseas leer
+            for (int j = 0; j < 5; j++) {
+                Cell cell = row.getCell(j + 1); // 1-5 son las columnas que deseas leer
+                String value = cell.getStringCellValue();
+                table[j][i] = value; // Asigna el valor a la tabla de destino
+            }
         }
+
+        // Imprime la tabla de destino
+        for (int i = 0; i < 5; i++) {
+            System.out.println(table[i][0] + " " + table[i][1]);
+        }
+
     }
 
     public String guardarCambios(String nuevaRutaArchivo) throws FileNotFoundException, IOException, ParseException {
@@ -437,11 +469,11 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
         return nuevaRutaArchivo;
     }
-    
+
     public void cerrarVentana() {
         HojaInstruccionGUI2.this.dispose();
     }
-    
+
     public String getRutaArchivo() {
         return rutaArchivo;
     }
@@ -489,6 +521,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblCalibreLamina;
     private javax.swing.JLabel lblDescripcionMPR;
@@ -503,6 +536,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private javax.swing.JLabel lblPunto1;
     private javax.swing.JLabel lblPunto2;
     private javax.swing.JTable tblAnchoLargo;
+    private javax.swing.JTable tblRugosidadDureza;
     private javax.swing.JTextField txtDescripcionMP;
     private javax.swing.JTextField txtHojaInstrucciones;
     private javax.swing.JTextField txtObservacionesRD;
