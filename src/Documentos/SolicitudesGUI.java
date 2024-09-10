@@ -27,7 +27,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
     private Usuarios usr;
     private ProcesosM proceso;
-    private Connection conexion;
+    private Conexion conexion;
     private DefaultTableModel modeloTabla;
     private List<SolicitudesM> listSolicitudes = new ArrayList<>();
     private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
@@ -205,7 +205,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
                 }
             };
 
-            this.conexion = Conexion.getInstance().getConnection();
+            this.conexion = Conexion.getInstance();
             listSolicitudes = cds.recuperarSolicitudes(conexion);
             DefaultTableModel tableModel = construirModeloTabla();
             tblSolicitudes.setModel(tableModel);

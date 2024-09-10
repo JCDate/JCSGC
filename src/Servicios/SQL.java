@@ -1,6 +1,5 @@
 package Servicios;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,7 +11,7 @@ import javax.swing.JOptionPane;
  */
 public class SQL {
 
-    Connection conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos
+    Conexion conexion = Conexion.getInstance(); // Obtener la conexión a la base de datos
     ContadorAnual contador = new ContadorAnual(); // Contador de reportes de inspección
 
     public int autoIncremento(String sql) {
@@ -20,7 +19,7 @@ public class SQL {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conexion.prepareStatement(sql);
+            ps = conexion.conectar().prepareStatement(sql);
             rs = ps.executeQuery();
             while (rs.next()) {
                 id = rs.getInt(1) + 1;
@@ -40,7 +39,7 @@ public class SQL {
 
     public String getCodigoHoja(String sql, int year) {
         String numHoja = "";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+        try (PreparedStatement ps = conexion.conectar().prepareStatement(sql)) {
             ps.setString(1, String.valueOf(year) + "%");
 
             try (ResultSet rs = ps.executeQuery()) {

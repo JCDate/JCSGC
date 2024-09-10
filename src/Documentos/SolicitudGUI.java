@@ -27,7 +27,7 @@ import javax.swing.JTextField;
 public class SolicitudGUI extends javax.swing.JFrame {
 
     private Usuarios usr;
-    private Connection conexion;
+    private Conexion conexion;
     private ProcesosM proceso;
     private SolicitudesM solicitudes;
     private List<ProcedimientosM> listProcedimientos;
@@ -301,7 +301,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
         lblProceso.setText("PROCESO: " + proceso.getProceso());
 
         listProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());

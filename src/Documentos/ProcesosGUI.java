@@ -30,7 +30,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
     private Usuarios usr;
     private ProcesosM proceso;
-    private Connection conexion;
+    private Conexion conexion;
     private DefaultTableModel modeloTabla;
     private List<ProcedimientosM> listaProcedimientos = new ArrayList<>();
 
@@ -233,7 +233,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
         this.proceso = cds.recuperarProceso(conexion, idProceso);
         
 

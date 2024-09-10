@@ -7,7 +7,6 @@ import Servicios.ControlDocumentacionServicio;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +17,7 @@ import javax.swing.JFrame;
 public class ControlDocumentosGUI extends javax.swing.JFrame {
 
     private Usuarios usr;
-    private Connection conexion;
+    private Conexion conexion;
     private List<SolicitudesM> listSolicitudes = new ArrayList<>();
     private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
 
@@ -288,7 +287,7 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
         listSolicitudes = cds.recuperarSolicitudes(conexion);
 
         btnSolicitudCambio.setVisible(false);

@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -43,10 +44,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class GeneradorExcel {
 
-    private Connection conexion;
+    private Conexion conexion;
 
     public GeneradorExcel() {
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
     }
 
     // Servicios y Utilidades
@@ -231,7 +232,7 @@ public class GeneradorExcel {
         return celda.getStringCellValue().equalsIgnoreCase("√");
     }
 
-    public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, List<JTable> listTablas, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
+    public String generarHojaInstruccion(Conexion conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, List<JTable> listTablas, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
         String filePath = "HojaInstruccion.xlsx"; // Se obtiene el formato editable de la Hoja de Instrucción
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
@@ -341,7 +342,7 @@ public class GeneradorExcel {
         setValorCeldasHojaInstruccion(sheet, 60, 1, dirm.getInspector());
     }
 
-    private void procesarPaginaDosHJ(XSSFWorkbook workbook, Connection conexion, DatosIRM dirm, List<JTable> listTablas) throws SQLException {
+    private void procesarPaginaDosHJ(XSSFWorkbook workbook, Conexion conexion, DatosIRM dirm, List<JTable> listTablas) throws SQLException {
         Sheet sheet2 = workbook.getSheetAt(1);
         workbook.setSheetName(workbook.getSheetIndex(sheet2), formato.eliminarSeparadores(dirm.getFechaInspeccion()));
 
@@ -425,7 +426,7 @@ public class GeneradorExcel {
         }
     }
 
-    public String generarExcelRD(Connection conexion, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
+    public String generarExcelRD(Conexion conexion, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
         String filePath = "RETENCION-DIMENSIONAL.xlsx";
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
@@ -482,7 +483,7 @@ public class GeneradorExcel {
         }
     }
 
-    private void procesarPaginaDosRD(Connection conexion, XSSFWorkbook workbook, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m, AceptacionProductoServicio aps, AceptacionPc2 apc2) {
+    private void procesarPaginaDosRD(Conexion conexion, XSSFWorkbook workbook, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m, AceptacionProductoServicio aps, AceptacionPc2 apc2) {
         XSSFSheet hoja2 = workbook.getSheetAt(1);
 
         mostrarComponentes(hoja2, ap1m, ap3m);
@@ -551,7 +552,8 @@ public class GeneradorExcel {
             }
 
             if (selectedMap != null) {
-                try { // Buscar objeto correspondiente en ap2m usando identificador único
+                
+                try {
                     String id = dataVariable.getFecha();
                     String comp = dataVariable.getComponente();
                     List<AceptacionPc2> objetoAp2m = aps.buscarObjetoEnAp2mPorFecha(conexion, id, comp, apc2);
@@ -574,7 +576,7 @@ public class GeneradorExcel {
                         numO++;
                     }
                 } catch (SQLException ex) {
-                    aps.manejarExcepcion("Hubo un error al obtener la información de la base de datos: ", ex);
+                    Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }

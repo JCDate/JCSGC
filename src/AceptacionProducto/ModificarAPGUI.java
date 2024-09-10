@@ -1,7 +1,6 @@
 package AceptacionProducto;
 
 import Modelos.AceptacionPc1;
-import Modelos.AceptacionPc2;
 import Modelos.DatosFilaRD;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
@@ -10,10 +9,8 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,13 +22,27 @@ import javax.swing.JOptionPane;
 
 public class ModificarAPGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
-    private Connection conexion;
-    private DatosFilaRD datosFila = new DatosFilaRD();
-    private AceptacionProductoServicio aps = new AceptacionProductoServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private DatosFilaRD datosFila; // Objeto para el manejo de la información de los registros
+    private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public ModificarAPGUI() {
         try {
+            inicializarVentanaYComponentes();
+        } catch (SQLException | ClassNotFoundException ex) {
+
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public ModificarAPGUI(Usuarios usuario) {
+        try {
+            this.usuario = usuario;
+            this.conexion = Conexion.getInstance();
+            this.datosFila = new DatosFilaRD();
+            this.aps = new AceptacionProductoServicio();
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error en ModificarAPGUI: ", ex);
@@ -39,13 +50,8 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         }
     }
 
-    public ModificarAPGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
-        this.usr = usr;
-        inicializarVentanaYComponentes();
-    }
-
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -199,18 +205,87 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        AceptacionPc1 apc1 = new AceptacionPc1();
-        AceptacionPc2 apc2 = new AceptacionPc2();
+        AceptacionPc1 aceptacionPc1 = crearAceptacionPc1();
 
-        apc1.setComponente(cbxComponente.getSelectedItem().toString());
-        apc1.setFecha(cbxFecha.getSelectedItem().toString());
-        apc1.setNoRollo(txtNoRollo.getText());
-        apc1.setInspVisual(txtInspVisual.getText());
-        apc1.setObservacion(txtObservaciones.getText());
+        configurarFocusListener();
 
-        apc2.setComponente(cbxComponente.getSelectedItem().toString());
-        apc2.setFecha(cbxFecha.getSelectedItem().toString());
+        try {
+            aps.modificarInfoRD(conexion, aceptacionPc1, datosFila);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al actualizar la información: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
+        JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
+        cerrarVentana();
+        aps.abrirAceptacionProductoGUI(usuario);
+    }//GEN-LAST:event_btnGuardarActionPerformed
+
+    private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
+        cerrarVentana();
+        aps.abrirAceptacionProductoGUI(usuario);
+    }//GEN-LAST:event_btnCerrarActionPerformed
+
+    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        configurarVentana();
+        configurarComboBoxComponentes();
+        configurarComboBoxFecha();
+    }
+
+    private void configurarVentana() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void configurarComboBoxComponentes() {
+        try {
+            aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
+            cbxComponente.addActionListener(this::manejarComponenteSeleccionado);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al configurar el ComboBox: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void manejarComponenteSeleccionado() {
+        try {
+            cbxFecha.removeAllItems();
+            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
+            List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
+            fechasRD.forEach(cbxFecha::addItem);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarComboBoxFecha() {
+        cbxFecha.addActionListener(this::manejarFechaSeleccionada);
+    }
+
+    private void manejarFechaSeleccionada() {
+        try {
+            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
+            datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
+
+            txtNoRollo.setText(datosFila.getNoRollo());
+            txtInspVisual.setText(datosFila.getInspVisual());
+            txtObservaciones.setText(datosFila.getObservaciones());
+            txtNoOrden.setText(String.join(", ", datosFila.getNoOrden()));
+            txtTamLote.setText(datosFila.getTamLote());
+            txtTamMta.setText(datosFila.getTamMta());
+            txtInsp.setText(datosFila.getInsp());
+            txtTurno.setText(datosFila.getTurno());
+            txtDisp.setText(datosFila.getDisp());
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarFocusListener() {
         txtNoOrden.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
@@ -219,66 +294,16 @@ public class ModificarAPGUI extends javax.swing.JFrame {
                 datosFila.setNoOrden(new ArrayList<>(newNoOrdenList));
             }
         });
+    }
 
-        try {
-            aps.modificarInfoRD(conexion, apc1, datosFila);
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al actualizar la información: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        cerrarVentana();
-        JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
-        aps.abrirAceptacionProductoGUI(usr);
-    }//GEN-LAST:event_btnGuardarActionPerformed
-
-    private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
-        cerrarVentana();
-        aps.abrirAceptacionProductoGUI(usr);
-    }//GEN-LAST:event_btnCerrarActionPerformed
-
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        initComponents();
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-        this.conexion = Conexion.getInstance().getConnection();
-        aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
-
-        cbxComponente.addActionListener((ActionEvent ae) -> {
-            try {
-                cbxFecha.removeAllItems();
-                String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-                List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
-                fechasRD.forEach(cbxFecha::addItem);
-            } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
-                Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
-
-        cbxFecha.addActionListener((ActionEvent ae) -> {
-            try {
-                String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-                datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
-
-                txtNoRollo.setText(datosFila.getNoRollo());
-                txtInspVisual.setText(datosFila.getInspVisual());
-                txtObservaciones.setText(datosFila.getObservaciones());
-
-                txtNoOrden.setText(String.join(", ", datosFila.getNoOrden()));
-                txtTamLote.setText(datosFila.getTamLote());
-                txtTamMta.setText(datosFila.getTamMta());
-
-                txtInsp.setText(datosFila.getInsp());
-                txtTurno.setText(datosFila.getTurno());
-                txtDisp.setText(datosFila.getDisp());
-            } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
-                Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
+    private AceptacionPc1 crearAceptacionPc1() {
+        AceptacionPc1 aceptacionPc1 = new AceptacionPc1();
+        aceptacionPc1.setComponente(cbxComponente.getSelectedItem().toString());
+        aceptacionPc1.setFecha(cbxFecha.getSelectedItem().toString());
+        aceptacionPc1.setNoRollo(txtNoRollo.getText());
+        aceptacionPc1.setInspVisual(txtInspVisual.getText());
+        aceptacionPc1.setObservacion(txtObservaciones.getText());
+        return aceptacionPc1;
     }
 
     private void cerrarVentana() {

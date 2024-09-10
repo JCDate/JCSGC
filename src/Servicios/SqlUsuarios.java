@@ -21,22 +21,22 @@ public class SqlUsuarios {
     public final String INSERT_DATOS_USUARIO_SQL = "INSERT INTO usuarios (usuario, password, nombre, id_tipo) VALUES(?,?,?,?)";
     public final String SELECT_COUNT_ID_USUARIO_SQL = "SELECT COUNT(id) FROM usuarios WHERE usuario=?";
 
-    Connection conexion;
+    Conexion conexion;
 
     public SqlUsuarios() {
-        conexion = Conexion.getInstance().getConnection(); // Obtener la conexión a la base de datos usando el Singleton
+        conexion = Conexion.getInstance(); // Obtener la conexión a la base de datos usando el Singleton
     }
 
     public boolean login(Usuarios usr) throws ClassNotFoundException {
         try {
-            PreparedStatement ps = conexion.prepareStatement(SELECT_DATOS_USUARIOS_SQL);
+            PreparedStatement ps = conexion.conectar().prepareStatement(SELECT_DATOS_USUARIOS_SQL);
             ps.setString(1, usr.getUsuario());
 
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
                 if (usr.getPassword().equals(rs.getString(3))) {
-                    ps = conexion.prepareStatement(UPDATE_ULTIMA_SESION_SQL);
+                    ps = conexion.conectar().prepareStatement(UPDATE_ULTIMA_SESION_SQL);
                     ps.setString(1, usr.getLast_session());
                     ps.setInt(2, rs.getInt(1));
                     ps.execute();
@@ -60,7 +60,7 @@ public class SqlUsuarios {
 
     public boolean registrar(Usuarios usr) {
         try {
-            PreparedStatement ps = conexion.prepareStatement(INSERT_DATOS_USUARIO_SQL);
+            PreparedStatement ps = conexion.conectar().prepareStatement(INSERT_DATOS_USUARIO_SQL);
             ps.setString(1, usr.getUsuario());
             ps.setString(2, usr.getPassword());
             ps.setString(3, usr.getNombre());
@@ -75,7 +75,7 @@ public class SqlUsuarios {
 
     public int existeUsuario(String usuarios) throws ClassNotFoundException {
         try {
-            PreparedStatement ps = conexion.prepareStatement(SELECT_COUNT_ID_USUARIO_SQL);
+            PreparedStatement ps = conexion.conectar().prepareStatement(SELECT_COUNT_ID_USUARIO_SQL);
             ps.setString(1, usuarios);
 
             ResultSet rs = ps.executeQuery();

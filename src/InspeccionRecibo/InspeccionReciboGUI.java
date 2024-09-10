@@ -13,7 +13,6 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
@@ -34,7 +33,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Connection conexion;
+    private Conexion conexion;
 
     // Definición de la estructura de la tabla
     private DefaultTableModel modeloTabla;
@@ -50,19 +49,19 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private TableRowSorter<DefaultTableModel> trs;
 
     // Columnas de la tabla
-    private static final int COLUMN_NO_HOJA = 0;
-    private static final int COLUMN_FECHA = 1;
-    private static final int COLUMN_PROVEEDOR = 2;
-    private static final int COLUMN_NO_FACTURA = 3;
-    private static final int COLUMN_NO_PEDIDO = 4;
-    private static final int COLUMN_CALIBRE = 5;
-    private static final int COLUMN_PRESENTACION_LAMINA = 6;
-    private static final int COLUMN_NO_ROLLO = 7;
-    private static final int COLUMN_PZKG = 8;
-    private static final int COLUMN_ESTATUS = 9;
-    private static final int COLUMN_VER_FACTURA = 10;
-    private static final int COLUMN_VER_CERTIFICADO = 11;
-    private static final int COLUMN_VER_HOJA_INSTRUCCION = 12;
+    private static final int COLUMNA_NO_HOJA = 0;
+    private static final int COLUMNA_FECHA = 1;
+    private static final int COLUMNA_PROVEEDOR = 2;
+    private static final int COLUMNA_NO_FACTURA = 3;
+    private static final int COLUMNA_NO_PEDIDO = 4;
+    private static final int COLUMNA_CALIBRE = 5;
+    private static final int COLUMNA_PRESENTACION_LAMINA = 6;
+    private static final int COLUMNA_NO_ROLLO = 7;
+    private static final int COLUMNA_PZKG = 8;
+    private static final int COLUMNA_ESTATUS = 9;
+    private static final int COLUMNA_VER_FACTURA = 10;
+    private static final int COLUMNA_VER_CERTIFICADO = 11;
+    private static final int COLUMNA_VER_HOJA_INSTRUCCION = 12;
 
     public InspeccionReciboGUI() {
         inicializarVentanaYComponentes();
@@ -264,11 +263,11 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         int filaSeleccionada = tblInspeccionRecibo.getSelectedRow();
         if (filaSeleccionada != -1) {
 
-            String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_HOJA);
-            String fechaFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_FECHA);
-            String noFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_FACTURA);
-            String noPedido = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_NO_PEDIDO);
-            String pzKg = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMN_PZKG);
+            String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_NO_HOJA);
+            String fechaFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_FECHA);
+            String noFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_NO_FACTURA);
+            String noPedido = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_NO_PEDIDO);
+            String pzKg = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_PZKG);
 
             int respuesta = JOptionPane.showConfirmDialog(this, "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ,¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
             if (respuesta == JOptionPane.YES_NO_OPTION) {
@@ -371,7 +370,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
 
         txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
         txtBuscador.setHint("Buscar...");
@@ -412,21 +411,21 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             if (listaInspeccionRecibo != null) {
                 listaInspeccionRecibo.stream().map((ir) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
                     Object fila[] = new Object[13];
-                    fila[COLUMN_NO_HOJA] = ir.getNoHoja();
-                    fila[COLUMN_FECHA] = ir.getFechaFactura();
-                    fila[COLUMN_PROVEEDOR] = ir.getProveedor();
-                    fila[COLUMN_NO_FACTURA] = ir.getNoFactura();
-                    fila[COLUMN_NO_PEDIDO] = ir.getNoPedido();
-                    fila[COLUMN_CALIBRE] = ir.getCalibre();
-                    fila[COLUMN_PRESENTACION_LAMINA] = ir.getpLamina();
-                    fila[COLUMN_NO_ROLLO] = ir.getNoRollo();
-                    fila[COLUMN_PZKG] = ir.getPzKg();
-                    fila[COLUMN_ESTATUS] = ir.getEstatus();
+                    fila[COLUMNA_NO_HOJA] = ir.getNoHoja();
+                    fila[COLUMNA_FECHA] = ir.getFechaFactura();
+                    fila[COLUMNA_PROVEEDOR] = ir.getProveedor();
+                    fila[COLUMNA_NO_FACTURA] = ir.getNoFactura();
+                    fila[COLUMNA_NO_PEDIDO] = ir.getNoPedido();
+                    fila[COLUMNA_CALIBRE] = ir.getCalibre();
+                    fila[COLUMNA_PRESENTACION_LAMINA] = ir.getpLamina();
+                    fila[COLUMNA_NO_ROLLO] = ir.getNoRollo();
+                    fila[COLUMNA_PZKG] = ir.getPzKg();
+                    fila[COLUMNA_ESTATUS] = ir.getEstatus();
 
                     // Se crean los botones para el resto de campos
-                    fila[COLUMN_VER_FACTURA] = irs.crearBoton(ir.getFacturapdf(), Iconos.ICONO_PDF, "Vacío");
-                    fila[COLUMN_VER_CERTIFICADO] = irs.crearBoton(ir.getCertificadopdf(), Iconos.ICONO_PDF, "Vacío");
-                    fila[COLUMN_VER_HOJA_INSTRUCCION] = irs.crearBoton(ir.getHojaIns(), Iconos.ICONO_EXCEL_2, "Realizar");
+                    fila[COLUMNA_VER_FACTURA] = irs.crearBoton(ir.getFacturapdf(), Iconos.ICONO_PDF, "Vacío");
+                    fila[COLUMNA_VER_CERTIFICADO] = irs.crearBoton(ir.getCertificadopdf(), Iconos.ICONO_PDF, "Vacío");
+                    fila[COLUMNA_VER_HOJA_INSTRUCCION] = irs.crearBoton(ir.getHojaIns(), Iconos.ICONO_EXCEL_2, "Realizar");
                     return fila;
                 }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
                     modeloTabla.addRow(fila);

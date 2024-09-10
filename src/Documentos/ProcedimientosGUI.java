@@ -28,7 +28,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
     private Usuarios usr;
     private ProcedimientosM procedimiento;
-    private Connection conexion;
+    private Conexion conexion;
     private DefaultTableModel modeloTabla;
     private List<FormatosM> listaFormatos = new ArrayList<>();
     private List<DocumentosM> listaDocumentos = new ArrayList<>();
@@ -191,7 +191,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
         lblProcedimiento.setText("<html>PROCEDIMIENTO: <br>" + procedimiento.getProcedimiento() + "</html>");
 
         this.modeloTabla = new DefaultTableModel() {

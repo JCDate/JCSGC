@@ -38,7 +38,7 @@ public class EspecificacionesGUI extends JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Connection conexion;
+    private Conexion conexion;
 
     // Objetos para manipulación de los datos
     private DatosIRM datosIR;
@@ -249,7 +249,7 @@ public class EspecificacionesGUI extends JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
 
         pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
 

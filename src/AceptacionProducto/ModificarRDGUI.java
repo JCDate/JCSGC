@@ -10,10 +10,7 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,30 +19,32 @@ import javax.swing.JOptionPane;
 
 public class ModificarRDGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
-    private Connection conexion;
-
-    private AceptacionPc1 apc1;
-    private AceptacionPc2 apc2;
-    private AceptacionPc3 apc3, apc3Aux;
-    private AceptacionProductoServicio aps = new AceptacionProductoServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de la aceptacion de producto
+    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de la aceptacion de producto
+    private AceptacionPc3 aceptacionPc3; // Objeto para el manejo de la aceptacion de producto
+    private AceptacionPc3 aceptacionPc3Auxiliar; // Objeto auxiliar para el manejo de la aceptacion de producto
+    private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public ModificarRDGUI() {
         try {
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Surgio un error al abrir el apartado MODIFICAR", ex);
+            Utilidades.manejarExcepcion("Surgio un error al abrir ModificarRDGUI", ex);
             Logger.getLogger(ModificarRDGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public ModificarRDGUI(AceptacionPc3 apc3, Usuarios usr, AceptacionPc1 apc1, AceptacionPc2 apc2) {
+    public ModificarRDGUI(AceptacionPc3 aceptacionPc3, Usuarios usuario, AceptacionPc1 aceptacionPc1, AceptacionPc2 aceptacionPc2) {
         try {
-            this.usr = usr;
-            this.apc1 = apc1;
-            this.apc2 = apc2;
-            this.apc3 = apc3;
-            this.apc3Aux = new AceptacionPc3(apc3.getId(), apc3.getComponente(), apc3.getNoOp(), apc3.getNoTroquel(), apc3.getFecha(), apc3.getVariable(), apc3.getEspecificacion(), apc3.getValor(), 0);
+            this.usuario = usuario;
+            this.aceptacionPc1 = aceptacionPc1;
+            this.aceptacionPc2 = aceptacionPc2;
+            this.aceptacionPc3 = aceptacionPc3;
+            this.conexion = Conexion.getInstance();
+            this.aceptacionPc3Auxiliar = inicializarAceptacionPc3Auxiliar(aceptacionPc3);
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la ventana y componentes", ex);
@@ -53,7 +52,7 @@ public class ModificarRDGUI extends javax.swing.JFrame {
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -128,11 +127,6 @@ public class ModificarRDGUI extends javax.swing.JFrame {
         jPanel1.add(txtVariable, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 150, 250, -1));
 
         txtEspecificacion.setEditable(false);
-        txtEspecificacion.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtEspecificacionActionPerformed(evt);
-            }
-        });
         jPanel1.add(txtEspecificacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 190, 200, -1));
         jPanel1.add(txtValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 230, 280, -1));
 
@@ -166,30 +160,10 @@ public class ModificarRDGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txtEspecificacionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtEspecificacionActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtEspecificacionActionPerformed
-
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         if (aps.verificarRango(txtEspecificacion.getText(), txtValor.getText())) {
-            Date fechaSeleccionada = dchFecha.getDate();
-            String fecha = aps.formatearFecha(fechaSeleccionada); // formato específico "dd/mm/aaaa" 
-
-            String valor = txtValor.getText();
-            String noOp = txtNoOperacion.getText();
-            String variable = txtVariable.getText();
-            String especificacion = txtEspecificacion.getText();
-
-            if (!fecha.isEmpty() && !noOp.isEmpty() && !variable.isEmpty() && !especificacion.isEmpty() && !valor.isEmpty()) {
-                this.apc3.setFecha(fecha);
-                this.apc3.setNoOp(noOp);
-                this.apc3.setVariable(variable);
-                this.apc3.setEspecificacion(especificacion);
-                this.apc3.setValor(valor);
-                modificarDatos();
-            } else {
-                JOptionPane.showMessageDialog(this, "HAY CAMPOS INCOMPLETOS", "ERROR", JOptionPane.ERROR_MESSAGE);
-            }
+            actualizarDatos();
+            modificarDatos();
         } else {
             txtValor.setText("");
         }
@@ -197,29 +171,63 @@ public class ModificarRDGUI extends javax.swing.JFrame {
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
         cerrarVentana();
-        aps.abrirRetencionDimensionalGUI(usr, apc1, apc2);
+        aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1, aceptacionPc2);
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        configurarVentana();
+        definirValoresPredeterminados();
+    }
+
+    private AceptacionPc3 inicializarAceptacionPc3Auxiliar(AceptacionPc3 aceptacionPc3) {
+        return new AceptacionPc3(
+                aceptacionPc3.getId(),
+                aceptacionPc3.getComponente(),
+                aceptacionPc3.getNoOp(),
+                aceptacionPc3.getNoTroquel(),
+                aceptacionPc3.getFecha(),
+                aceptacionPc3.getVariable(),
+                aceptacionPc3.getEspecificacion(),
+                aceptacionPc3.getValor(),
+                0
+        );
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
 
-        this.conexion = Conexion.getInstance().getConnection();
+    private void definirValoresPredeterminados() {
+        Date fecha = aps.formatearFecha(aceptacionPc3.getFecha());
+        dchFecha.setDate(fecha);
 
-        try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            Date fecha = dateFormat.parse(apc3.getFecha());
-            dchFecha.setDate(fecha);
-        } catch (ParseException e) {
-            Utilidades.manejarExcepcion("Error al parsear la fecha", e);
+        txtValor.setText(aceptacionPc3.getValor());
+        txtNoOperacion.setText(aceptacionPc3.getNoOp());
+        txtVariable.setText(aceptacionPc3.getVariable());
+        txtEspecificacion.setText(aceptacionPc3.getEspecificacion());
+    }
+
+    private void actualizarDatos() {
+        Date fechaSeleccionada = dchFecha.getDate();
+        String fecha = aps.formatearFecha(fechaSeleccionada);
+
+        String valor = txtValor.getText();
+        String noOp = txtNoOperacion.getText();
+        String variable = txtVariable.getText();
+        String especificacion = txtEspecificacion.getText();
+
+        if (!fecha.isEmpty() && !noOp.isEmpty() && !variable.isEmpty() && !especificacion.isEmpty() && !valor.isEmpty()) {
+            aceptacionPc3.setFecha(fecha);
+            aceptacionPc3.setNoOp(noOp);
+            aceptacionPc3.setVariable(variable);
+            aceptacionPc3.setEspecificacion(especificacion);
+            aceptacionPc3.setValor(valor);
+        } else {
+            JOptionPane.showMessageDialog(this, "HAY CAMPOS INCOMPLETOS", "ERROR", JOptionPane.ERROR_MESSAGE);
         }
-
-        txtValor.setText(apc3.getValor());
-        txtNoOperacion.setText(apc3.getNoOp());
-        txtVariable.setText(apc3.getVariable());
-        txtEspecificacion.setText(apc3.getEspecificacion());
     }
 
     private void cerrarVentana() {
@@ -228,10 +236,10 @@ public class ModificarRDGUI extends javax.swing.JFrame {
 
     private void modificarDatos() {
         try {
-            aps.modificar(conexion, apc3, apc3Aux);
+            aps.modificar(conexion, aceptacionPc3, aceptacionPc3Auxiliar);
             JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
             cerrarVentana();
-            aps.abrirRetencionDimensionalGUI(usr, apc1, apc2);
+            aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1, aceptacionPc2);
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Ha surgido un error y no se ha podido guardar el registro.", ex);
         }
@@ -281,4 +289,5 @@ public class ModificarRDGUI extends javax.swing.JFrame {
     private javax.swing.JTextField txtValor;
     private javax.swing.JTextField txtVariable;
     // End of variables declaration//GEN-END:variables
+
 }

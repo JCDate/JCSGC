@@ -22,7 +22,7 @@ import swing.Button;
 
 public class RegistrosGUI extends javax.swing.JFrame {
 
-    private Connection conexion;
+    private Conexion conexion;
     private Usuarios usr;
     private ProcedimientosM procedimiento;
     private DefaultTableModel modeloTabla;
@@ -126,7 +126,7 @@ public class RegistrosGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
 
         this.modeloTabla = new DefaultTableModel() {
             @Override

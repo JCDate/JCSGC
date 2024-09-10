@@ -14,7 +14,7 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Connection conexion;
+    private Conexion conexion;
     
     // Servicios y Utilidades
     private InspeccionReciboServicio irs = new InspeccionReciboServicio();
@@ -114,7 +114,7 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
         this.setResizable(false); 
         this.setLocationRelativeTo(null); 
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
-        this.conexion = Conexion.getInstance().getConnection(); 
+        this.conexion = Conexion.getInstance(); 
     }
 
     private void cerrarVentana() {

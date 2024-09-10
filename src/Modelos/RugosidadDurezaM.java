@@ -1,11 +1,14 @@
 package Modelos;
 
 public class RugosidadDurezaM {
-    
+
     private int id;
     private String rugosidad;
     private String dureza;
     private int idDIR;
+
+    public RugosidadDurezaM() {
+    }
 
     public RugosidadDurezaM(int id, String rugosidad, String dureza, int idDIR) {
         this.id = id;

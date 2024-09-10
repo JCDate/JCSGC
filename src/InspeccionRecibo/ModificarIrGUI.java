@@ -24,7 +24,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Connection conexion;
+    private Conexion conexion;
 
     // Objetos para manejar la información
     private InspeccionReciboM inspeccionRecibo;
@@ -311,7 +311,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
     }
 
     private void cargarDatosEnComponentes() {

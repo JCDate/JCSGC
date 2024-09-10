@@ -23,10 +23,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,9 +46,9 @@ public class AceptacionProductoServicio {
 
     final String SELECT_NO_ROLLO_SQL = "SELECT noRollo FROM inspeccionRecibo";
 
-    public List<String> obtenerNoRollos(Connection conexion) throws SQLException {
+    public List<String> obtenerNoRollos(Conexion conexion) throws SQLException {
         List<String> listaNoRollos = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_NO_ROLLO_SQL);
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SELECT_NO_ROLLO_SQL);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 listaNoRollos.add(resultado.getString("noRollo"));
@@ -56,11 +56,33 @@ public class AceptacionProductoServicio {
         }
         return listaNoRollos;
     }
+    
+    public Date formatearFecha(String fecha) {
+        try {
+            if (fecha == null) {
+                return null;
+            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            return dateFormat.parse(fecha);
+        } catch (ParseException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+            manejarExcepcion("Error al formatear la fecha: ", ex);
+            return null;
+        }
+    }
 
-    public List<AceptacionPc1> recuperarAP1(Connection conexion, String componente) throws SQLException {
+    public String formatearFecha(Date fecha) {
+        if (fecha == null) {
+            return "";
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        return dateFormat.format(fecha);
+    }
+
+    public List<AceptacionPc1> recuperarAP1(Conexion conexion, String componente) throws SQLException {
         List<AceptacionPc1> listaAp1 = new ArrayList<>();
         String sqlConsulta = "SELECT * FROM aceptacionpc1 WHERE componente=?";
-        try (PreparedStatement consulta = conexion.prepareStatement(sqlConsulta)) {
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta)) {
             consulta.setString(1, componente);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -80,10 +102,10 @@ public class AceptacionProductoServicio {
         return listaAp1;
     }
 
-    public List<AceptacionPc2> recuperarAP2(Connection conexion, String componente) throws SQLException {
+    public List<AceptacionPc2> recuperarAP2(Conexion conexion, String componente) throws SQLException {
         List<AceptacionPc2> listaAp2 = new ArrayList<>();
         String sqlConsulta = "SELECT * FROM aceptacionpc2 WHERE componente=?";
-        try (PreparedStatement consulta = conexion.prepareStatement(sqlConsulta)) {
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta)) {
             consulta.setString(1, componente);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -104,10 +126,10 @@ public class AceptacionProductoServicio {
         return listaAp2;
     }
 
-    public List<AceptacionPc3> recuperarAP3(Connection conexion, String componente) throws SQLException {
+    public List<AceptacionPc3> recuperarAP3(Conexion conexion, String componente) throws SQLException {
         List<AceptacionPc3> listaAp3 = new ArrayList<>();
         String sqlConsulta = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY fecha, noOp";
-        try (PreparedStatement consulta = conexion.prepareStatement(sqlConsulta)) {
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta)) {
             consulta.setString(1, componente);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -128,9 +150,9 @@ public class AceptacionProductoServicio {
         return listaAp3;
     }
 
-    public void agregarpc1(Connection conexion, AceptacionPc1 ap1) throws SQLException {
+    public void agregarpc1(Conexion conexion, AceptacionPc1 ap1) throws SQLException {
         String sqlInsertIr = "INSERT INTO aceptacionpc1(componente,fecha,noRollo,inspVisual,observacion,noParte,noOps) VALUES (?,?,?,?,?,?,?)";
-        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
             sqlInsert.setString(1, ap1.getComponente());
             sqlInsert.setString(2, ap1.getFecha());
             sqlInsert.setString(3, ap1.getNoRollo());
@@ -144,9 +166,9 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public void agregarpc2(Connection conexion, AceptacionPc2 ap2) throws SQLException {
+    public void agregarpc2(Conexion conexion, AceptacionPc2 ap2) throws SQLException {
         String sqlInsertIr = "INSERT INTO aceptacionpc2(componente,fecha,noOrden,tamLote,tamMta,inspector,turno,disp) VALUES (?,?,?,?,?,?,?,?)";
-        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
             sqlInsert.setString(1, ap2.getComponente());
             sqlInsert.setString(2, ap2.getFecha());
             sqlInsert.setString(3, ap2.getNoOrden());
@@ -161,10 +183,10 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public void agregarpc3(Connection conexion, List<AceptacionPc3> ap3) throws SQLException {
+    public void agregarpc3(Conexion conexion, List<AceptacionPc3> ap3) throws SQLException {
         String sqlInsertIr = "INSERT INTO aceptacionpc3(componente,noOp,noTroquel,fecha,variable,especificacion,valor,procesoCritico) VALUES (?,?,?,?,?,?,?,?)";
         for (int i = 0; i < ap3.size(); i++) {
-            try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+            try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
                 sqlInsert.setString(1, ap3.get(i).getComponente());
                 sqlInsert.setString(2, ap3.get(i).getNoOp());
                 sqlInsert.setString(3, ap3.get(i).getNoTroquel());
@@ -180,9 +202,9 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public void modificar(Connection conexion, AceptacionPc3 apc3, AceptacionPc3 apc32) throws SQLException {
-        try (PreparedStatement consulta = conexion.prepareStatement("SELECT id FROM aceptacionpc3 WHERE noOp=? AND fecha=? AND variable=? AND especificacion=? AND valor=?");
-                PreparedStatement updateConsulta = conexion.prepareStatement("UPDATE aceptacionpc3 SET noOp=?, fecha=?, variable=?, especificacion=?, valor=? WHERE id=?")) {
+    public void modificar(Conexion conexion, AceptacionPc3 apc3, AceptacionPc3 apc32) throws SQLException {
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement("SELECT id FROM aceptacionpc3 WHERE noOp=? AND fecha=? AND variable=? AND especificacion=? AND valor=?");
+                PreparedStatement updateConsulta = conexion.conectar().prepareStatement("UPDATE aceptacionpc3 SET noOp=?, fecha=?, variable=?, especificacion=?, valor=? WHERE id=?")) {
             consulta.setString(1, apc32.getNoOp());
             consulta.setString(2, apc32.getFecha());
             consulta.setString(3, apc32.getVariable());
@@ -212,9 +234,9 @@ public class AceptacionProductoServicio {
 
     }
 
-    public void agregarNuevaVariable(Connection conexion, String nuevaVariable) throws SQLException {
+    public void agregarNuevaVariable(Conexion conexion, String nuevaVariable) throws SQLException {
         String sqlInsertIr = "INSERT INTO productosactividadespc(nombreProducto) VALUES (?)";
-        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
             sqlInsert.setString(1, nuevaVariable);
             sqlInsert.executeUpdate();
         } catch (SQLException ex) {
@@ -222,9 +244,9 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public void eliminarpc3(Connection conexion, AceptacionPc3 apc3) {
+    public void eliminarpc3(Conexion conexion, AceptacionPc3 apc3) {
         try {
-            PreparedStatement ps = conexion.prepareStatement("DELETE FROM aceptacionpc3 WHERE fecha = ? AND noOp = ? AND variable = ? AND especificacion = ? AND valor = ?");
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM aceptacionpc3 WHERE fecha = ? AND noOp = ? AND variable = ? AND especificacion = ? AND valor = ?");
             ps.setString(1, apc3.getFecha());
             ps.setString(2, apc3.getNoOp());
             ps.setString(3, apc3.getVariable());
@@ -326,7 +348,7 @@ public class AceptacionProductoServicio {
         return dateFormat.format(date);
     }
 
-    public void cargarNoRollos(Connection conexion, JComboBox cbxNoRollo) {
+    public void cargarNoRollos(Conexion conexion, JComboBox cbxNoRollo) {
         try {
             List<String> rollos = obtenerNoRollos(conexion);
             rollos.forEach(cbxNoRollo::addItem);
@@ -363,9 +385,9 @@ public class AceptacionProductoServicio {
         modificar.setLocationRelativeTo(null);
     }
 
-    public List<String> obtenerDatos(Connection conexion, String query, String columna) throws SQLException {
+    public List<String> obtenerDatos(Conexion conexion, String query, String columna) throws SQLException {
         List<String> listaDatos = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.prepareStatement(query);
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(query);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 listaDatos.add(resultado.getString(columna));
@@ -374,26 +396,26 @@ public class AceptacionProductoServicio {
         return listaDatos;
     }
 
-    public List<String> obtenerComponetes(Connection conexion) throws SQLException {
+    public List<String> obtenerComponetes(Conexion conexion) throws SQLException {
         String query = "SELECT componente FROM antecedentesfamilia";
         return obtenerDatos(conexion, query, "componente");
     }
 
-    public List<String> obtenerVariablesPC(Connection conexion, String variable) throws SQLException {
+    public List<String> obtenerVariablesPC(Conexion conexion, String variable) throws SQLException {
         String query = "SELECT pa.nombreProducto FROM productosactividadespc AS pa JOIN descripcion2pc AS d2 ON pa.nombreProducto = d2.producto WHERE d2.componente = '" + variable + "'";
         return obtenerDatos(conexion, query, "nombreProducto");
     }
 
-    public List<String> obtenerVariables(Connection conexion) throws SQLException {
+    public List<String> obtenerVariables(Conexion conexion) throws SQLException {
         String query = "SELECT nombreProducto FROM productosactividadespc";
         return obtenerDatos(conexion, query, "nombreProducto");
     }
 
-    public List<String> obtenerEspecificaciones(Connection conexion, String variable, String componente) throws SQLException {
+    public List<String> obtenerEspecificaciones(Conexion conexion, String variable, String componente) throws SQLException {
         List<String> listaEspecificaciones = new ArrayList<>();
         String producto = variable + "%"; // Agregar el comodín % al final para buscar palabras que comiencen con la variable
         String sqlConsulta = "SELECT t1.especificacion FROM descripcion3pc AS t1 JOIN descripcion2pc AS t2 ON t1.componente = t2.componente AND t1.noPartesP = t2.noPartesP AND t1.no = t2.no WHERE t2.producto LIKE ? AND t1.componente = ? GROUP BY t1.especificacion, t2.producto";
-        try (PreparedStatement consulta = conexion.prepareStatement(sqlConsulta)) {
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta)) {
             consulta.setString(1, producto);
             consulta.setString(2, componente);
 
@@ -406,7 +428,7 @@ public class AceptacionProductoServicio {
         return listaEspecificaciones;
     }
 
-    public List<AceptacionPc2> buscarObjetoEnAp2mPorFecha(Connection conexion, String fecha, String componente, AceptacionPc2 apc2) throws SQLException {
+    public List<AceptacionPc2> buscarObjetoEnAp2mPorFecha(Conexion conexion, String fecha, String componente, AceptacionPc2 apc2) throws SQLException {
         String sqlConsulta = "SELECT noOrden, fecha, tamLote, tamMta, inspector, turno, disp\n"
                 + "FROM aceptacionpc2\n"
                 + "WHERE fecha = ? AND componente = ?\n"
@@ -414,7 +436,7 @@ public class AceptacionProductoServicio {
 
         List<AceptacionPc2> ap2c = new ArrayList<>();
 
-        try (PreparedStatement consulta = conexion.prepareStatement(sqlConsulta)) {
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta)) {
             consulta.setString(1, fecha);
             consulta.setString(2, componente);
             ResultSet resultado = consulta.executeQuery();
@@ -428,24 +450,24 @@ public class AceptacionProductoServicio {
         return ap2c;
     }
 
-    public void subirRD(Connection conexion, AceptacionProducto ap) throws SQLException {
+    public void subirRD(Conexion conexion, AceptacionProducto ap) throws SQLException {
         String sqlSelect = "SELECT * FROM aceptacionproducto WHERE componente=?";
         String sqlInsertIr = "INSERT INTO aceptacionproducto(componente,retencionDimensionalpdf) VALUES (?,?)";
         String sqlUpdate = "UPDATE aceptacionproducto SET retencionDimensionalpdf = ? WHERE componente = ?";
 
-        try (PreparedStatement sqlSelectStatement = conexion.prepareStatement(sqlSelect)) {
+        try (PreparedStatement sqlSelectStatement = conexion.conectar().prepareStatement(sqlSelect)) {
             sqlSelectStatement.setString(1, ap.getComponente());
             ResultSet resultSet = sqlSelectStatement.executeQuery();
 
             if (resultSet.next()) {
-                try (PreparedStatement sqlUpdateStatement = conexion.prepareStatement(sqlUpdate)) {
+                try (PreparedStatement sqlUpdateStatement = conexion.conectar().prepareStatement(sqlUpdate)) {
                     sqlUpdateStatement.setBytes(1, ap.getRdPdf());
                     sqlUpdateStatement.setString(2, ap.getComponente());
                     sqlUpdateStatement.executeUpdate();
                     JOptionPane.showMessageDialog(null, "El Archivo se actualizo Correctamente");
                 }
             } else {
-                try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+                try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
                     sqlInsert.setString(1, ap.getComponente());
                     sqlInsert.setBytes(2, ap.getRdPdf());
                     sqlInsert.executeUpdate();
@@ -473,9 +495,9 @@ public class AceptacionProductoServicio {
         return pdf; // Se regresa el archivo
     }
 
-    public List<AceptacionProducto> recuperarAPs(Connection conexion) {
+    public List<AceptacionProducto> recuperarAPs(Conexion conexion) {
         List<AceptacionProducto> listaIr = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM aceptacionProducto ORDER BY componente");
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement("SELECT * FROM aceptacionProducto ORDER BY componente");
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 AceptacionProducto ir = new AceptacionProducto(
@@ -491,9 +513,9 @@ public class AceptacionProductoServicio {
         return listaIr;
     }
 
-    public void eliminarAP(Connection conexion, String componente) {
+    public void eliminarAP(Conexion conexion, String componente) {
         try {
-            PreparedStatement ps = conexion.prepareStatement("DELETE FROM aceptacionproducto WHERE componente = ?");
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM aceptacionproducto WHERE componente = ?");
             ps.setString(1, componente);
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -501,7 +523,7 @@ public class AceptacionProductoServicio {
         }
 
         try {
-            PreparedStatement ps = conexion.prepareStatement("DELETE FROM aceptacionpc1 WHERE componente = ?");
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM aceptacionpc1 WHERE componente = ?");
             ps.setString(1, componente);
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -509,7 +531,7 @@ public class AceptacionProductoServicio {
         }
 
         try {
-            PreparedStatement ps = conexion.prepareStatement("DELETE FROM aceptacionpc2 WHERE componente=?");
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM aceptacionpc2 WHERE componente=?");
             ps.setString(1, componente);
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -517,7 +539,7 @@ public class AceptacionProductoServicio {
         }
 
         try {
-            PreparedStatement ps = conexion.prepareStatement("DELETE FROM aceptacionpc3 WHERE componente=?");
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM aceptacionpc3 WHERE componente=?");
             ps.setString(1, componente);
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -525,12 +547,12 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public void ejecutarArchivoXLSX(Connection conexion, String componente, int column) throws ClassNotFoundException, SQLException {
+    public void ejecutarArchivoXLSX(Conexion conexion, String componente, int column) throws ClassNotFoundException, SQLException {
         final String SELECT_HOJA_INSTRUCCION_SQL = "SELECT retencionDimensionalpdf FROM aceptacionproducto WHERE componente = ?";
         ResultSet rs;
         byte[] b = null;
         try {
-            PreparedStatement ps = conexion.prepareStatement(SELECT_HOJA_INSTRUCCION_SQL);
+            PreparedStatement ps = conexion.conectar().prepareStatement(SELECT_HOJA_INSTRUCCION_SQL);
             ps.setString(1, componente);
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -556,10 +578,10 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public AceptacionPc1 recuperarInfoPc1(Connection conexion, String selectedComponente) throws SQLException {
+    public AceptacionPc1 recuperarInfoPc1(Conexion conexion, String selectedComponente) throws SQLException {
         AceptacionPc1 ap1 = new AceptacionPc1();
         String sqlConsulta = "SELECT * FROM aceptacionpc1 WHERE componente=?";
-        try (PreparedStatement consulta = conexion.prepareStatement(sqlConsulta)) {
+        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta)) {
             consulta.setString(1, selectedComponente);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -579,9 +601,9 @@ public class AceptacionProductoServicio {
         return ap1;
     }
 
-    public int obtenerEspecificacion(Connection conexion, String especificacion) throws SQLException {
+    public int obtenerEspecificacion(Conexion conexion, String especificacion) throws SQLException {
         String sqlConsulta = "SELECT fila FROM especificacionesir WHERE especificacion=?";
-        PreparedStatement consulta = conexion.prepareStatement(sqlConsulta);
+        PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta);
         consulta.setString(1, especificacion);
         ResultSet resultado = consulta.executeQuery();
         int fila = 0;
@@ -591,9 +613,9 @@ public class AceptacionProductoServicio {
         return fila;
     }
 
-    public boolean existeRegistroPc1(Connection conexion, AceptacionPc1 apc1) throws SQLException {
+    public boolean existeRegistroPc1(Conexion conexion, AceptacionPc1 apc1) throws SQLException {
         String consulta = "SELECT COUNT(*) FROM aceptacionpc1 WHERE componente = ? AND fecha = ?";
-        try (PreparedStatement ps = conexion.prepareCall(consulta)) {
+        try (PreparedStatement ps = conexion.conectar().prepareCall(consulta)) {
             ps.setString(1, apc1.getComponente());
             ps.setString(2, apc1.getFecha());
             try (ResultSet rs = ps.executeQuery()) {
@@ -605,9 +627,9 @@ public class AceptacionProductoServicio {
         return false;
     }
 
-    public boolean existeRegistroPc2(Connection conexion, AceptacionPc2 apc2) throws SQLException {
+    public boolean existeRegistroPc2(Conexion conexion, AceptacionPc2 apc2) throws SQLException {
         String consulta = "SELECT COUNT(*) FROM aceptacionpc2 WHERE componente = ? AND fecha = ? ";
-        try (PreparedStatement ps = conexion.prepareCall(consulta)) {
+        try (PreparedStatement ps = conexion.conectar().prepareCall(consulta)) {
             ps.setString(1, apc2.getComponente());
             ps.setString(2, apc2.getFecha());
 //            ps.setString(3, apc2.getNoOrden());
@@ -620,9 +642,9 @@ public class AceptacionProductoServicio {
         return false;
     }
 
-    public boolean existeRegistroPc3(Connection conexion, AceptacionPc3 apc3) throws SQLException {
+    public boolean existeRegistroPc3(Conexion conexion, AceptacionPc3 apc3) throws SQLException {
         String consulta = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? AND noOp = ? AND fecha = ? AND variable = ? AND valor = ?";
-        try (PreparedStatement ps = conexion.prepareCall(consulta)) {
+        try (PreparedStatement ps = conexion.conectar().prepareCall(consulta)) {
             ps.setString(1, apc3.getComponente());
             ps.setString(2, apc3.getNoOp());
             ps.setString(3, apc3.getFecha());
@@ -637,7 +659,7 @@ public class AceptacionProductoServicio {
         return false;
     }
 
-    public List<AceptacionPc3> filtrarNuevosDatos(Connection conexion, List<AceptacionPc3> listNuevosDatos) throws SQLException {
+    public List<AceptacionPc3> filtrarNuevosDatos(Conexion conexion, List<AceptacionPc3> listNuevosDatos) throws SQLException {
         List<AceptacionPc3> nuevosDatos = new ArrayList<>();
         for (AceptacionPc3 dato : listNuevosDatos) {
             if (!existeRegistroPc3(conexion, dato)) {
@@ -647,10 +669,10 @@ public class AceptacionProductoServicio {
         return nuevosDatos;
     }
 
-    public List<String> obtenerFechasRD(Connection conexion, String componenteSeleccionado) throws SQLException {
+    public List<String> obtenerFechasRD(Conexion conexion, String componenteSeleccionado) throws SQLException {
         List<String> nuevosDatos = new ArrayList<>();
         String selectFechas = "SELECT fecha FROM aceptacionpc1 WHERE componente = ?";
-        try (PreparedStatement ps = conexion.prepareStatement(selectFechas)) {
+        try (PreparedStatement ps = conexion.conectar().prepareStatement(selectFechas)) {
             ps.setString(1, componenteSeleccionado);
             ResultSet resultado = ps.executeQuery(); // execute the query
             while (resultado.next()) {
@@ -660,13 +682,13 @@ public class AceptacionProductoServicio {
         return nuevosDatos;
     }
 
-    public DatosFilaRD obtenerInfoRD(Connection conexion, String componenteSeleccionado, String fechaSeleccionada) throws SQLException {
+    public DatosFilaRD obtenerInfoRD(Conexion conexion, String componenteSeleccionado, String fechaSeleccionada) throws SQLException {
         DatosFilaRD datosFilaRD = new DatosFilaRD();
         String selectInfo = "SELECT * FROM aceptacionpc1 a1 "
                 + "INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente "
                 + "WHERE a1.componente = ? AND a1.fecha = ?";
 
-        try (PreparedStatement ps = conexion.prepareStatement(selectInfo)) {
+        try (PreparedStatement ps = conexion.conectar().prepareStatement(selectInfo)) {
             ps.setString(1, componenteSeleccionado);
             ps.setString(2, fechaSeleccionada);
             ResultSet resultado = ps.executeQuery();
@@ -704,9 +726,9 @@ public class AceptacionProductoServicio {
         return datosFilaRD;
     }
 
-    public void modificarInfoRD(Connection conexion, AceptacionPc1 apc1, DatosFilaRD datosFila) throws SQLException {
+    public void modificarInfoRD(Conexion conexion, AceptacionPc1 apc1, DatosFilaRD datosFila) throws SQLException {
         String sql1 = "UPDATE aceptacionpc1 SET noRollo = ?, inspVisual = ?, observacion = ? WHERE componente = ? AND fecha = ?";
-        try (PreparedStatement sqlInsert = conexion.prepareStatement(sql1)) {
+        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sql1)) {
             sqlInsert.setString(1, apc1.getNoRollo());
             sqlInsert.setString(2, apc1.getInspVisual());
             sqlInsert.setString(3, apc1.getObservacion());
@@ -718,7 +740,7 @@ public class AceptacionProductoServicio {
         }
 
         String sql2 = "UPDATE aceptacionpc2 SET noOrden = ?, tamLote = ?, tamMta = ?, inspector = ?, turno = ?, disp =? WHERE componente = ? AND fecha = ?";
-        try (PreparedStatement sqlInsert = conexion.prepareStatement(sql2)) {
+        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sql2)) {
             sqlInsert.setString(1, String.join(", ", datosFila.getNoOrden()));
             sqlInsert.setString(2, datosFila.getTamLote());
             sqlInsert.setString(3, datosFila.getTamMta());
@@ -733,10 +755,10 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public AceptacionPc2 buscarOrden(Connection conexion, AceptacionPc1 apc1) throws SQLException {
+    public AceptacionPc2 buscarOrden(Conexion conexion, AceptacionPc1 apc1) throws SQLException {
         AceptacionPc2 apc2 = new AceptacionPc2();
         String sql = "SELECT noOrden FROM aceptacionpc2 WHERE componente = ? AND fecha = ?";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+        try (PreparedStatement ps = conexion.conectar().prepareStatement(sql)) {
             ps.setString(1, apc1.getComponente());
             ps.setString(2, apc1.getFecha());
             ResultSet resultado = ps.executeQuery();
@@ -752,9 +774,9 @@ public class AceptacionProductoServicio {
         return apc2;
     }
 
-    public void modificarOrden(Connection conexion, AceptacionPc2 apc2) throws SQLException {
+    public void modificarOrden(Conexion conexion, AceptacionPc2 apc2) throws SQLException {
         String consulta = "UPDATE aceptacionpc2 SET noOrden = ? WHERE componente = ? AND fecha = ?";
-        try (PreparedStatement ps = conexion.prepareStatement(consulta)) {
+        try (PreparedStatement ps = conexion.conectar().prepareStatement(consulta)) {
             // Configurar los parámetros en el orden correcto
             ps.setString(1, apc2.getNoOrden());   // Primero el noOrden
             ps.setString(2, apc2.getComponente()); // Luego el componente

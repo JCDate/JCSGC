@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -32,7 +31,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Connection conexion;
+    private Conexion conexion;
 
     // Servicios y Utilidades
     private InspeccionReciboServicio irs = new InspeccionReciboServicio();
@@ -312,7 +311,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(0);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
     }
 
     private void cargarProveedores() throws SQLException {

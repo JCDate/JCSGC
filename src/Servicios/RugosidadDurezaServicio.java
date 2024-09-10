@@ -32,11 +32,11 @@ public class RugosidadDurezaServicio {
 
         for (int i = 0; i < model.getRowCount(); i++) { // Recorrer los valores de la JTable y asignarlos a los parámetros de la consulta
             // Obtener los valores de cada columna en la fila actual
-            String ancho = Objects.toString(model.getValueAt(i, 0), "");
-            String largo = Objects.toString(model.getValueAt(i, 1), "");
+            String rugosidad = Objects.toString(model.getValueAt(i, 0), "");
+            String dureza = Objects.toString(model.getValueAt(i, 1), "");
 
-            RugosidadDurezaM medidas = new RugosidadDurezaM(a, ancho, largo, b); // Crear una nueva instancia de la clase AnchoLargoM 
-            listaAnchoLargo.add(medidas); // Se agrega a la lista
+            RugosidadDurezaM medidas = new RugosidadDurezaM(a, rugosidad, dureza, b); // Crear una nueva instancia de la clase AnchoLargoM 
+            listaAnchoLargo.add(medidas);
         }
         return listaAnchoLargo;
     }

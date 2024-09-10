@@ -11,17 +11,17 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class TextField extends javax.swing.JTextField {
-    
+
     private Icon prefixIcon;
     private Icon suffixIcon;
     private String hint = "";
-    
+
     public TextField() {
-        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10)); 
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         setBackground(new Color(0, 0, 0, 0));
         setForeground(Color.decode("#7A8C8D"));
         setFont(new java.awt.Font("sansserif", 0, 13));
-        setSelectionColor(new Color(75, 175, 152)); 
+        setSelectionColor(new Color(75, 175, 152));
     }
 
     public String getHint() {
@@ -75,16 +75,16 @@ public class TextField extends javax.swing.JTextField {
 
     private void paintIcon(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-        if (prefixIcon != null) { 
+        if (prefixIcon != null) {
             Image prefix = ((ImageIcon) prefixIcon).getImage();
             int y = (getHeight() - prefixIcon.getIconHeight()) / 2;
             g2.drawImage(prefix, 10, y, this);
         }
-        
-        if (suffixIcon != null) { 
-            Image suffix = ((ImageIcon) suffixIcon).getImage(); 
-            int y = (getHeight() - suffixIcon.getIconHeight()) / 2; 
-            g2.drawImage(suffix, getWidth() - suffixIcon.getIconWidth() - 10, y, this); 
+
+        if (suffixIcon != null) {
+            Image suffix = ((ImageIcon) suffixIcon).getImage();
+            int y = (getHeight() - suffixIcon.getIconHeight()) / 2;
+            g2.drawImage(suffix, getWidth() - suffixIcon.getIconWidth() - 10, y, this);
         }
     }
 

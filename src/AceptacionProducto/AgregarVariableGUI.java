@@ -9,32 +9,34 @@ import Servicios.Utilidades;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.Color;
-import java.sql.Connection;
 import java.sql.SQLException;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 public class AgregarVariableGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
-    private Connection conexion;
-    private AceptacionPc1 apc1;
-    private AceptacionPc2 apc2;
-    private AceptacionProductoServicio aps = new AceptacionProductoServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de la aceptacion de producto
+    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de la aceptacion de producto
+    private AceptacionProductoServicio aps; 
 
     public AgregarVariableGUI() {
         inicializarVentanaYComponentes();
     }
 
-    public AgregarVariableGUI(Usuarios usr, AceptacionPc1 apc1, AceptacionPc2 apc2) {
-        this.usr = usr;
-        this.apc1 = apc1;
-        this.apc2 = apc2;
+    public AgregarVariableGUI(Usuarios usuario, AceptacionPc1 aceptacionPc1, AceptacionPc2 aceptacionPc2) {
+        this.usuario = usuario;
+        this.aceptacionPc1 = aceptacionPc1;
+        this.aceptacionPc2 = aceptacionPc2;
+        this.conexion = Conexion.getInstance();
+        this.aps = new AceptacionProductoServicio();
         inicializarVentanaYComponentes();
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -106,21 +108,19 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
         cerrarVentana();
-        aps.abrirRetencionDimensionalGUI(usr, apc1, apc2);
+        aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1, aceptacionPc2);
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         String nuevaVariable = txtNuevaVariable.getText();
+
         if (nuevaVariable.isEmpty()) {
             JOptionPane.showMessageDialog(this, "El campo para agregar una nueva variable esta vacío");
         } else {
             try {
-                aps.agregarNuevaVariable(conexion, nuevaVariable);
-                JOptionPane.showMessageDialog(this, "NUEVA VARIABLE AGREGADA CORRECTAMENTE");
-                cerrarVentana();
-                aps.abrirRetencionDimensionalGUI(usr, apc1, apc2);
+                agregarVariable(nuevaVariable);
             } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("Surgio un error al abrir la Ventana AGREGAR VARIABLES", ex);
+                Utilidades.manejarExcepcion("Surgio un error al abrir RetencionDimensionalGUI", ex);
             }
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
@@ -130,7 +130,13 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+    }
+
+    private void agregarVariable(String nuevaVariable) throws SQLException {
+        aps.agregarNuevaVariable(conexion, nuevaVariable);
+        JOptionPane.showMessageDialog(this, "NUEVA VARIABLE AGREGADA CORRECTAMENTE");
+        cerrarVentana();
+        aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1, aceptacionPc2);
     }
 
     private void cerrarVentana() {

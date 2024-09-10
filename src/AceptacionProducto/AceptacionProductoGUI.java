@@ -12,9 +12,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,29 +28,41 @@ import swing.Button;
 
 public class AceptacionProductoGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
-    private Connection conexion;
-    private DefaultTableModel modeloTabla;
-    private TableRowSorter<DefaultTableModel> filtroTabla;
-    private List<AceptacionProducto> listAP = new ArrayList<>();
-    private AceptacionProductoServicio aps = new AceptacionProductoServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
+    private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
+    private TableRowSorter<DefaultTableModel> filtroTabla; // Objeto filtrador de campos de la tabla
+    private List<AceptacionProducto> listaAceptacionProducto; // Listas de información de aceptación de productos
+
+    // Columnas de la tabla
+    private static final int COLUMNA_COMPONENTE = 0;
+    private static final int COLUMNA_ARCHIVO_RETENCION = 1;
 
     public AceptacionProductoGUI() {
         try {
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error en ACEPTACIÓN PRODUCTO: ", ex);
+            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI: ", ex);
             Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, "Error de conexión: " + ex.getMessage(), ex);
         }
     }
 
-    public AceptacionProductoGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
-        this.usr = usr;
-        inicializarVentanaYComponentes();
+    public AceptacionProductoGUI(Usuarios usuario) {
+        try {
+            this.usuario = usuario;
+            this.conexion = Conexion.getInstance();
+            this.aps = new AceptacionProductoServicio();
+            inicializarVentanaYComponentes();
+        } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI: ", ex);
+            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -79,12 +89,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         getContentPane().add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
-
-        txtBuscador.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtBuscadorKeyTyped(evt);
-            }
-        });
         getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(810, 50, 200, -1));
         txtBuscador.getAccessibleContext().setAccessibleParent(this);
 
@@ -176,7 +180,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
     private void btnModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarActionPerformed
         cerrarVentana();
-        aps.abrirModificarAPGUI(usr);
+        aps.abrirModificarAPGUI(usuario);
     }//GEN-LAST:event_btnModificarActionPerformed
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
@@ -187,138 +191,196 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         int columnaSeleccionada = tblAceptacionProducto.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblAceptacionProducto.rowAtPoint(evt.getPoint());
         if (esCeldaValida(columnaSeleccionada, filaSeleccionada)) {
-            String componente = (String) tblAceptacionProducto.getValueAt(filaSeleccionada, 0);
-            Object valor = tblAceptacionProducto.getValueAt(filaSeleccionada, columnaSeleccionada);
-            if (valor instanceof JButton) { // Si el valor de la celda es un boton...
-                JButton boton = (Button) valor;
-                String textoBoton = boton.getText();
-                switch (textoBoton) {
-                    case "Vacio":
-                        JOptionPane.showMessageDialog(this, "No hay archivo");
-                        break;
-                    default:
-                        try {
-                            aps.ejecutarArchivoXLSX(conexion, componente, columnaSeleccionada);
-                        } catch (ClassNotFoundException | SQLException ex) {
-                            Utilidades.manejarExcepcion("Error al abrir el documento de RETENCIÓN-DIMENSIONAL.xlsx", ex);
-                        }
-                        break;
-                }
-            }
+            manejarCeldaSeleccionada(filaSeleccionada, columnaSeleccionada);
         }
     }//GEN-LAST:event_tblAceptacionProductoMouseClicked
 
-    private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
-        txtBuscador.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(final KeyEvent ke) {
-                filtrarBusqueda();
-            }
-        });
-        filtroTabla = new TableRowSorter(tblAceptacionProducto.getModel());
-        tblAceptacionProducto.setRowSorter(filtroTabla);
-    }//GEN-LAST:event_txtBuscadorKeyTyped
-
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
         int filaSeleccionada = tblAceptacionProducto.getSelectedRow();
-        if (filaSeleccionada != -1) { // Devuelve -1 cuando no hay ninguna fila seleccionada
-            String componente = (String) tblAceptacionProducto.getValueAt(filaSeleccionada, 0);
-            int respuesta = JOptionPane.showConfirmDialog(this, "SE ELIMINARÁ TODA LA INFORMACIÓN DEL COMPONENTE, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-            if (componente != null && respuesta == JOptionPane.YES_OPTION) {
-                try {
-                    eliminarRegistro(componente);
-                } catch (Exception ex) {
-                    Utilidades.manejarExcepcion("Surgio un error al ELIMINAR EL REGISTRO", ex);
-                }
-            }
-        } else {
+
+        if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
+            return;
+        }
+
+        String nombreComponente = (String) tblAceptacionProducto.getValueAt(filaSeleccionada, 0);
+
+        if (confirmarEliminacion()) {
+            eliminarComponente(nombreComponente);
         }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarActionPerformed
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS");
-        aps.abrirAceptacionProductoGUI(usr);
+        aps.abrirAceptacionProductoGUI(usuario);
     }//GEN-LAST:event_btnActualizarActionPerformed
 
     private void btnCrearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCrearActionPerformed
         cerrarVentana();
-        aps.abrirAceptacionProductoGUI2(usr);
+        aps.abrirAceptacionProductoGUI2(usuario);
     }//GEN-LAST:event_btnCrearActionPerformed
 
     private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        configurarVentana();
+        configurarBuscador();
+        inicializarTabla();
+        inicializarListeners();
+        inicializarFiltroTabla();
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
 
-        this.conexion = Conexion.getInstance().getConnection();
-        
-        this.modeloTabla = new DefaultTableModel() {
+    private void configurarBuscador() {
+        txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
+        txtBuscador.setHint("Buscar...");
+    }
+
+    private void inicializarTabla() {
+        try {
+            this.modeloTabla = construirModeloTabla();
+            this.listaAceptacionProducto = aps.recuperarAPs(conexion);
+            tblAceptacionProducto.setModel(modeloTabla);
+            tblAceptacionProducto.setRowHeight(40);
+            mostrarDatosTabla();
+        } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
+            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void inicializarListeners() {
+        txtBuscador.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(final KeyEvent ke) {
+                filtrarBusqueda();
+            }
+        });
+    }
+
+    private void inicializarFiltroTabla() {
+        filtroTabla = new TableRowSorter(tblAceptacionProducto.getModel());
+        tblAceptacionProducto.setRowSorter(filtroTabla);
+    }
+
+    private void filtrarBusqueda() {
+        String textoBusqueda = txtBuscador.getText();
+
+        if (textoBusqueda == null || textoBusqueda.trim().isEmpty()) {
+            filtroTabla.setRowFilter(null);
+            return;
+        }
+
+        try {
+            RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(textoBusqueda, 0);
+            filtroTabla.setRowFilter(rowFilter);
+        } catch (PatternSyntaxException e) {
+            filtroTabla.setRowFilter(null);
+            Utilidades.manejarExcepcion("Error al aplicar el filtrado de información: ", e);
+        }
+    }
+
+    private DefaultTableModel construirModeloTabla() {
+        final String[] nombresColumnas = {"COMPONENTE", "VER DOCUMENTO RETENCIÓN DIMENSIONAL"};
+
+        modeloTabla = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-        this.listAP = aps.recuperarAPs(conexion);
+        modeloTabla.setColumnIdentifiers(nombresColumnas);
 
-        txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
-        txtBuscador.setHint("Buscar...");
-
-        DefaultTableModel tableModel = construirModeloTabla();
-
-        tblAceptacionProducto.setModel(tableModel);
-        tblAceptacionProducto.setRowHeight(40);
-        mostrarDatosTabla();
-    }
-
-    public void filtrarBusqueda() {
-        String filtro = txtBuscador.getText();
-        try {
-            RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(filtro, 0);
-            filtroTabla.setRowFilter(rowFilter);
-        } catch (PatternSyntaxException e) {
-            Utilidades.manejarExcepcion("Error al aplicar el filtrado de información: ", e);
-            filtroTabla.setRowFilter(null);
-        }
+        return modeloTabla;
     }
 
     public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-        modeloTabla.setRowCount(0);
-        if (this.listAP != null) {
-            listAP.stream().map((ap) -> {
-                Object fila[] = new Object[2];
-                fila[0] = ap.getComponente();
-                fila[1] = Utilidades.crearBoton(ap.getRdPdf(), Iconos.ICONO_EXCEL_2, "Vacio");
-                return fila;
-            }).forEachOrdered((fila) -> {
-                modeloTabla.addRow(fila);
-            });
+        limpiarTabla();
+        if (listaAceptacionProducto != null && !listaAceptacionProducto.isEmpty()) {
+            llenarTabla();
         }
-        tblAceptacionProducto.setDefaultRenderer(Object.class, new imgTabla());
+        configurarRenderizacionTabla();
     }
 
-    private DefaultTableModel construirModeloTabla() {
-        modeloTabla.addColumn("COMPONENTE");
-        modeloTabla.addColumn("VER DOCUMENTO RETENCIÓN DIMENSIONAL");
-        return modeloTabla;
+    private void limpiarTabla() {
+        modeloTabla.setRowCount(0);
+    }
+
+    private void llenarTabla() {
+        listaAceptacionProducto.forEach(aceptacionProducto -> {
+            Object[] fila = crearFila(aceptacionProducto);
+            modeloTabla.addRow(fila);
+        });
+    }
+
+    private Object[] crearFila(AceptacionProducto aceptacionProducto) {
+        Object[] fila = new Object[2];
+        fila[COLUMNA_COMPONENTE] = aceptacionProducto.getComponente();
+        fila[COLUMNA_ARCHIVO_RETENCION] = Utilidades.crearBoton(aceptacionProducto.getRdPdf(), Iconos.ICONO_EXCEL_2, "Vacio");
+        return fila;
+    }
+
+    private void configurarRenderizacionTabla() {
+        tblAceptacionProducto.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     private void cerrarVentana() {
         AceptacionProductoGUI.this.dispose();
     }
 
+    private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
+        return filaSeleccionada < tblAceptacionProducto.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblAceptacionProducto.getColumnCount() && columnaSeleccionada >= 0;
+    }
+
+    public void manejarCeldaSeleccionada(int filaSeleccionada, int columnaSeleccionada) {
+        String componente = (String) tblAceptacionProducto.getValueAt(filaSeleccionada, 0);
+        Object valor = tblAceptacionProducto.getValueAt(filaSeleccionada, columnaSeleccionada);
+        if (valor instanceof JButton) {
+            JButton boton = (Button) valor;
+            procesarBoton(boton, componente, columnaSeleccionada);
+        }
+    }
+
+    private void procesarBoton(JButton boton, String componente, int columnaSeleccionada) {
+        String textoBoton = boton.getText();
+        switch (textoBoton) {
+            case "Vacio":
+                JOptionPane.showMessageDialog(this, "No hay archivo");
+                break;
+            default:
+                try {
+                    aps.ejecutarArchivoXLSX(conexion, componente, columnaSeleccionada);
+                } catch (ClassNotFoundException | SQLException ex) {
+                    Utilidades.manejarExcepcion("Error al abrir el documento de RETENCIÓN-DIMENSIONAL.xlsx", ex);
+                }
+                break;
+        }
+    }
+
+    private boolean confirmarEliminacion() {
+        int respuesta = JOptionPane.showConfirmDialog(this, "SE ELIMINARÁ TODA LA INFORMACIÓN DEL COMPONENTE, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+        return respuesta == JOptionPane.YES_OPTION;
+    }
+
+    private void eliminarComponente(String nombreComponente) {
+        try {
+            eliminarRegistro(nombreComponente);
+        } catch (Exception ex) {
+            Utilidades.manejarExcepcion("Surgio un error al ELIMINAR EL REGISTRO", ex);
+        }
+    }
+
     private void eliminarRegistro(String componente) {
         aps.eliminarAP(conexion, componente);
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
-        aps.abrirAceptacionProductoGUI(usr);
-    }
-
-    private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
-        return filaSeleccionada < tblAceptacionProducto.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblAceptacionProducto.getColumnCount() && columnaSeleccionada >= 0;
+        aps.abrirAceptacionProductoGUI(usuario);
     }
 
     public static void main(String args[]) {

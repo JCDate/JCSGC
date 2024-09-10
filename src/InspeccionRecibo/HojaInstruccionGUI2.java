@@ -3,6 +3,7 @@ package InspeccionRecibo;
 import Modelos.AnchoLargoM;
 import Modelos.DatosIRM;
 import Modelos.InspeccionReciboM;
+import Modelos.RugosidadDurezaM;
 import Servicios.ExcelFormato;
 import Modelos.Usuarios;
 import Servicios.Conexion;
@@ -39,7 +40,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Connection conexion;
+    private Conexion conexion;
 
     // Lista de proveedores
     List<String> listaInspectores = new ArrayList<>();
@@ -337,7 +338,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().getConnection();
+        this.conexion = Conexion.getInstance();
 
         listaInspectores = irs.recuperarInspectores(conexion);
         listaInspectores.forEach(cbxNombreInspector::addItem);
@@ -380,29 +381,26 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
             for (int j = 0; j < 2; j++) {
                 Row filaAnchoLargo = hoja1.getRow(numFila);
                 Cell cellAnchoLargo = filaAnchoLargo.getCell(2);
-                tblRugosidadDureza.setValueAt(cellAnchoLargo.getStringCellValue(), i, j);
+                tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, j);
             }
             numFila++;
         }
 
-        // Crea la tabla de destino
-        String[][] table = new String[5][2];
+        numFila = 43;
+        int numColExcel = 2; // Columna inicial en Excel (columna 2)
+        for (int i = 0; i < 5; i++) { // 5 filas en tu tabla
+            // Accedemos a la fila correspondiente en Excel (43 y 44)
+            Row filaAnchoLargo43 = hoja1.getRow(43);
+            Row filaAnchoLargo44 = hoja1.getRow(44);
 
-        // Lee las filas y columnas de la tabla de Excel
-        for (int i = 0; i < 2; i++) {
-            Row row = hoja1.getRow(i + 42); // 42 y 43 son las filas que deseas leer
-            for (int j = 0; j < 5; j++) {
-                Cell cell = row.getCell(j + 1); // 1-5 son las columnas que deseas leer
-                String value = cell.getStringCellValue();
-                table[j][i] = value; // Asigna el valor a la tabla de destino
-            }
+            // Recuperamos las celdas de la columna actual en Excel
+            Cell cellAnchoLargo43 = filaAnchoLargo43.getCell(numColExcel + i); // fila 43
+            Cell cellAnchoLargo44 = filaAnchoLargo44.getCell(numColExcel + i); // fila 44
+
+            // Colocamos los valores en las celdas de la tabla
+            tblRugosidadDureza.setValueAt(cellAnchoLargo43.getStringCellValue(), i, 0); // Primera columna
+            tblRugosidadDureza.setValueAt(cellAnchoLargo44.getStringCellValue(), i, 1); // Segunda columna
         }
-
-        // Imprime la tabla de destino
-        for (int i = 0; i < 5; i++) {
-            System.out.println(table[i][0] + " " + table[i][1]);
-        }
-
     }
 
     public String guardarCambios(String nuevaRutaArchivo) throws FileNotFoundException, IOException, ParseException {
@@ -435,9 +433,11 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         if (numero < 10) {
             numeroStr = String.valueOf(numero);
         }
+
         int numeroFila = 20; // indice de la Tabla Ancho/Largo
         try {
             int idHojaInstruccion = irs.getIdHI(conexion, inspeccionRecibo);
+            // Ancho/Largo 
             List anchoLargo = als.capturarValores(idHojaInstruccion, dirm.getAnchoLargo());
 
             for (int i = 0; i < anchoLargo.size(); i++) {
@@ -453,6 +453,35 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
                 row.getCell(1).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
                 row.getCell(2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
             }
+
+            // Rugosidad/Dureza
+            
+            numeroFila = 43;
+            List<RugosidadDurezaM> rugosidadDureza = rds.recuperarTodas(idHojaInstruccion, dirm.getAnchoLargo());
+
+// Se asume que solo hay 5 elementos en la lista para que se ajusten a las 5 columnas consecutivas.
+            if (rugosidadDureza.size() == 5) {
+                // Imprimir valores de Rugosidad en la primera fila
+                for (int j = 0; j < 5; j++) {
+                    RugosidadDurezaM valores = rugosidadDureza.get(j);
+                    excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getRugosidad()); // Rugosidad en fila 1
+                }
+
+                // Imprimir valores de Dureza en la fila siguiente
+                numeroFila++; // Avanzar a la siguiente fila
+                Row row = hoja1.getRow(numeroFila);
+                for (int j = 0; j < 5; j++) {
+                    RugosidadDurezaM valores = rugosidadDureza.get(j);
+                    excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getDureza()); // Dureza en fila 2
+                }
+
+                // Aplicación del formato a cada celda en las 5 columnas para ambas filas
+                for (int j = 0; j < 5; j++) {
+                    hoja1.getRow(numeroFila - 1).getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Rugosidad
+                    row.getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Dureza
+                }
+            }
+
         } catch (SQLException ex) {
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }

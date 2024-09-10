@@ -8,7 +8,6 @@ package Servicios;
 import Modelos.ComposicionQuimicaM;
 import Modelos.DatosIRM;
 import Modelos.PropiedadMecanicaM;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,8 +27,8 @@ public class EspecificacionesServicio {
     final String SQL_CONSULTA_PROPIEDADES_MC = "SELECT pm,valor FROM propiedadesmc WHERE especificacionTecnica=?";
     final String SQL_CONSULTA_COMPOSICION_QM = "SELECT cq,valor FROM composicionquimica WHERE especificacionTecnica=?";
 
-    public void agregarDatosIR(Connection conexion, DatosIRM dirm, int id) throws SQLException {
-        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_DATOS_IR)) { // Se realiza la consulta
+    public void agregarDatosIR(Conexion conexion, DatosIRM dirm, int id) throws SQLException {
+        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(SQL_INSERCION_DATOS_IR)) { // Se realiza la consulta
             sqlInsert.setString(1, dirm.getFechaInspeccion());
             sqlInsert.setInt(2, dirm.getAnchoLargo());
             sqlInsert.setString(3, dirm.getObsMP());
@@ -42,9 +41,9 @@ public class EspecificacionesServicio {
         }
     }
 
-    public List<PropiedadMecanicaM> obtenerPropiedadesMecanicas(Connection con, String espeTecnica) throws SQLException {
+    public List<PropiedadMecanicaM> obtenerPropiedadesMecanicas(Conexion con, String espeTecnica) throws SQLException {
         List<PropiedadMecanicaM> listaIr = new ArrayList<>(); // Se crea una nueva lista 
-        PreparedStatement consulta = con.prepareStatement(SQL_CONSULTA_PROPIEDADES_MC);
+        PreparedStatement consulta = con.conectar().prepareStatement(SQL_CONSULTA_PROPIEDADES_MC);
         consulta.setString(1, espeTecnica);
         ResultSet resultado = consulta.executeQuery();
         while (resultado.next()) { // Se almacena la información encontrada
@@ -57,9 +56,9 @@ public class EspecificacionesServicio {
         return listaIr;
     }
 
-    public List<ComposicionQuimicaM> obtenerCM(Connection con, String espeTecnica) throws SQLException {
+    public List<ComposicionQuimicaM> obtenerCM(Conexion con, String espeTecnica) throws SQLException {
         List<ComposicionQuimicaM> listaIr = new ArrayList<>(); // Se crea una nueva lista 
-        PreparedStatement consulta = con.prepareStatement(SQL_CONSULTA_COMPOSICION_QM);
+        PreparedStatement consulta = con.conectar().prepareStatement(SQL_CONSULTA_COMPOSICION_QM);
         consulta.setString(1, espeTecnica);
         ResultSet resultado = consulta.executeQuery();
         while (resultado.next()) { // Se almacena la información encontrada

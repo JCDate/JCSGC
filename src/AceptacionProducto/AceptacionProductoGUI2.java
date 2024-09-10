@@ -7,37 +7,45 @@ import Servicios.Conexion;
 import Servicios.Utilidades;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 public class AceptacionProductoGUI2 extends javax.swing.JFrame {
 
-    private Usuarios usr;
-    private AceptacionPc1 apc1;
-    private Connection conexion;
-    private AceptacionProductoServicio aps = new AceptacionProductoServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de la aceptacion de producto
+    private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public AceptacionProductoGUI2() {
         try {
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Surgio error en ACEPTACION PRODUCTO", ex);
+            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI2: ", ex);
             Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, "Error de conexión: " + ex.getMessage(), ex);
         }
     }
 
-    public AceptacionProductoGUI2(Usuarios usr) throws SQLException, ClassNotFoundException {
-        this.usr = usr;
-        this.apc1 = new AceptacionPc1();
-        inicializarVentanaYComponentes();
+    public AceptacionProductoGUI2(Usuarios usuario) {
+        try {
+            this.usuario = usuario;
+            this.conexion = Conexion.getInstance();
+            this.aceptacionPc1 = new AceptacionPc1();
+            this.aps = new AceptacionProductoServicio();
+            inicializarVentanaYComponentes();
+        } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI2: ", ex);
+            Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -142,39 +150,64 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
         cerrarVentana();
-        aps.abrirAceptacionProductoGUI(usr);
+        aps.abrirAceptacionProductoGUI(usuario);
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnContinuarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContinuarActionPerformed
         Date fechaSeleccionada = dchFechaLiberacion.getDate();
+
+        if (fechaSeleccionada == null || cbxComponente.getSelectedItem() == null || cbxNoRollo.getSelectedItem() == null) {
+            JOptionPane.showMessageDialog(this, "Por Favor, complete los campos obligatorios");
+            return;
+        }
+
         String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // formato: "dd/mm/aaaa" 
 
-        apc1.setComponente(cbxComponente.getSelectedItem().toString());
-        apc1.setFecha(fechaLiberacion);
-        apc1.setNoRollo(cbxNoRollo.getSelectedItem().toString());
-        apc1.setInspVisual(txtInspeccionVisual.getText());
-        apc1.setObservacion(txtObservaciones.getText());
-
+        asignarValoresAceptacionProducto(fechaLiberacion);
         cerrarVentana();
-        aps.abrirRetencionDimensionalGUI(usr, apc1);
+        aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1);
     }//GEN-LAST:event_btnContinuarActionPerformed
 
     private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        configurarVentana();
+        configurarComponentes();
+        definirValoresPredeterminados();
+        inicializarListeners();
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
 
-        this.conexion = Conexion.getInstance().getConnection();
+    private void configurarComponentes() {
+        try {
+            aps.cargarNoRollos(conexion, cbxNoRollo);
+            aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al Cargar los números de rollo: ", ex);
+            Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
-        aps.cargarNoRollos(conexion, cbxNoRollo);
-        aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
-
+    private void definirValoresPredeterminados() {
         dchFechaLiberacion.setDate(new Date());
         txtInspeccionVisual.setText("OK");
         txtObservaciones.setText("INSPECCIÓN 100%");
+    }
 
+    private void inicializarListeners() {
         cbxComponente.addActionListener(cbxNoRollo);
+    }
+
+    private void asignarValoresAceptacionProducto(String fechaLiberacion) {
+        aceptacionPc1.setComponente(cbxComponente.getSelectedItem().toString());
+        aceptacionPc1.setFecha(fechaLiberacion);
+        aceptacionPc1.setNoRollo(cbxNoRollo.getSelectedItem().toString());
+        aceptacionPc1.setInspVisual(txtInspeccionVisual.getText());
+        aceptacionPc1.setObservacion(txtObservaciones.getText());
     }
 
     private void cerrarVentana() {
