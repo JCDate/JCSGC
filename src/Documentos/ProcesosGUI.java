@@ -6,6 +6,7 @@ import Modelos.ProcesosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
+import Servicios.Utilidades;
 import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Desktop;
@@ -13,13 +14,11 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ImageIcon;
+import java.util.stream.IntStream;
 import javax.swing.JButton;
 import swing.Button;
 import javax.swing.JFrame;
@@ -28,37 +27,37 @@ import javax.swing.table.DefaultTableModel;
 
 public class ProcesosGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
-    private ProcesosM proceso;
-    private Conexion conexion;
-    private DefaultTableModel modeloTabla;
-    private List<ProcedimientosM> listaProcedimientos = new ArrayList<>();
-
-    private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private ProcesosM proceso; // Objeto para manejar la documentacion por procesos
+    private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
+    private List<ProcedimientosM> listaProcedimientos; // Lista de procedimientos
+    private ControlDocumentacionServicio cds; // Listas de información de control de documentación
 
     public ProcesosGUI() {
-        try {
-            inicializarVentanaYComponentes(0);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
-    public ProcesosGUI(Usuarios usr, int idProceso) {
-        try {
-            this.usr = usr;
-            inicializarVentanaYComponentes(idProceso);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public ProcesosGUI(Usuarios usuario) {
+        this.usuario = usuario;
+        inicializarVentanaYComponentes();
     }
 
-    public ProcesosGUI(Usuarios usr) {
-        this.usr = usr;
+    public ProcesosGUI(Usuarios usuario, int idProceso) {
+        try {
+            this.usuario = usuario;
+            this.conexion = Conexion.getInstance();
+            this.proceso = cds.recuperarProceso(conexion, idProceso);
+            inicializarVentanaYComponentes();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al abrir ProcesosGUI: ", ex);
+            Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -156,61 +155,27 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
-        cds.abrirControlDocumentosGUI(usr);
+        cds.abrirControlDocumentosGUI(usuario);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void tblProcedimientosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblProcedimientosMouseClicked
         int columnaSeleccionada = tblProcedimientos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblProcedimientos.rowAtPoint(evt.getPoint());
-        String textoPrimeraCelda = "";
 
-        if (filaSeleccionada < tblProcedimientos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblProcedimientos.getColumnCount() && columnaSeleccionada >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
-            String id = (String) tblProcedimientos.getValueAt(filaSeleccionada, 0); // Se guarda el valor de la celda (row,0) en la primera columna
-            int posicion = -1;
+        if (!esCeldaValida(filaSeleccionada, columnaSeleccionada)) {
+            return;
+        }
 
-            for (int i = 0; i < listaProcedimientos.size(); i++) {
-                ProcedimientosM elemento = this.listaProcedimientos.get(i);
-                if (elemento.getNo().equals(id)) {
-                    posicion = i;
-                    break;
-                }
-            }
+        String id = (String) tblProcedimientos.getValueAt(filaSeleccionada, 0);
+        int posicion = buscarProcedimientoPorId(id);
 
-            Object value = tblProcedimientos.getValueAt(filaSeleccionada, columnaSeleccionada);
-            if (value instanceof JButton) {
+        if (posicion == -1) {
+            return;
+        }
 
-                JButton boton = (JButton) value;
-                String textoBoton = boton.getText();
-
-                // Get the text from the first cell (column 0) of the selected row
-                Object firstCellValue = tblProcedimientos.getValueAt(filaSeleccionada, 0);
-                if (firstCellValue != null) {
-                    textoPrimeraCelda = firstCellValue.toString();
-                }
-
-                switch (textoBoton) {
-                    case "Vacío":
-                        JOptionPane.showMessageDialog(null, "No hay documentos");
-                        break;
-                    default:
-                            if (columnaSeleccionada == 5) {
-                                ProcesosGUI.this.dispose();
-                                ProcedimientosGUI proc;
-                                try {
-                                    proc = new ProcedimientosGUI(usr, listaProcedimientos.get(posicion));
-                                    proc.setVisible(true);
-                                    proc.setLocationRelativeTo(null);
-                                } catch (SQLException | ClassNotFoundException ex) {
-                                    Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                            } else if (columnaSeleccionada == 6) {
-                                cds.abrirRegistrosGUI(usr, listaProcedimientos.get(posicion));
-                            }
-
-                        break;
-                }
-
-            }
+        Object value = tblProcedimientos.getValueAt(filaSeleccionada, columnaSeleccionada);
+        if (value instanceof JButton) {
+            manejarAccionBoton((JButton) value, columnaSeleccionada, posicion);
         }
     }//GEN-LAST:event_tblProcedimientosMouseClicked
 
@@ -219,79 +184,133 @@ public class ProcesosGUI extends javax.swing.JFrame {
             cds.ejecutarDiagramaTortuga(proceso);
             Desktop.getDesktop().open(new File(proceso.getNombreDT()));
         } catch (ClassNotFoundException | SQLException | IOException ex) {
+            Utilidades.manejarExcepcion("Error al abrir Diagrama de Tortuga: ", ex);
             Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnDiagramaTortugaActionPerformed
 
     private void btnSolicitudCambioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudCambioActionPerformed
         cerrarVentana();
-        cds.abrirSolicitudGUI(usr, proceso);
+        cds.abrirSolicitudGUI(usuario, proceso);
     }//GEN-LAST:event_btnSolicitudCambioActionPerformed
 
-    private void inicializarVentanaYComponentes(int idProceso) throws SQLException, ClassNotFoundException {
-        initComponents();
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance();
-        this.proceso = cds.recuperarProceso(conexion, idProceso);
-        
+    private void inicializarVentanaYComponentes() {
+        configurarVentana();
+        configurarVisibilidadBoton();
+        lblTitulo.setText("PROCESO: " + proceso.getProceso());
+        inicializarTabla();
+    }
 
-        if (usr.getId() == proceso.getUid() || usr.getId() == 8) {
+    private void configurarVisibilidadBoton() {
+        if (usuario.getId() == proceso.getUid() || usuario.getId() == 8) {
             btnSolicitudCambio.setVisible(true);
         } else {
             btnSolicitudCambio.setVisible(false);
         }
+    }
 
-        lblTitulo.setText("PROCESO: " + proceso.getProceso());
+    private void configurarVentana() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
 
-        this.modeloTabla = new DefaultTableModel() {
+    private void inicializarTabla() {
+        try {
+            this.modeloTabla = construirModeloTabla();
+            this.listaProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
+            DefaultTableModel tableModel = construirModeloTabla();
+            tblProcedimientos.setModel(tableModel);
+            tblProcedimientos.setRowHeight(40);
+            mostrarDatosTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al inicializar laa tabla: ", ex);
+            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void mostrarDatosTabla() {
+        limpiarTabla();
+        llenarTabla();
+        configurarRenderizacionTabla();
+    }
+
+    private void configurarRenderizacionTabla() {
+        tblProcedimientos.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    private void limpiarTabla() {
+        modeloTabla.setRowCount(0);
+    }
+
+    private void llenarTabla() {
+        if (listaProcedimientos != null && !listaProcedimientos.isEmpty()) {
+            listaProcedimientos.forEach(procedimiento -> {
+                Object[] fila = crearFila(procedimiento);
+                modeloTabla.addRow(fila);
+            });
+        }
+    }
+
+    private Object[] crearFila(ProcedimientosM procedimiento) {
+        Button botonVerDocumentos = new Button();
+        Button botonVerRegistros = new Button();
+
+        botonVerDocumentos.setIcon(Iconos.ICONO_VER);
+        botonVerRegistros.setIcon(Iconos.ICONO_SOLICITUD);
+
+        Object fila[] = new Object[7];
+        fila[0] = procedimiento.getNo();
+        fila[1] = procedimiento.getCodigo();
+        fila[2] = procedimiento.getRevision();
+        fila[3] = procedimiento.getProcedimiento();
+        fila[4] = procedimiento.getEncargado();
+        fila[5] = botonVerDocumentos;
+        fila[6] = botonVerRegistros;
+        return fila;
+    }
+
+    private DefaultTableModel construirModeloTabla() {
+        final String[] nombresColumnas = {"NO", "CODIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS"};
+
+        modeloTabla = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-        DefaultTableModel tableModel = construirModeloTabla();
-        tblProcedimientos.setModel(tableModel);
-        tblProcedimientos.setRowHeight(40);
-        mostrarDatosTabla();
-    }
-
-    private DefaultTableModel construirModeloTabla() {
-        modeloTabla.addColumn("NO");
-        modeloTabla.addColumn("CODIGO");
-        modeloTabla.addColumn("REVISIÓN");
-        modeloTabla.addColumn("PROCEDIMIENTO");
-        modeloTabla.addColumn("DUEÑO DE PROCESO");
-        modeloTabla.addColumn("VER DOCUMENTOS");
-        modeloTabla.addColumn("REGISTROS");
+        modeloTabla.setColumnIdentifiers(nombresColumnas);
         return modeloTabla;
     }
 
-    public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-        modeloTabla.setRowCount(0);
-        listaProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
-        Button boton = new Button();
-        Button boton2 = new Button();
-        boton.setIcon(Iconos.ICONO_VER);
-        boton2.setIcon(Iconos.ICONO_SOLICITUD);
-        if (listaProcedimientos != null) {
-            listaProcedimientos.stream().map((procedimiento) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-                Object fila[] = new Object[7];
-                fila[0] = procedimiento.getNo();
-                fila[1] = procedimiento.getCodigo();
-                fila[2] = procedimiento.getRevision();
-                fila[3] = procedimiento.getProcedimiento();
-                fila[4] = procedimiento.getEncargado();
-                fila[5] = boton;
-                fila[6] = boton2;
-                return fila;
-            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
-                modeloTabla.addRow(fila);
-            });
+    private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
+        return filaSeleccionada < tblProcedimientos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblProcedimientos.getColumnCount() && columnaSeleccionada >= 0;
+    }
+
+    private int buscarProcedimientoPorId(String id) {
+        return IntStream.range(0, listaProcedimientos.size())
+                .filter(i -> listaProcedimientos.get(i).getNo().equals(id))
+                .findFirst()
+                .orElse(-1);
+    }
+
+    private void manejarAccionBoton(JButton boton, int columnaSeleccionada, int posicion) {
+        String textoBoton = boton.getText();
+
+        switch (textoBoton) {
+            case "Vacío":
+                JOptionPane.showMessageDialog(null, "No hay documentos");
+                break;
+            default:
+                if (columnaSeleccionada == 5) {
+                    cds.abrirProcedimientosGUI(usuario, listaProcedimientos.get(posicion));
+                } else if (columnaSeleccionada == 6) {
+                    cds.abrirRegistrosGUI(usuario, listaProcedimientos.get(posicion));
+                }
+                break;
         }
-        tblProcedimientos.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     public void cerrarVentana() {
@@ -317,7 +336,6 @@ public class ProcesosGUI extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(ProcesosGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */

@@ -7,6 +7,7 @@ import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.GeneradorExcel;
 import Servicios.InspeccionReciboServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -310,7 +311,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 JButton boton = (Button) value;
                 String textoBoton = boton.getText();
                 switch (textoBoton) {
-                    case "Vacio":
+                    case "Vacío":
                         JOptionPane.showMessageDialog(null, "No hay archivo");
                         break;
                     case "Realizar":
@@ -337,6 +338,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         try {
             excel.generarInspeccionReciboXLS(); // Generar el excel
         } catch (SQLException | ParseException ex) {
+            Utilidades.manejarExcepcion("Error al genear el archivo InspeccionRecibo.xlsx: ", ex);
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
         JOptionPane.showMessageDialog(this, "Datos Exportados.");

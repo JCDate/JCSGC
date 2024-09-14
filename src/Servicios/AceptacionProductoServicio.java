@@ -56,7 +56,7 @@ public class AceptacionProductoServicio {
         }
         return listaNoRollos;
     }
-    
+
     public Date formatearFecha(String fecha) {
         try {
             if (fecha == null) {
@@ -259,12 +259,10 @@ public class AceptacionProductoServicio {
     }
 
     public void abrirAceptacionProductoGUI(Usuarios usr) {
-        try {
-            AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr);
-            mostrarVentana(apGUI);
-        } catch (SQLException | ClassNotFoundException ex) {
-            manejarExcepcion("Surgio un error al abrir ACEPTACION PRODUCTO", ex);
-        }
+
+        AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr);
+        mostrarVentana(apGUI);
+
     }
 
     public void abrirRetencionDimensionalGUI(Usuarios usr, AceptacionPc1 apc1, AceptacionPc2 apc2) {
@@ -326,12 +324,10 @@ public class AceptacionProductoServicio {
     }
 
     public void abrirModificarAPGUI(Usuarios usr) {
-        try {
-            ModificarAPGUI moGUI = new ModificarAPGUI(usr);
-            mostrarVentana(moGUI);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+        ModificarAPGUI moGUI = new ModificarAPGUI(usr);
+        mostrarVentana(moGUI);
+
     }
 
     public void mostrarVentana(JFrame frame) {
@@ -341,11 +337,6 @@ public class AceptacionProductoServicio {
 
     public void manejarExcepcion(String msg, Exception ex) {
         JOptionPane.showMessageDialog(null, msg + ex, "ERROR", JOptionPane.ERROR_MESSAGE);
-    }
-
-    public String formatearFecha(Date date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        return dateFormat.format(date);
     }
 
     public void cargarNoRollos(Conexion conexion, JComboBox cbxNoRollo) {
@@ -364,13 +355,11 @@ public class AceptacionProductoServicio {
     }
 
     public void abrirAceptacionProductoGUI2(Usuarios usr) {
-        try {
-            AceptacionProductoGUI2 ap2 = new AceptacionProductoGUI2(usr); // Se crea la instancia de la clase
-            ap2.setVisible(true); // Se muestra visible al usuario
-            ap2.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) {
-            manejarExcepcion("Surgio un error al abrir ACEPTACIÓN PRODUCTO", ex);
-        }
+
+        AceptacionProductoGUI2 ap2 = new AceptacionProductoGUI2(usr); // Se crea la instancia de la clase
+        ap2.setVisible(true); // Se muestra visible al usuario
+        ap2.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+
     }
 
     public void abrirAgregarVariableGUI(Usuarios usr, AceptacionPc1 apc1, AceptacionPc2 apc2) {

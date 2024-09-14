@@ -132,7 +132,7 @@ public class InspeccionReciboServicio {
     public void agregar(Conexion conexion, InspeccionReciboM irm) throws SQLException {
         try {
             // Inicia la transacción
-            conexion.conectar().setAutoCommit(false);
+//            conexion.conectar().setAutoCommit(false);
 
             // Consulta para verificar si el noRollo ya está registrado
             String sql = "SELECT hojaInstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
@@ -218,10 +218,10 @@ public class InspeccionReciboServicio {
             }
 
             // Confirma la transacción
-            conexion.conectar().commit();
+//            conexion.conectar().commit();
         } catch (SQLException ex) {
             // Si hay algún error, realiza un rollback para deshacer los cambios
-            conexion.conectar().rollback();
+//            conexion.conectar().rollback();
             throw new SQLException("Error al ejecutar la transacción SQL: " + ex.getMessage(), ex);
         } finally {
             // Restaura el modo de autocommit a true

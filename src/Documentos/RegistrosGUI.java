@@ -1,16 +1,15 @@
 package Documentos;
 
-import Modelos.Iconos;
 import Modelos.Usuarios;
 import Modelos.ProcedimientosM;
 import Modelos.RegistrosM;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
+import Servicios.Utilidades;
 import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,37 +17,54 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.table.DefaultTableModel;
-import swing.Button;
 
 public class RegistrosGUI extends javax.swing.JFrame {
 
-    private Conexion conexion;
-    private Usuarios usr;
-    private ProcedimientosM procedimiento;
-    private DefaultTableModel modeloTabla;
-    private List<RegistrosM> listaRegistros = new ArrayList<>();
-    private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private ProcedimientosM procedimiento; // Objeto para manejar la documentacion por procedimientos
+    private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
+    private List<RegistrosM> listaRegistros; // Lista de procedimientos
+    private ControlDocumentacionServicio cds; // Listas de información de control de documentación
+
+    // Columnas de la tabla
+    private static final int COLUMNA_FECHA = 0;
+    private static final int COLUMNA_CODIGO = 1;
+    private static final int COLUMNA_PROCESO = 2;
+    private static final int COLUMNA_PROCEDIMIENTO = 3;
+    private static final int COLUMNA_REV_ANTERIOR = 4;
+    private static final int COLUMNA_REV_NUEVA = 5;
+    private static final int COLUMNA_ENCARGADO = 6;
+    private static final int COLUMNA_ACCION = 7;
+    private static final int COLUMNA_TIPO_ARCHIVO = 8;
+    private static final int COLUMNA_NOMBRE = 9;
 
     public RegistrosGUI() {
         try {
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al abrir RegistrosGUI: ", ex);
             Logger.getLogger(RegistrosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public RegistrosGUI(Usuarios usr, ProcedimientosM procedimiento) {
+    public RegistrosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
         try {
-            this.usr = usr;
+            this.usuario = usuario;
             this.procedimiento = procedimiento;
+            this.listaRegistros = new ArrayList<>();
+            this.conexion = Conexion.getInstance();
+            this.cds = new ControlDocumentacionServicio();
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al abrir RegistrosGUI: ", ex);
             Logger.getLogger(RegistrosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -122,63 +138,82 @@ public class RegistrosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+        configurarVentana();
+        inicializarTabla();
+    }
+
+    private void inicializarTabla() {
+        try {
+            this.modeloTabla = construirModeloTabla();
+            this.listaRegistros = cds.recuperarRegistros(conexion, procedimiento.getId(), usuario);
+            DefaultTableModel tableModel = construirModeloTabla();
+            tblRegistros.setModel(tableModel);
+            tblRegistros.setRowHeight(40);
+            mostrarDatosTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al inicializar laa tabla: ", ex);
+            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance();
+    }
 
-        this.modeloTabla = new DefaultTableModel() {
+    public void mostrarDatosTabla() {
+        limpiarTabla();
+        llenarTabla();
+        configurarRenderizacionTabla();
+    }
+
+    private void configurarRenderizacionTabla() {
+        tblRegistros.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    private void limpiarTabla() {
+        modeloTabla.setRowCount(0);
+    }
+
+    private void llenarTabla() {
+        if (listaRegistros != null && !listaRegistros.isEmpty()) {
+            listaRegistros.forEach(registro -> {
+                Object[] fila = crearFila(registro);
+                modeloTabla.addRow(fila);
+            });
+        }
+    }
+
+    private Object[] crearFila(RegistrosM registro) {
+        Object fila[] = new Object[10];
+        fila[COLUMNA_FECHA] = registro.getFecha();
+        fila[COLUMNA_CODIGO] = registro.getCodigo();
+        fila[COLUMNA_PROCESO] = registro.getProceso();
+        fila[COLUMNA_PROCEDIMIENTO] = registro.getProcedimiento();
+        fila[COLUMNA_REV_ANTERIOR] = registro.getRevAnterior();
+        fila[COLUMNA_REV_NUEVA] = registro.getRevNueva();
+        fila[COLUMNA_ENCARGADO] = registro.getEncargado();
+        fila[COLUMNA_ACCION] = registro.getAccion();
+        fila[COLUMNA_TIPO_ARCHIVO] = registro.getTipoArchivo();
+        fila[COLUMNA_NOMBRE] = registro.getNombre();
+        return fila;
+    }
+
+    private DefaultTableModel construirModeloTabla() {
+        final String[] nombresColumnas = {"FECHA", "CÓDIGO", "PROCESO", "PROCEDIMIENTO", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO",
+            "ACCIÓN", "TIPO ARCHIVO", "NOMBRE"};
+
+        modeloTabla = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-        listaRegistros = cds.recuperarRegistros(conexion, procedimiento.getId(), usr);
-
-        DefaultTableModel tblModeloDocumentos = construirTabla();
-        tblRegistros.setModel(tblModeloDocumentos);
-        tblRegistros.setRowHeight(40);
-        mostrarDatosTabla();
-    }
-
-    private DefaultTableModel construirTabla() {
-        modeloTabla.addColumn("FECHA");
-        modeloTabla.addColumn("CÓDIGO");
-        modeloTabla.addColumn("PROCESO");
-        modeloTabla.addColumn("PROCEDIMIENTO");
-        modeloTabla.addColumn("REV. ANTERIOR");
-        modeloTabla.addColumn("REV. NUEVA");
-        modeloTabla.addColumn("ENCARGADO");
-        modeloTabla.addColumn("ACCIÓN");
-        modeloTabla.addColumn("TIPO ARCHIVO");
-        modeloTabla.addColumn("NOMBRE");
+        modeloTabla.setColumnIdentifiers(nombresColumnas);
         return modeloTabla;
-    }
-
-    public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-        modeloTabla.setRowCount(0);
-        if (this.listaRegistros != null) {
-            listaRegistros.stream().map((registro) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-                Object fila[] = new Object[10];
-                fila[0] = registro.getFecha();
-                fila[1] = registro.getCodigo();
-                fila[2] = registro.getProceso();
-                fila[3] = registro.getProcedimiento();
-                fila[4] = registro.getRevAnterior();
-                fila[5] = registro.getRevNueva();
-                fila[6] = registro.getEncargado();
-                fila[7] = registro.getAccion();
-                fila[8] = registro.getTipoArchivo();
-                fila[9] = registro.getNombre();
-
-                return fila;
-            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
-                modeloTabla.addRow(fila);
-            });
-        }
-        tblRegistros.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     public void cerrarVentana() {

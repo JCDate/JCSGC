@@ -9,6 +9,7 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.sql.SQLException;
@@ -26,13 +27,14 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Conexion conexion; // Conexión a la Base de Datos
     private DatosFilaRD datosFila; // Objeto para el manejo de la información de los registros
+    private String componenteAnterior; // Valida que el componente no haya cambiado
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public ModificarAPGUI() {
         try {
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {
-
+            Utilidades.manejarExcepcion("Error al abrir ModificarAPGUI: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -249,12 +251,15 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         }
     }
 
-    private void manejarComponenteSeleccionado() {
+    private void manejarComponenteSeleccionado(ActionEvent evt) {
         try {
-            cbxFecha.removeAllItems();
             String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-            List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
-            fechasRD.forEach(cbxFecha::addItem);
+            if (!componenteSeleccionado.equals(componenteAnterior)) {
+                componenteAnterior = componenteSeleccionado;
+                cbxFecha.removeAllItems();
+                List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
+                fechasRD.forEach(cbxFecha::addItem);
+            }
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -265,7 +270,7 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         cbxFecha.addActionListener(this::manejarFechaSeleccionada);
     }
 
-    private void manejarFechaSeleccionada() {
+    private void manejarFechaSeleccionada(ActionEvent evt) {
         try {
             String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
             datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());

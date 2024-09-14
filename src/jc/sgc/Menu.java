@@ -203,12 +203,10 @@ public class Menu extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarSesionActionPerformed
 
     private void btnAceptacionProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAceptacionProductoActionPerformed
-        try {
-            AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usuario);
-            apGUI.setVisible(true);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+        AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usuario);
+        apGUI.setVisible(true);
+
     }//GEN-LAST:event_btnAceptacionProductoActionPerformed
 
     private void btnInspeccionReciboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInspeccionReciboActionPerformed
@@ -217,12 +215,10 @@ public class Menu extends javax.swing.JFrame {
     }//GEN-LAST:event_btnInspeccionReciboActionPerformed
 
     private void btnCtrlDocumentosYRegistrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCtrlDocumentosYRegistrosActionPerformed
-        try {
-            ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usuario);
-            docGUI.setVisible(true);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+        ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usuario);
+        docGUI.setVisible(true);
+
     }//GEN-LAST:event_btnCtrlDocumentosYRegistrosActionPerformed
 
     private void inicializarVentanaYComponentes() {

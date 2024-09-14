@@ -302,9 +302,8 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
     public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
         limpiarTabla();
-        if (listaAceptacionProducto != null && !listaAceptacionProducto.isEmpty()) {
-            llenarTabla();
-        }
+        llenarTabla();
+
         configurarRenderizacionTabla();
     }
 
@@ -313,10 +312,12 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     }
 
     private void llenarTabla() {
-        listaAceptacionProducto.forEach(aceptacionProducto -> {
-            Object[] fila = crearFila(aceptacionProducto);
-            modeloTabla.addRow(fila);
-        });
+        if (listaAceptacionProducto != null && !listaAceptacionProducto.isEmpty()) {
+            listaAceptacionProducto.forEach(aceptacionProducto -> {
+                Object[] fila = crearFila(aceptacionProducto);
+                modeloTabla.addRow(fila);
+            });
+        }
     }
 
     private Object[] crearFila(AceptacionProducto aceptacionProducto) {
@@ -383,6 +384,9 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         aps.abrirAceptacionProductoGUI(usuario);
     }
 
+    /**
+     * @param args the command line arguments
+     */
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">

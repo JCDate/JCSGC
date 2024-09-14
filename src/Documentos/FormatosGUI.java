@@ -1,24 +1,21 @@
 package Documentos;
 
-import Modelos.DocumentosM;
 import Modelos.FormatosM;
 import Modelos.Iconos;
 import Modelos.ProcedimientosM;
-import Modelos.ProcesosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
+import Servicios.Utilidades;
 import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -27,34 +24,43 @@ import swing.Button;
 
 public class FormatosGUI extends javax.swing.JFrame {
 
-    private Usuarios usr;
-    private ProcedimientosM procedimiento;
-    private Conexion conexion;
-    private DefaultTableModel modeloTabla;
-    private List<FormatosM> listaFormatos = new ArrayList<>();
-    private List<DocumentosM> listaDocumentos = new ArrayList<>();
-    private ControlDocumentacionServicio cds = new ControlDocumentacionServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Conexion conexion; // Conexión a la Base de Datos
+    private ProcedimientosM procedimiento; // Objeto para manejar la documentacion por procedimiento
+    private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
+    private List<FormatosM> listaFormatos; // Listas para el control del formato
+    private ControlDocumentacionServicio cds; // Listas de información de control de documentación
+
+    // Columnas de la tabla
+    private static final int COLUMNA_FORMATOS = 0;
+    private static final int COLUMNA_ARCHIVO = 1;
 
     public FormatosGUI() {
         try {
             inicializarVentanaYComponentes();
         } catch (ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al abrir FormatosGUI: ", ex);
             Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public FormatosGUI(Usuarios usr, ProcedimientosM procedimiento) {
-        this.usr = usr;
+    public FormatosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
+        this.usuario = usuario;
         this.procedimiento = procedimiento;
+        this.conexion = Conexion.getInstance();
+        this.listaFormatos = new ArrayList<>();
+        this.cds = new ControlDocumentacionServicio();
         try {
             inicializarVentanaYComponentes();
         } catch (ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al abrir FormatosGUI: ", ex);
             Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -129,27 +135,21 @@ public class FormatosGUI extends javax.swing.JFrame {
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
-        cds.abrirProcedimientosGUI(usr, procedimiento);
+        cds.abrirProcedimientosGUI(usuario, procedimiento);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void tblFormatosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblFormatosMouseClicked
         int columnaSeleccionada = tblFormatos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblFormatos.rowAtPoint(evt.getPoint());
-        String textoPrimeraCelda = "";
 
-        if (filaSeleccionada < tblFormatos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblFormatos.getColumnCount() && columnaSeleccionada >= 0) {// Si las coordenadas estan dentro de los limites de la tabla... 
-            String id = (String) tblFormatos.getValueAt(filaSeleccionada, 0); // Se guarda el valor de la celda (row,0) en la primera columna
-
+        if (esCeldaValida(filaSeleccionada, columnaSeleccionada)) {
             Object value = tblFormatos.getValueAt(filaSeleccionada, columnaSeleccionada);
+
             if (value instanceof JButton) {
                 JButton boton = (Button) value;
                 String textoBoton = boton.getText();
+                String id = (String) tblFormatos.getValueAt(filaSeleccionada, 0);
 
-                // Get the text from the first cell (column 0) of the selected row
-                Object firstCellValue = tblFormatos.getValueAt(filaSeleccionada, 0);
-                if (firstCellValue != null) {
-                    textoPrimeraCelda = firstCellValue.toString();
-                }
                 switch (textoBoton) {
                     case "Vacío":
                         JOptionPane.showMessageDialog(null, "No hay archivo");
@@ -158,7 +158,8 @@ public class FormatosGUI extends javax.swing.JFrame {
                         try {
                             cds.ejecutarFormato(id);
                         } catch (ClassNotFoundException | SQLException ex) {
-                            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, "Error al ejecutar formato", ex);
+                            JOptionPane.showMessageDialog(null, "Error al ejecutar formato: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                         }
                         break;
                 }
@@ -170,53 +171,79 @@ public class FormatosGUI extends javax.swing.JFrame {
         FormatosGUI.this.dispose();
     }
 
-    public void inicializarVentanaYComponentes() throws ClassNotFoundException {
+    private void inicializarVentanaYComponentes() throws ClassNotFoundException {
+        configurarVentana();
+        lblFormato.setText("<html>FORMATOS DEL PROCESO: <br>" + procedimiento.getProcedimiento() + "</html>");
+        inicializarTabla();
+    }
+
+    private void inicializarTabla() {
         try {
-            initComponents();
-            this.setResizable(false);
-            this.setLocationRelativeTo(null);
-            this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-            this.conexion = Conexion.getInstance();
-            lblFormato.setText("<html>FORMATOS DEL PROCESO: <br>" + procedimiento.getProcedimiento() + "</html>");
-
-            this.modeloTabla = new DefaultTableModel() {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-
-            listaFormatos = cds.recuperarFormatos(conexion, procedimiento.getId());
+            this.modeloTabla = construirModeloTabla();
+            this.listaFormatos = cds.recuperarFormatos(conexion, procedimiento.getId());
             DefaultTableModel tableModel = construirModeloTabla();
             tblFormatos.setModel(tableModel);
             tblFormatos.setRowHeight(40);
             mostrarDatosTabla();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al inicializar laa tabla: ", ex);
             Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     private DefaultTableModel construirModeloTabla() {
-        modeloTabla.addColumn("NOMBRE");
-        modeloTabla.addColumn("VER DOCUMENTO");
+        final String[] nombresColumnas = {"NOMBRE", "VER DOCUMENTO"};
+
+        modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        modeloTabla.setColumnIdentifiers(nombresColumnas);
+
         return modeloTabla;
     }
 
-    public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
+    private boolean esCeldaValida(int filaSeleccionada, int columnaSeleccionada) {
+        return filaSeleccionada < tblFormatos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblFormatos.getColumnCount() && columnaSeleccionada >= 0;
+    }
+
+    public void mostrarDatosTabla() {
+        limpiarTabla();
+        llenarTabla();
+        configurarRenderizacionTabla();
+    }
+
+    private void configurarRenderizacionTabla() {
+        tblFormatos.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    private void limpiarTabla() {
         modeloTabla.setRowCount(0);
-        Button boton = new Button();
-        boton.setIcon(Iconos.ICONO_VER);
-        if (this.listaFormatos != null) {
-            listaFormatos.stream().map((formato) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-                Object fila[] = new Object[2];
-                fila[0] = formato.getNombre();
-                fila[1] = cds.crearBoton(formato.getContenido(), Iconos.ICONO_VER, "Vacío");
-                return fila;
-            }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
+    }
+
+    private void llenarTabla() {
+        if (listaFormatos != null && !listaFormatos.isEmpty()) {
+            listaFormatos.forEach(formato -> {
+                Object[] fila = crearFila(formato);
                 modeloTabla.addRow(fila);
             });
         }
-        tblFormatos.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    private Object[] crearFila(FormatosM formato) {
+        Object[] fila = new Object[2];
+        fila[COLUMNA_FORMATOS] = formato.getNombre();
+        fila[COLUMNA_ARCHIVO] = Utilidades.crearBoton(formato.getContenido(), Iconos.ICONO_EXCEL_2, "Vacio");
+        return fila;
+    }
+
+    private void configurarVentana() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
     /**

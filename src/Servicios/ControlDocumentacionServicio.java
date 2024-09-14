@@ -46,13 +46,9 @@ public class ControlDocumentacionServicio {
     }
 
     public void abrirControlDocumentosGUI(Usuarios usr) {
-        try {
-            ControlDocumentosGUI doc = new ControlDocumentosGUI(usr); // Se crea la instancia de la clase
-            doc.setVisible(true); // Se muestra visible al usuario
-            doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        ControlDocumentosGUI doc = new ControlDocumentosGUI(usr); // Se crea la instancia de la clase
+        doc.setVisible(true); // Se muestra visible al usuario
+        doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
     }
 
     public ProcesosM recuperarProceso(Conexion conexion, int id) throws SQLException {

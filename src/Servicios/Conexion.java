@@ -25,6 +25,7 @@ public class Conexion {
         datos.setUsername(USUARIO);
         datos.setPassword(PASSWORD);
         datos.setInitialSize(50); // tamaño de conexiones a la base de datos
+        
         return datos;
     }
 

@@ -10,16 +10,12 @@ import Modelos.InspeccionReciboM;
 import Modelos.RugosidadDurezaM;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -115,12 +111,13 @@ public class GeneradorExcel {
         }
 
         int indexFila = 2;
-        Row filaDatos = hojaExcel.createRow(indexFila);
 
         List<InspeccionReciboM> registrosIR = irs.recuperarTodas(conexion);
         List<String> fechas = new ArrayList<>();
 
         for (InspeccionReciboM registro : registrosIR) {
+
+            Row filaDatos = hojaExcel.createRow(indexFila);
             String noHoja = registro.getNoHoja();
 
             String numeroHojaStr = noHoja.substring(noHoja.length() - 3);
@@ -138,7 +135,7 @@ public class GeneradorExcel {
             filaDatos.createCell(10);
             fechas.add(registro.getFechaFactura());
 
-            for (int i = 0; i < filaDatos.getLastCellNum(); i++) {
+            for (int i = 0; i < 11; i++) {
                 XSSFCell cell = (XSSFCell) filaDatos.getCell(i);
                 switch (cell.getStringCellValue()) {
                     case "LIBERADA":
@@ -186,8 +183,9 @@ public class GeneradorExcel {
                 mesActual = mes;
             }
 
-            Row fila2 = hoja1.getRow(indexFila);
-            XSSFCell celdaFecha = (XSSFCell) fila2.getCell(10);
+            Row fila2 = hoja1.getRow(indexFila) == null ? hoja1.createRow(indexFila) : hoja1.getRow(indexFila);
+
+            XSSFCell celdaFecha = (XSSFCell) fila2.createCell(10);
             celdaFecha.setCellValue(mes);
             celdaFecha.setCellStyle(formato.formatoMeses(workbook));
             indexFila++;
@@ -208,7 +206,7 @@ public class GeneradorExcel {
         }
         System.out.println("Proceso completado.");
     }
-    
+
     public String getDatosCeldas(Sheet hoja, int fila, int columna) {
         Cell celda = hoja.getRow(fila).getCell(columna);
         return celda.getStringCellValue();
@@ -552,7 +550,7 @@ public class GeneradorExcel {
             }
 
             if (selectedMap != null) {
-                
+
                 try {
                     String id = dataVariable.getFecha();
                     String comp = dataVariable.getComponente();
