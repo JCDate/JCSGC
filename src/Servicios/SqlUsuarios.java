@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 public class SqlUsuarios {
 
@@ -24,7 +25,7 @@ public class SqlUsuarios {
     Conexion conexion;
 
     public SqlUsuarios() {
-        conexion = Conexion.getInstance(); // Obtener la conexión a la base de datos usando el Singleton
+        this.conexion = Conexion.getInstance(); // Obtener la conexión a la base de datos usando el Singleton
     }
 
     public boolean login(Usuarios usr) throws ClassNotFoundException {
@@ -52,6 +53,7 @@ public class SqlUsuarios {
             }
             return false;
         } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "ERROR TIPO: " + ex);
             Logger.getLogger(SqlUsuarios.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }

@@ -76,20 +76,17 @@ public class RetencionDimensional extends javax.swing.JFrame {
     }
 
     public RetencionDimensional(Usuarios usuario, AceptacionPc1 aceptacionPc1, AceptacionPc2 aceptacionPc2) {
-        this.usuario = usuario;
-        this.aceptacionPc1 = aceptacionPc1;
-        this.aceptacionPc2 = aceptacionPc2;
-        this.conexion = Conexion.getInstance();
-        
         try {
+            this.usuario = usuario;
+            this.aceptacionPc1 = aceptacionPc1;
+            this.aceptacionPc2 = aceptacionPc2;
+            this.conexion = Conexion.getInstance();
+            inicializarVentanaYComponentes();
+            definirValoresPredeterminados();
             this.aceptacionPc2 = aps.buscarOrden(conexion, aceptacionPc1);
-            inicializarComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al Buscar la orden en Retención Dimensional", ex);
+        } catch (SQLException ex) {
             Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
         }
-        inicializarVentanaYComponentes();
-        definirValoresPredeterminados();
     }
 
     @Override
@@ -156,6 +153,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
         btnEliminar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
         btnActualizar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnModificar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        btnArchivoExcel = new swing.Button(new Color(118, 223, 135),new Color(45, 220, 75));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -194,7 +192,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(tblRetencionDimensional);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 120, 770, 490));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 120, 800, 490));
 
         jPanel3.setBackground(new java.awt.Color(32, 163, 211));
         jPanel3.setForeground(new java.awt.Color(95, 158, 180));
@@ -262,7 +260,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
         txtComponente.setEnabled(false);
         jPanel4.add(txtComponente, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 20, 140, -1));
 
-        jPanel1.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 40, 1040, 70));
+        jPanel1.add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 40, 1070, 70));
 
         btnRegresar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/boton_regresar.png"))); // NOI18N
         btnRegresar.setContentAreaFilled(false);
@@ -293,6 +291,12 @@ public class RetencionDimensional extends javax.swing.JFrame {
         pnlPC.add(txtFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 90, 280, -1));
 
         pnlPC.add(cbxVariable, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 170, 260, -1));
+
+        txtValor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtValorActionPerformed(evt);
+            }
+        });
         pnlPC.add(txtValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 250, 290, -1));
 
         btnAceptar.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
@@ -352,7 +356,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
                 btnGuardarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1020, 620, 140, 30));
+        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1050, 620, 140, 30));
 
         btnEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Eliminar.png"))); // NOI18N
         btnEliminar.addActionListener(new java.awt.event.ActionListener() {
@@ -379,7 +383,15 @@ public class RetencionDimensional extends javax.swing.JFrame {
         });
         jPanel1.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 610, 80, 40));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1170, 700));
+        btnArchivoExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excelC.png"))); // NOI18N
+        btnArchivoExcel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnArchivoExcelActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnArchivoExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 610, 80, 40));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1210, 700));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -407,43 +419,12 @@ public class RetencionDimensional extends javax.swing.JFrame {
     }//GEN-LAST:event_btnPlanControlActionPerformed
 
     private void btnAceptarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAceptarActionPerformed
-        String especificacion = obtenerEspecificacionPLG();
-
-        if (!esNumeroDeOperacionValido(txtNoOp.getText())) {
-            JOptionPane.showMessageDialog(this, "El número de Operación es incorrecto", "Alerta", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        if (!aps.verificarRango(especificacion, txtNoOp.getText())) {
-            JOptionPane.showMessageDialog(this, "El valor ingresado esta fuera de rango", "Alerta", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        if (txtComponente.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El campo Componente está vacío", "Alerta", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String componente = txtComponente.getText();
-        String noTroquel = txtNoTroquel.getText();
-        String fecha = aceptacionPc1.getFecha();
-        String noOp = "if".equalsIgnoreCase(txtNoOp.getText()) ? "IF" : txtNoOp.getText();
-        String variable = obtenerVariableFormateada();
-        String especificacionPLG = especificacion;
-        String valor = txtValor.getText();
-        int procesoCritico = cbxProcesoCritico.isSelected() ? 1 : 0;
-
-        Object[] filaDatos = {fecha, noOp, noTroquel, variable, especificacionPLG, valor};
-        nuevosDatos = new AceptacionPc3("", componente, noOp, noTroquel, fecha, variable, especificacionPLG, valor, procesoCritico);
-
-        listaNuevosDatos.add(nuevosDatos);
-        agregarFilaTabla(filaDatos);
+        agregarFilaAceptacion();
     }//GEN-LAST:event_btnAceptarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-
         try {
-            int noOperacion = Integer.parseInt(txtNoOperaciones.getText());
+            String noOperacion = txtNoOperaciones.getText();
 
             if (!esNumeroDeOperacionValido(noOperacion)) {
                 JOptionPane.showMessageDialog(this, "El número de operaciones debe estar en el rango del 1 al 5", "Alerta", JOptionPane.WARNING_MESSAGE);
@@ -452,8 +433,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
 
             configurarObjetosAceptacionPc();
             procesarRegistros();
-            cerrarVentana();
-            aps.abrirAceptacionProductoGUI(usuario);
+
         } catch (IOException | ClassNotFoundException | SQLException ex) {
             Utilidades.manejarExcepcion("Error al Guardar la información", ex);
             Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
@@ -476,35 +456,16 @@ public class RetencionDimensional extends javax.swing.JFrame {
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
         int filaSeleccionada = tblRetencionDimensional.getSelectedRow();
 
-        if (filaSeleccionada != -1) {
-            return; // No hay fila seleccionada
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor, selecciona una fila para eliminar.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
-        AceptacionPc3 aceptacionPc3 = obtenerDatosDeFila(filaSeleccionada);
+        int respuesta = JOptionPane.showConfirmDialog(this, "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ, ¿ESTÁS DE ACUERDO?",
+                "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
-        if (confirmarEliminacion()) {
-            eliminarRegistro(aceptacionPc3);
-        }
-
-        if (filaSeleccionada != -1) { // Devuelve -1 cuando no hay ninguna fila seleccionada
-
-            String fecha = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, COLUMNA_NO_FECHA);
-            String noOp = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, COLUMNA_NO_OP);
-            String variable = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, COLUMNA_VARIABLE);
-            String especificacion = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, COLUMNA_ESPECIFICACION);
-            String valor = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, COLUMNA_VALOR);
-
-            aceptacionPc3.setFecha(fecha);
-            aceptacionPc3.setNoOp(noOp);
-            aceptacionPc3.setVariable(variable);
-            aceptacionPc3.setEspecificacion(especificacion);
-            aceptacionPc3.setValor(valor);
-
-            int respuesta = JOptionPane.showConfirmDialog(this, "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-
-            if (respuesta == JOptionPane.YES_OPTION) {
-                eliminarRegistro(aceptacionPc3);
-            }
+        if (respuesta == JOptionPane.YES_OPTION) {
+            eliminarRegistro(obtenerDatosDeFila(filaSeleccionada));
         }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
@@ -519,26 +480,44 @@ public class RetencionDimensional extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnModificarActionPerformed
 
+    private void txtValorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtValorActionPerformed
+        agregarFilaAceptacion();
+    }//GEN-LAST:event_txtValorActionPerformed
+
+    private void btnArchivoExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnArchivoExcelActionPerformed
+
+        try {
+            listaAceptacionPc3 = aps.recuperarAP3(conexion, aceptacionPc1.getComponente());
+
+            String retencionDimensional = excel.generarExcelRD(conexion, listaAceptacionPc3, aceptacionPc2);
+            aceptacionProducto.setComponente(txtComponente.getText());
+            aceptacionProducto.setRdPdf(aps.leerArchivo(retencionDimensional));
+            aps.subirRD(conexion, aceptacionProducto);
+            cerrarVentana();
+            aps.abrirAceptacionProductoGUI(usuario);
+        } catch (IOException | SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }//GEN-LAST:event_btnArchivoExcelActionPerformed
+
     private void inicializarVentanaYComponentes() {
-        configurarVentana();
-        this.listaAceptacionPc3 = new ArrayList<>();
-        this.modeloTabla = construirModeloTabla();
-        inicializarListeners();
-        configurarTabla();
-        inicializarDatos();
-    }
+        try {
+            configurarVentana();
+            this.aps = new AceptacionProductoServicio();
+            this.excel = new GeneradorExcel();
+            this.listaNuevosDatos = new ArrayList<>();
+            this.modeloTabla = construirModeloTabla();
 
-    private void definirValoresPredeterminados() {
-        txtComponente.setText(aceptacionPc1.getComponente());
-        txtNoParte.setText(aceptacionPc1.getNoParte());
-        txtNoOperaciones.setText(aceptacionPc1.getNoOps());
-
-        txtNoOrden.setText(aceptacionPc2.getNoOrden());
-        txtInspector.setText(aceptacionPc2.getInspector());
-        txtTamLote.setText(aceptacionPc2.getTamLote());
-        txtTamMta.setText(aceptacionPc2.getTamMta());
-        txtTurno.setText(aceptacionPc2.getTurno());
-        txtDisp.setText(aceptacionPc2.getDisp());
+            this.listaAceptacionPc3 = new ArrayList<>();
+            this.aceptacionProducto = new AceptacionProducto();
+            inicializarComponentes();
+            inicializarListeners();
+            configurarTabla();
+            inicializarDatos();
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(RetencionDimensional.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void configurarVentana() {
@@ -549,7 +528,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
     }
 
     private DefaultTableModel construirModeloTabla() {
-        final String[] nombresColumnas = {"Fecha", "No Op", "No Troquel", "Variable", "Especificación", "Valor"};
+        final String[] nombresColumnas = {"Fecha", "No. Op.", "No. Troquel", "Variable", "Especificación", "Valor"};
 
         modeloTabla = new DefaultTableModel() {
             @Override
@@ -567,11 +546,14 @@ public class RetencionDimensional extends javax.swing.JFrame {
         try {
             cbxVariable.removeAllItems();
             String componenteSeleccionado = aceptacionPc1.getComponente();
+
             List<String> variablesPlanControl = aps.obtenerVariablesPC(conexion, componenteSeleccionado);
             List<String> variablesLista = aps.obtenerVariables(conexion);
+
             this.aceptacionPc1Auxiliar = aps.recuperarInfoPc1(conexion, componenteSeleccionado);
             this.listaAceptacionPc2 = aps.recuperarAP2(conexion, txtComponente.getText());
             this.listaAceptacionPc3 = aps.recuperarAP3(conexion, aceptacionPc1.getComponente());
+
             mostrarDatosTabla();
             configurarCampos(variablesPlanControl, variablesLista);
         } catch (SQLException ex) {
@@ -629,7 +611,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
             obtenerEspecificaciones();
             btnAgregarVariable.setVisible(false);
             txtEspecificacionPLG.setVisible(false);
-
         }
     }
 
@@ -698,45 +679,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
         RetencionDimensional.this.dispose();
     }
 
-    private String obtenerComponenteCodificado() {
-        String componentePc = txtComponente.getText().trim();
-        if (componentePc.isEmpty()) {
-            return "";
-        }
-
-        try {
-            return URLEncoder.encode(componentePc, "UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-            Utilidades.manejarExcepcion("Error al codificar el componente en UTF-8", ex);
-            return "";
-        }
-    }
-
-    private void agregarFilaTabla(Object[] filaDatos) {
-        modeloTabla.addRow(filaDatos);
-    }
-
-    private String obtenerEspecificacionPLG() {
-        return cbxEspecificacionPLG.getSelectedItem() != null
-                ? cbxEspecificacionPLG.getSelectedItem().toString()
-                : txtEspecificacionPLG.getText();
-    }
-
-    private boolean esNumeroDeOperacionValido(String noOp) {
-        Set<String> valoresPermitidos = new HashSet<>(Arrays.asList("1", "2", "3", "4", "5", "if", "IF"));
-        return valoresPermitidos.contains(noOp);
-    }
-
-    private String obtenerVariableFormateada() {
-        return cbxProcesoCritico.isSelected()
-                ? "C " + obtenerVariableSeleccionada()
-                : obtenerVariableSeleccionada();
-    }
-
-    private String obtenerVariableSeleccionada() {
-        return cbxVariable.getSelectedItem() != null ? cbxVariable.getSelectedItem().toString() : "";
-    }
-
     private void configurarObjetosAceptacionPc() {
         configurarAceptacionPc1();
         configurarAceptacionPc2();
@@ -745,6 +687,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
     private void configurarAceptacionPc1() {
         aceptacionPc1.setNoParte(txtNoParte.getText());
         aceptacionPc1.setNoOps(txtNoOperaciones.getText());
+
     }
 
     private void configurarAceptacionPc2() {
@@ -759,8 +702,52 @@ public class RetencionDimensional extends javax.swing.JFrame {
         aceptacionPc2 = new AceptacionPc2("", componente, fechap, noOrden, tamLote, tamMta, inspector, turno, disp);
     }
 
-    private boolean esNumeroDeOperacionValido(int noOperacion) {
-        return noOperacion >= 1 && noOperacion <= 5;
+    private void definirValoresPredeterminados() {
+        txtComponente.setText(aceptacionPc1.getComponente());
+        txtNoParte.setText(aceptacionPc1.getNoParte());
+        txtNoOperaciones.setText(aceptacionPc1.getNoOps());
+
+        txtNoOrden.setText(aceptacionPc2.getNoOrden());
+        txtInspector.setText(aceptacionPc2.getInspector());
+        txtTamLote.setText(aceptacionPc2.getTamLote());
+        txtTamMta.setText(aceptacionPc2.getTamMta());
+        txtTurno.setText(aceptacionPc2.getTurno());
+        txtDisp.setText(aceptacionPc2.getDisp());
+    }
+
+    private String obtenerEspecificacionPLG() {
+        return cbxEspecificacionPLG.getSelectedItem() != null
+                ? cbxEspecificacionPLG.getSelectedItem().toString()
+                : txtEspecificacionPLG.getText();
+    }
+
+    private String obtenerVariableFormateada() {
+        return cbxProcesoCritico.isSelected()
+                ? "C " + obtenerVariableSeleccionada()
+                : obtenerVariableSeleccionada();
+    }
+
+    private boolean esNumeroDeOperacionValido(String noOp) {
+        Set<String> valoresPermitidos = new HashSet<>(Arrays.asList("1", "2", "3", "4", "5", "if", "IF"));
+        return valoresPermitidos.contains(noOp);
+    }
+
+    private String obtenerVariableSeleccionada() {
+        return cbxVariable.getSelectedItem() != null ? cbxVariable.getSelectedItem().toString() : "";
+    }
+
+    private String obtenerComponenteCodificado() {
+        String componentePc = txtComponente.getText().trim();
+        if (componentePc.isEmpty()) {
+            return "";
+        }
+
+        try {
+            return URLEncoder.encode(componentePc, "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            Utilidades.manejarExcepcion("Error al codificar el componente en UTF-8", ex);
+            return "";
+        }
     }
 
     private void procesarRegistros() throws IOException, ClassNotFoundException, SQLException {
@@ -770,17 +757,14 @@ public class RetencionDimensional extends javax.swing.JFrame {
 
         if (!aps.existeRegistroPc2(conexion, aceptacionPc2)) {
             aps.agregarpc2(conexion, aceptacionPc2);
-        } else {
-            aps.modificarOrden(conexion, aceptacionPc2);
         }
+        /*else {
+            aps.modificarOrden(conexion, aceptacionPc2);
+        }*/
 
         List<AceptacionPc3> nuevosDatosFiltrados = aps.filtrarNuevosDatos(conexion, listaNuevosDatos);
         aps.agregarpc3(conexion, nuevosDatosFiltrados);
-
-        String retencionDimensional = excel.generarExcelRD(conexion, listaAceptacionPc3, aceptacionPc2);
-        aceptacionProducto.setComponente(txtComponente.getText());
-        aceptacionProducto.setRdPdf(aps.leerArchivo(retencionDimensional));
-        aps.subirRD(conexion, aceptacionProducto);
+        JOptionPane.showMessageDialog(this,"DATOS GUARDADOS CORRECTAMENTE");
     }
 
     private AceptacionPc3 obtenerDatosDeFila(int filaSeleccionada) {
@@ -800,14 +784,6 @@ public class RetencionDimensional extends javax.swing.JFrame {
         return aceptacionPc3;
     }
 
-    private boolean confirmarEliminacion() {
-        int respuesta = JOptionPane.showConfirmDialog(this,
-                "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ, ¿ESTÁS DE ACUERDO?",
-                "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-
-        return respuesta == JOptionPane.YES_OPTION;
-    }
-
     private void eliminarRegistro(AceptacionPc3 aceptacionPc3) {
         configurarObjetosAceptacionPc();
         if (elminarAceptacion(aceptacionPc3)) {
@@ -825,6 +801,39 @@ public class RetencionDimensional extends javax.swing.JFrame {
             aps.manejarExcepcion("Error al eliminar el registro: ", e);
             return false;
         }
+    }
+
+    private void agregarFilaAceptacion() {
+        String especificacion = obtenerEspecificacionPLG();
+
+        if (!esNumeroDeOperacionValido(txtNoOp.getText())) {
+            JOptionPane.showMessageDialog(this, "El número de Operación es incorrecto", "Alerta", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (!aps.verificarRango(especificacion, txtValor.getText())) {
+            return;
+        }
+
+        if (txtComponente.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El campo Componente está vacío", "Alerta", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String componente = txtComponente.getText();
+        String noTroquel = txtNoTroquel.getText();
+        String fecha = aceptacionPc1.getFecha();
+        String noOp = "if".equalsIgnoreCase(txtNoOp.getText()) ? "IF" : txtNoOp.getText();
+        String variable = obtenerVariableFormateada();
+        String especificacionPLG = especificacion;
+        String valor = txtValor.getText();
+        int procesoCritico = cbxProcesoCritico.isSelected() ? 1 : 0;
+
+        Object[] filaDatos = {fecha, noOp, noTroquel, variable, especificacionPLG, valor};
+        nuevosDatos = new AceptacionPc3("", componente, noOp, noTroquel, fecha, variable, especificacionPLG, valor, procesoCritico);
+
+        listaNuevosDatos.add(nuevosDatos);
+        modeloTabla.addRow(filaDatos);
     }
 
     /**
@@ -858,6 +867,7 @@ public class RetencionDimensional extends javax.swing.JFrame {
     private javax.swing.JButton btnAceptar;
     private javax.swing.JButton btnActualizar;
     private javax.swing.JButton btnAgregarVariable;
+    private javax.swing.JButton btnArchivoExcel;
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JButton btnModificar;

@@ -24,7 +24,7 @@ public class AceptacionPc3 {
         this.procesoCritico = 0;
     }
 
-    public AceptacionPc3(String id, String componente, String noOp,String noTroquel, String fecha, String variable, String especificacion, String valor, int procesoCritico) {
+    public AceptacionPc3(String id, String componente, String noOp, String noTroquel, String fecha, String variable, String especificacion, String valor, int procesoCritico) {
         this.id = id;
         this.componente = componente;
         this.noOp = noOp;

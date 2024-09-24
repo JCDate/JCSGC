@@ -48,6 +48,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         try {
             this.usuario = usuario;
             this.conexion = Conexion.getInstance();
+            this.cds = new ControlDocumentacionServicio();
             this.proceso = cds.recuperarProceso(conexion, idProceso);
             inicializarVentanaYComponentes();
         } catch (SQLException ex) {
@@ -79,6 +80,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         tblProcedimientos = new javax.swing.JTable();
         btnDiagramaTortuga = new swing.Button(new Color(255, 199, 114),new Color(255, 170, 39));
         btnSolicitudCambio = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        btnNuevoProcesos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -148,6 +150,17 @@ public class ProcesosGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnSolicitudCambio, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 480, 300, 50));
 
+        btnNuevoProcesos.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnNuevoProcesos.setForeground(new java.awt.Color(255, 255, 255));
+        btnNuevoProcesos.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/1004733.png"))); // NOI18N
+        btnNuevoProcesos.setText("NUEVO PROCESO");
+        btnNuevoProcesos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNuevoProcesosActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnNuevoProcesos, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 470, 210, 50));
+
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1260, 550));
 
         pack();
@@ -162,7 +175,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         int columnaSeleccionada = tblProcedimientos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblProcedimientos.rowAtPoint(evt.getPoint());
 
-        if (!esCeldaValida(filaSeleccionada, columnaSeleccionada)) {
+        if (!esCeldaValida(columnaSeleccionada, filaSeleccionada)) {
             return;
         }
 
@@ -174,6 +187,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         }
 
         Object value = tblProcedimientos.getValueAt(filaSeleccionada, columnaSeleccionada);
+
         if (value instanceof JButton) {
             manejarAccionBoton((JButton) value, columnaSeleccionada, posicion);
         }
@@ -193,6 +207,10 @@ public class ProcesosGUI extends javax.swing.JFrame {
         cerrarVentana();
         cds.abrirSolicitudGUI(usuario, proceso);
     }//GEN-LAST:event_btnSolicitudCambioActionPerformed
+
+    private void btnNuevoProcesosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoProcesosActionPerformed
+        cds.abrirAgregarProcesoGUI(usuario, proceso);
+    }//GEN-LAST:event_btnNuevoProcesosActionPerformed
 
     private void inicializarVentanaYComponentes() {
         configurarVentana();
@@ -220,8 +238,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         try {
             this.modeloTabla = construirModeloTabla();
             this.listaProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
-            DefaultTableModel tableModel = construirModeloTabla();
-            tblProcedimientos.setModel(tableModel);
+            tblProcedimientos.setModel(modeloTabla);
             tblProcedimientos.setRowHeight(40);
             mostrarDatosTabla();
         } catch (SQLException ex) {
@@ -256,23 +273,45 @@ public class ProcesosGUI extends javax.swing.JFrame {
     private Object[] crearFila(ProcedimientosM procedimiento) {
         Button botonVerDocumentos = new Button();
         Button botonVerRegistros = new Button();
+        Button botonModificar = new Button();
 
         botonVerDocumentos.setIcon(Iconos.ICONO_VER);
         botonVerRegistros.setIcon(Iconos.ICONO_SOLICITUD);
+        botonModificar.setIcon(Iconos.ICONO_MODIFICAR);
 
-        Object fila[] = new Object[7];
-        fila[0] = procedimiento.getNo();
-        fila[1] = procedimiento.getCodigo();
-        fila[2] = procedimiento.getRevision();
-        fila[3] = procedimiento.getProcedimiento();
-        fila[4] = procedimiento.getEncargado();
-        fila[5] = botonVerDocumentos;
-        fila[6] = botonVerRegistros;
+        Object fila[];
+
+        if (cds.esUsuarioAutorizado(usuario)) {
+            fila = new Object[8];
+            fila[0] = procedimiento.getNo();
+            fila[1] = procedimiento.getCodigo();
+            fila[2] = procedimiento.getRevision();
+            fila[3] = procedimiento.getProcedimiento();
+            fila[4] = procedimiento.getEncargado();
+            fila[5] = botonVerDocumentos;
+            fila[6] = botonVerRegistros;
+            fila[7] = botonModificar;
+        } else {
+            fila = new Object[7];
+            fila[0] = procedimiento.getNo();
+            fila[1] = procedimiento.getCodigo();
+            fila[2] = procedimiento.getRevision();
+            fila[3] = procedimiento.getProcedimiento();
+            fila[4] = procedimiento.getEncargado();
+            fila[5] = botonVerDocumentos;
+            fila[6] = botonVerRegistros;
+        }
         return fila;
     }
 
     private DefaultTableModel construirModeloTabla() {
-        final String[] nombresColumnas = {"NO", "CODIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS"};
+        final String[] nombresColumnas;
+
+        if (cds.esUsuarioAutorizado(usuario)) {
+            nombresColumnas = new String[]{"NO", "CODIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS", "MODIFICAR"};
+        } else {
+            nombresColumnas = new String[]{"NO", "CODIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS"};
+        }
 
         modeloTabla = new DefaultTableModel() {
             @Override
@@ -304,10 +343,22 @@ public class ProcesosGUI extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(null, "No hay documentos");
                 break;
             default:
-                if (columnaSeleccionada == 5) {
-                    cds.abrirProcedimientosGUI(usuario, listaProcedimientos.get(posicion));
-                } else if (columnaSeleccionada == 6) {
-                    cds.abrirRegistrosGUI(usuario, listaProcedimientos.get(posicion));
+
+                switch (columnaSeleccionada) {
+                    case 5:
+                        cerrarVentana();
+                        cds.abrirProcedimientosGUI(usuario, listaProcedimientos.get(posicion));
+                        break;
+                    case 6:
+                        cerrarVentana();
+                        cds.abrirRegistrosGUI(usuario, listaProcedimientos.get(posicion));
+                        break;
+                    case 7:
+                        cerrarVentana();
+                        cds.abrirModificarInfoGUI(usuario, listaProcedimientos.get(posicion));
+                        break;
+                    default:
+                        break;
                 }
                 break;
         }
@@ -347,6 +398,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnDiagramaTortuga;
+    private javax.swing.JButton btnNuevoProcesos;
     private javax.swing.JButton btnSolicitudCambio;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -354,4 +406,5 @@ public class ProcesosGUI extends javax.swing.JFrame {
     private javax.swing.JLabel lblTitulo;
     private javax.swing.JTable tblProcedimientos;
     // End of variables declaration//GEN-END:variables
+
 }

@@ -44,6 +44,7 @@ public class ModificarRDGUI extends javax.swing.JFrame {
             this.aceptacionPc2 = aceptacionPc2;
             this.aceptacionPc3 = aceptacionPc3;
             this.conexion = Conexion.getInstance();
+            this.aps = new AceptacionProductoServicio();
             this.aceptacionPc3Auxiliar = inicializarAceptacionPc3Auxiliar(aceptacionPc3);
             inicializarVentanaYComponentes();
         } catch (SQLException | ClassNotFoundException ex) {

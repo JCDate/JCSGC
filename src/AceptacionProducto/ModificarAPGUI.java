@@ -244,6 +244,8 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     private void configurarComboBoxComponentes() {
         try {
             aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
+            manejarComponenteSeleccionado();
+            manejarFechaSeleccionada();
             cbxComponente.addActionListener(this::manejarComponenteSeleccionado);
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al configurar el ComboBox: ", ex);
@@ -258,7 +260,30 @@ public class ModificarAPGUI extends javax.swing.JFrame {
                 componenteAnterior = componenteSeleccionado;
                 cbxFecha.removeAllItems();
                 List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
-                fechasRD.forEach(cbxFecha::addItem);
+                if (!fechasRD.isEmpty()) {
+                    fechasRD.forEach(cbxFecha::addItem);
+                } else {
+                    limpiarCampos();
+                }
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void manejarComponenteSeleccionado() {
+        try {
+            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
+            if (!componenteSeleccionado.equals(componenteAnterior)) {
+                componenteAnterior = componenteSeleccionado;
+                cbxFecha.removeAllItems();
+                List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
+                if (!fechasRD.isEmpty()) {
+                    fechasRD.forEach(cbxFecha::addItem);
+                } else {
+                    limpiarCampos();
+                }
             }
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
@@ -273,8 +298,36 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     private void manejarFechaSeleccionada(ActionEvent evt) {
         try {
             String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-            datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
 
+            if (cbxFecha.getSelectedItem() != null && !cbxFecha.getSelectedItem().toString().isEmpty()) {
+                datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
+            } else {
+                validarDatosFila();
+            }
+
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void manejarFechaSeleccionada() {
+        try {
+            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
+            if (cbxFecha.getSelectedItem() != null && !cbxFecha.getSelectedItem().toString().isEmpty()) {
+                datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
+            } else {
+                limpiarCampos();
+            }
+            validarDatosFila();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void validarDatosFila() {
+        if (datosFila != null) {
             txtNoRollo.setText(datosFila.getNoRollo());
             txtInspVisual.setText(datosFila.getInspVisual());
             txtObservaciones.setText(datosFila.getObservaciones());
@@ -284,10 +337,21 @@ public class ModificarAPGUI extends javax.swing.JFrame {
             txtInsp.setText(datosFila.getInsp());
             txtTurno.setText(datosFila.getTurno());
             txtDisp.setText(datosFila.getDisp());
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        } else {
+            limpiarCampos();
         }
+    }
+
+    private void limpiarCampos() {
+        txtNoRollo.setText("");
+        txtInspVisual.setText("");
+        txtObservaciones.setText("");
+        txtNoOrden.setText("");
+        txtTamLote.setText("");
+        txtTamMta.setText("");
+        txtInsp.setText("");
+        txtTurno.setText("");
+        txtDisp.setText("");
     }
 
     private void configurarFocusListener() {

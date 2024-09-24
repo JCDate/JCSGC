@@ -17,6 +17,7 @@ public class Iconos {
     public static final ImageIcon ICONO_RECHAZAR = new ImageIcon(getImage("/jc/img/cancelar.png"));
     public static final ImageIcon ICONO_SOLICITUD = new ImageIcon(getImage("/jc/img/antecedentesfamilia.png"));
     public static final ImageIcon ICONO_REGISTROS = new ImageIcon(getImage("/jc/img/lista.png"));
+    public static final ImageIcon ICONO_MODIFICAR = new ImageIcon(getImage("/jc/img/modificar.png"));
     
     public static Image getImage(String ruta) {
         try {

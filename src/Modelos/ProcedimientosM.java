@@ -1,21 +1,26 @@
 package Modelos;
 
 public class ProcedimientosM {
-    
+
     private int id;
     private int idp;
     private String no;
     private String codigo;
     private String revision;
+    private String proceso;
     private String procedimiento;
     private String encargado;
 
-    public ProcedimientosM(int id, int idp, String no, String codigo, String revision, String procedimiento, String encargado) {
+    public ProcedimientosM() {
+    }
+
+    public ProcedimientosM(int id, int idp, String no, String codigo, String revision, String proceso, String procedimiento, String encargado) {
         this.id = id;
         this.idp = idp;
         this.no = no;
         this.codigo = codigo;
         this.revision = revision;
+        this.proceso = proceso;
         this.procedimiento = procedimiento;
         this.encargado = encargado;
     }
@@ -75,7 +80,13 @@ public class ProcedimientosM {
     public void setEncargado(String encargado) {
         this.encargado = encargado;
     }
-    
-    
-    
+
+    public String getProceso() {
+        return proceso;
+    }
+
+    public void setProceso(String proceso) {
+        this.proceso = proceso;
+    }
+
 }

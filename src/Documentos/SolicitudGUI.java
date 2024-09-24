@@ -37,7 +37,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
     private InspeccionReciboServicio irs; // Servicio para manejar el control de documentos
 
-    String rutaArchivo = "";
+    private String rutaArchivo;
     
     public SolicitudGUI() {
         try {

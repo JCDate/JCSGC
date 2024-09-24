@@ -1,5 +1,6 @@
 package Documentos;
 
+import Modelos.DocumentosM;
 import Modelos.FormatosM;
 import Modelos.Iconos;
 import Modelos.ProcedimientosM;
@@ -35,6 +36,7 @@ public class FormatosGUI extends javax.swing.JFrame {
     // Columnas de la tabla
     private static final int COLUMNA_FORMATOS = 0;
     private static final int COLUMNA_ARCHIVO = 1;
+    private static final int COLUMNA_ELIMINAR = 2;
 
     public FormatosGUI() {
         try {
@@ -80,6 +82,7 @@ public class FormatosGUI extends javax.swing.JFrame {
         btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
         jScrollPane1 = new javax.swing.JScrollPane();
         tblFormatos = new javax.swing.JTable();
+        btnAgregarFormato = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -128,6 +131,17 @@ public class FormatosGUI extends javax.swing.JFrame {
 
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 70, 660, -1));
 
+        btnAgregarFormato.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnAgregarFormato.setForeground(new java.awt.Color(255, 255, 255));
+        btnAgregarFormato.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/1004733.png"))); // NOI18N
+        btnAgregarFormato.setText("AGREGAR FORMATO");
+        btnAgregarFormato.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAgregarFormatoActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnAgregarFormato, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 490, 210, 50));
+
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 840, 560));
 
         pack();
@@ -155,17 +169,39 @@ public class FormatosGUI extends javax.swing.JFrame {
                         JOptionPane.showMessageDialog(null, "No hay archivo");
                         break;
                     default:
-                        try {
-                            cds.ejecutarFormato(id);
-                        } catch (ClassNotFoundException | SQLException ex) {
-                            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, "Error al ejecutar formato", ex);
-                            JOptionPane.showMessageDialog(null, "Error al ejecutar formato: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        if (columnaSeleccionada == 1) {
+                            try {
+                                cds.ejecutarFormato(id);
+                            } catch (ClassNotFoundException | SQLException ex) {
+                                Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, "Error al ejecutar formato", ex);
+                                JOptionPane.showMessageDialog(null, "Error al ejecutar formato: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                        if (columnaSeleccionada == 2) {
+
+                            if (filaSeleccionada == -1) {
+                                JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
+                                return;
+                            }
+
+                            if (confirmarEliminacion()) {
+                                eliminarDocumento(listaFormatos.get(filaSeleccionada));
+
+                            }
+
+                            cerrarVentana();
+//                            cds.abrirModificarArchivosGUI(usuario, documento);
                         }
                         break;
                 }
             }
         }
     }//GEN-LAST:event_tblFormatosMouseClicked
+
+    private void btnAgregarFormatoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarFormatoActionPerformed
+        cerrarVentana();
+        cds.abrirAgregarFormatosGUI(usuario, procedimiento);
+    }//GEN-LAST:event_btnAgregarFormatoActionPerformed
 
     public void cerrarVentana() {
         FormatosGUI.this.dispose();
@@ -192,7 +228,13 @@ public class FormatosGUI extends javax.swing.JFrame {
     }
 
     private DefaultTableModel construirModeloTabla() {
-        final String[] nombresColumnas = {"NOMBRE", "VER DOCUMENTO"};
+        final String[] nombresColumnas;
+
+        if (cds.esUsuarioAutorizado(usuario)) {
+            nombresColumnas = new String[]{"NOMBRE", "VER DOCUMENTO", "ELIMINAR"};
+        } else {
+            nombresColumnas = new String[]{"NOMBRE", "VER DOCUMENTO"};
+        }
 
         modeloTabla = new DefaultTableModel() {
             @Override
@@ -233,9 +275,20 @@ public class FormatosGUI extends javax.swing.JFrame {
     }
 
     private Object[] crearFila(FormatosM formato) {
-        Object[] fila = new Object[2];
-        fila[COLUMNA_FORMATOS] = formato.getNombre();
-        fila[COLUMNA_ARCHIVO] = Utilidades.crearBoton(formato.getContenido(), Iconos.ICONO_EXCEL_2, "Vacio");
+        Button botonEliminar = new Button();
+        botonEliminar.setIcon(Iconos.ICONO_RECHAZAR);
+        Object[] fila;
+
+        if (cds.esUsuarioAutorizado(usuario)) {
+            fila = new Object[3];
+            fila[COLUMNA_FORMATOS] = formato.getNombre();
+            fila[COLUMNA_ARCHIVO] = Utilidades.crearBoton(formato.getContenido(), Iconos.ICONO_EXCEL_2, "Vacio");
+            fila[COLUMNA_ELIMINAR] = botonEliminar;
+        } else {
+            fila = new Object[2];
+            fila[COLUMNA_FORMATOS] = formato.getNombre();
+            fila[COLUMNA_ARCHIVO] = Utilidades.crearBoton(formato.getContenido(), Iconos.ICONO_EXCEL_2, "Vacio");
+        }
         return fila;
     }
 
@@ -244,6 +297,18 @@ public class FormatosGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+    
+    private boolean confirmarEliminacion() {
+        int respuesta = JOptionPane.showConfirmDialog(this, "SE ELIMINARÁ EL SIGUIENTE ARCHIVO, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+        return respuesta == JOptionPane.YES_OPTION;
+    }
+
+    private void eliminarDocumento(FormatosM formato) {
+        cds.eliminarFormato(conexion, formato);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
+        cds.abrirDocumentacionGUI(usuario, procedimiento.getIdp());
     }
 
     /**
@@ -274,6 +339,7 @@ public class FormatosGUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAgregarFormato;
     private javax.swing.JButton btnCerrar;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;

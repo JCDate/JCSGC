@@ -96,4 +96,5 @@ public class AceptacionPc1 {
     public void setNoOps(String noOps) {
         this.noOps = noOps;
     }
+  
 }

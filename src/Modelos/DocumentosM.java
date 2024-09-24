@@ -10,6 +10,9 @@ public class DocumentosM {
     private String nombre;
     private byte[] contenido;
 
+    public DocumentosM() {
+    }
+    
     public DocumentosM(int id, int idProceso, int idProcedimiento, String revision, String fechaActualizacion, String tipo, String nombre, byte[] contenido) {
         this.id = id;
         this.idProceso = idProceso;

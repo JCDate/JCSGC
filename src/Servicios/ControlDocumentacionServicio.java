@@ -1,8 +1,13 @@
 package Servicios;
 
+import Documentos.AgregarDocumentosGUI;
+import Documentos.AgregarFormatoGUI;
+import Documentos.AgregarProcesoGUI;
 import Documentos.ControlDocumentosGUI;
 import Documentos.ProcesosGUI;
 import Documentos.FormatosGUI;
+import Documentos.ModificarArchivosGUI;
+import Documentos.ModificarInfoGUI;
 import Documentos.ProcedimientosGUI;
 import Documentos.RegistrosGUI;
 import Documentos.SolicitudGUI;
@@ -14,10 +19,13 @@ import Modelos.ProcesosM;
 import Modelos.RegistrosM;
 import Modelos.SolicitudesM;
 import Modelos.Usuarios;
+import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Font;
+import java.awt.Window;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +33,7 @@ import java.io.OutputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,12 +41,30 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import java.util.Date;
+import java.util.function.Consumer;
 import javax.swing.JOptionPane;
+import jnafilechooser.api.JnaFileChooser;
 import swing.Button;
 
 public class ControlDocumentacionServicio {
 
     Conexion conexion = Conexion.getInstance();
+
+    public boolean esUsuarioAutorizado(Usuarios usuario) {
+        return usuario.getId() == 12 || usuario.getId() == 8;
+    }
+
+    public void abrirModificarInfoGUI(Usuarios usr, ProcedimientosM procedimiento) {
+        ModificarInfoGUI doc = new ModificarInfoGUI(usr, procedimiento);
+        doc.setVisible(true);
+        doc.setLocationRelativeTo(null);
+    }
+
+    public void abrirModificarArchivosGUI(Usuarios usr, DocumentosM documento) {
+        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, documento);
+        doc.setVisible(true);
+        doc.setLocationRelativeTo(null);
+    }
 
     public void abrirDocumentacionGUI(Usuarios usr, int idProceso) {
         ProcesosGUI doc = new ProcesosGUI(usr, idProceso);
@@ -75,6 +102,26 @@ public class ControlDocumentacionServicio {
         return proceso;
     }
 
+    public void cargarArchivo(String rutaArchivo, Consumer<byte[]> setterFunction) {
+        try {
+            byte[] archivoData = leerArchivo(rutaArchivo);
+            setterFunction.accept(archivoData);
+        } catch (IOException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public byte[] leerArchivo(String rutaArchivo) throws IOException {
+        File archivo = new File(rutaArchivo); // Se crea un nuevo archivo con la ruta especificada
+        byte[] pdf = new byte[(int) archivo.length()]; // Se crea un arreglo de bytes de la misma longitud del archivo previamente generado
+        if (archivo.exists()) {
+            try (InputStream input = new FileInputStream(archivo)) { // Se crea una instancia para leer los bytes del archivo
+                input.read(pdf); // Se lee la información capturada del arreglo de bytes, lee el archivo de bytes y lo almacena en la variable pdf
+            }
+        }
+        return pdf; // Se regresa el archivo
+    }
+
     public List<ProcedimientosM> recuperarProcedimientos(Conexion conexion, int idp) throws SQLException {
         List<ProcedimientosM> procedimientos = new ArrayList<>();
         String sql = "SELECT * FROM docprocedimientos WHERE idp = ?";
@@ -88,6 +135,7 @@ public class ControlDocumentacionServicio {
                         resultado.getString("no"),
                         resultado.getString("codigo"),
                         resultado.getString("revision"),
+                        resultado.getString("proceso"),
                         resultado.getString("procedimiento"),
                         resultado.getString("encargado")
                 );
@@ -699,5 +747,157 @@ public class ControlDocumentacionServicio {
         }
 
         return registros;
+    }
+
+    public void guardarCambiosProcedimiento(Conexion conexion, ProcedimientosM procedimiento) {
+        try {
+            PreparedStatement ps1 = conexion.conectar().prepareStatement("UPDATE docprocedimientos SET no = ?, codigo = ?, revision = ?, procedimiento = ?, encargado = ? WHERE id = ?");
+            ps1.setString(1, procedimiento.getNo());
+            ps1.setString(2, procedimiento.getCodigo());
+            ps1.setString(3, procedimiento.getRevision());
+            ps1.setString(4, procedimiento.getProcedimiento());
+            ps1.setString(5, procedimiento.getEncargado());
+            ps1.setInt(6, procedimiento.getId());
+            ps1.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al Actualizar la información: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public File seleccionarArchivo(Component parentComponent) {
+        JnaFileChooser jfc = new JnaFileChooser();
+        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx", "doc", "docx");
+        boolean action = jfc.showOpenDialog((Window) parentComponent);
+        if (action) {
+            return jfc.getSelectedFile();
+        }
+
+        return null;
+    }
+
+    public void actualizarDocumento(Conexion conexion, DocumentosM documento) {
+        Date fechaActual = new Date();
+        try {
+            PreparedStatement ps = conexion.conectar().prepareStatement("UPDATE documentos SET fechaActualizacion = ?, nombre = ?, contenido = ? WHERE id = ?");
+            ps.setString(1, formatearFecha(fechaActual));
+            ps.setString(2, documento.getNombre());
+            ps.setBytes(3, documento.getContenido());
+            ps.setInt(4, documento.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public Date formatearFecha(String fecha) {
+        try {
+            if (fecha == null) {
+                return null;
+            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            return dateFormat.parse(fecha);
+        } catch (ParseException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+            manejarExcepcion("Error al formatear la fecha: ", ex);
+            return null;
+        }
+    }
+
+    public String formatearFecha(Date fecha) {
+        if (fecha == null) {
+            return "";
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        return dateFormat.format(fecha);
+    }
+
+    public void manejarExcepcion(String msg, Exception ex) {
+        JOptionPane.showMessageDialog(null, msg + ex, "ERROR", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void eliminarDocumento(Conexion conexion, DocumentosM documento) {
+        try {
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM documentos WHERE id = ?");
+            ps.setInt(1, documento.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+
+        }
+    }
+
+    public void eliminarFormato(Conexion conexion, FormatosM formato) {
+        try {
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM formatos WHERE id = ?");
+            ps.setInt(1, formato.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+
+        }
+    }
+
+    public void abrirAgregarProcesoGUI(Usuarios usuario, ProcesosM proceso) {
+        AgregarProcesoGUI formatos = new AgregarProcesoGUI(usuario, proceso); // Se crea la instancia de la clase
+        formatos.setVisible(true); // Se muestra visible al usuario
+        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+
+    public void agregarProcedimiento(ProcedimientosM procedimiento) {
+        String sql = "INSERT INTO docprocedimientos(idp, no, codigo, revision, proceso, procedimiento, encargado) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+            pstmtSelect.setInt(1, procedimiento.getIdp());
+            pstmtSelect.setString(2, procedimiento.getNo());
+            pstmtSelect.setString(3, procedimiento.getCodigo());
+            pstmtSelect.setString(4, procedimiento.getRevision());
+            pstmtSelect.setString(5, procedimiento.getProceso());
+            pstmtSelect.setString(6, procedimiento.getProcedimiento());
+            pstmtSelect.setString(7, procedimiento.getEncargado());
+            pstmtSelect.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void abrirAgregarDocumentosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
+        AgregarDocumentosGUI formatos = new AgregarDocumentosGUI(usuario, procedimiento); // Se crea la instancia de la clase
+        formatos.setVisible(true); // Se muestra visible al usuario
+        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+
+    public void actualizarInfoDocumentos(Conexion conexion, DocumentosM documento) {
+        Date fechaActual = new Date();
+        String sql = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+            pstmtSelect.setInt(1, documento.getIdProceso());
+            pstmtSelect.setInt(2, documento.getIdProcedimiento());
+            pstmtSelect.setString(3, documento.getRevision());
+            pstmtSelect.setString(4, formatearFecha(fechaActual));
+            pstmtSelect.setString(5, documento.getTipo());
+            pstmtSelect.setString(6, documento.getNombre());
+            pstmtSelect.setBytes(7, documento.getContenido());
+            pstmtSelect.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void abrirAgregarFormatosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
+        AgregarFormatoGUI formatos = new AgregarFormatoGUI(usuario, procedimiento); // Se crea la instancia de la clase
+        formatos.setVisible(true); // Se muestra visible al usuario
+        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+
+    public void agregarFormatoNuevo(Conexion conexion, FormatosM formato) {
+        String sql = "INSERT INTO formatos(idProcedimiento, nombre, contenido) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+            pstmtSelect.setInt(1, formato.getIdP());
+            pstmtSelect.setString(2, formato.getNombre());
+            pstmtSelect.setBytes(3, formato.getContenido());
+            pstmtSelect.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

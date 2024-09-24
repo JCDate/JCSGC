@@ -429,7 +429,8 @@ public class GeneradorExcel {
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
             XSSFWorkbook workbook = new XSSFWorkbook(fileInputStream);
-
+   
+            
             List<AceptacionPc1> ap1m = aps.recuperarAP1(conexion, ap3m.get(0).getComponente());
 
             if (ap1m == null || ap1m.isEmpty()) { // Si es null y vacío...
@@ -910,7 +911,7 @@ public class GeneradorExcel {
                         if (cellNoOps == null) {
                             cellNoOps = rowNoOps.createCell(24);
                         }
-                        cellNoOps.setCellValue("X");
+                        cellNoOps.setCellValue("XXX");
                         break;
                 }
             }

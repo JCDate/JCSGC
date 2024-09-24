@@ -122,7 +122,7 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
                 btnCancelarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnCancelar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 350, 150, 50));
+        jPanel1.add(btnCancelar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 350, 140, 50));
 
         lblMedidas.setFont(new java.awt.Font("Tahoma", 1, 15)); // NOI18N
         lblMedidas.setForeground(new java.awt.Color(10, 110, 255));

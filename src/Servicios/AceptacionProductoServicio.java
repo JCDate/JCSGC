@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -123,6 +124,7 @@ public class AceptacionProductoServicio {
                 listaAp2.add(ap2);
             }
         }
+
         return listaAp2;
     }
 
@@ -528,7 +530,7 @@ public class AceptacionProductoServicio {
         }
 
         try {
-            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM aceptacionpc3 WHERE componente=?");
+            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM aceptacionpc3 WHERE componente = ?");
             ps.setString(1, componente);
             ps.executeUpdate();
         } catch (SQLException ex) {

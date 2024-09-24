@@ -207,6 +207,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
         if (confirmarEliminacion()) {
             eliminarComponente(nombreComponente);
+
         }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
@@ -369,15 +370,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         return respuesta == JOptionPane.YES_OPTION;
     }
 
-    private void eliminarComponente(String nombreComponente) {
-        try {
-            eliminarRegistro(nombreComponente);
-        } catch (Exception ex) {
-            Utilidades.manejarExcepcion("Surgio un error al ELIMINAR EL REGISTRO", ex);
-        }
-    }
-
-    private void eliminarRegistro(String componente) {
+    private void eliminarComponente(String componente) {
         aps.eliminarAP(conexion, componente);
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");

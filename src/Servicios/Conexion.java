@@ -16,7 +16,6 @@ public class Conexion {
     private static Conexion instancia;
 
     private Conexion() {
-
     }
 
     public DataSource obtenerFuenteDeDatos() {
@@ -24,8 +23,7 @@ public class Conexion {
         datos.setUrl(URL); // URL de la base de datos
         datos.setUsername(USUARIO);
         datos.setPassword(PASSWORD);
-        datos.setInitialSize(50); // tamaño de conexiones a la base de datos
-        
+        datos.setInitialSize(500); // tamaño de conexiones a la base de datos
         return datos;
     }
 
