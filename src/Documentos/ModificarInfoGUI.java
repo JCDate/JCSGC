@@ -1,6 +1,7 @@
 package Documentos;
 
 import Modelos.ProcedimientosM;
+import Modelos.ProcesosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
@@ -15,8 +16,10 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Conexion conexion; // Conexión a la Base de Datos
+    private ProcesosM proceso;
     private ProcedimientosM procedimiento; // Manejar la información del procedimiento
     private ControlDocumentacionServicio cds; // Servicios y Utilidades
+    private String tipoOperacion;
 
     public ModificarInfoGUI() {
         inicializarVentanaYComponentes();
@@ -26,10 +29,21 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
         this.usuario = usuario;
         this.conexion = Conexion.getInstance();
         this.procedimiento = procedimiento;
+        this.tipoOperacion = "modificar";
         this.cds = new ControlDocumentacionServicio();
         inicializarVentanaYComponentes();
     }
-    
+
+    public ModificarInfoGUI(Usuarios usuario, ProcesosM proceso) {
+        this.usuario = usuario;
+        this.conexion = Conexion.getInstance();
+        this.proceso = proceso;
+        this.procedimiento = new ProcedimientosM();
+        this.tipoOperacion = "agregar";
+        this.cds = new ControlDocumentacionServicio();
+        inicializarVentanaYComponentes();
+    }
+
     @Override
     public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
@@ -135,22 +149,33 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
+        int idProceso = procedimiento.getIdp() == 0 ? proceso.getId() : procedimiento.getIdp();
         cerrarVentana();
-        cds.abrirProcedimientosGUI(usuario, procedimiento);
+        cds.abrirDocumentacionGUI(usuario, idProceso);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        actualizarInformacion();
-        cds.guardarCambiosProcedimiento(conexion, procedimiento);
-        JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
-        cerrarVentana();
-        cds.abrirDocumentacionGUI(usuario, procedimiento.getIdp());
+        if (tipoOperacion.equals("modificar")) {
+            actualizarInformacion();
+            cds.guardarCambiosProcedimiento(conexion, procedimiento);
+
+            cerrarVentana();
+            JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
+            cds.abrirDocumentacionGUI(usuario, procedimiento.getIdp());
+        } else {
+            agregarInformacion();
+            cds.agregarProcedimiento(procedimiento);
+            cerrarVentana();
+            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS");
+
+        }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
         configurarVentana();
-        lblTitulo.setText("PROCESO: " + procedimiento.getProcedimiento());
-        inicializarCampos();
+        if (tipoOperacion.equals("modificar")) {
+            inicializarCampos();
+        }
     }
 
     private void configurarVentana() {
@@ -230,4 +255,15 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
     private javax.swing.JTextField txtProcedimiento;
     private javax.swing.JTextField txtRevision;
     // End of variables declaration//GEN-END:variables
+
+    private void agregarInformacion() {
+
+        procedimiento.setIdp(proceso.getId());
+        procedimiento.setNo(txtNo.getText());
+        procedimiento.setCodigo(txtCodigo.getText());
+        procedimiento.setRevision(txtRevision.getText());
+        procedimiento.setProceso(proceso.getProceso());
+        procedimiento.setProcedimiento(txtProcedimiento.getText());
+        procedimiento.setEncargado(txtDueñoProceso.getText());
+    }
 }

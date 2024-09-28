@@ -9,7 +9,10 @@ import Servicios.Utilidades;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.Color;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
@@ -17,10 +20,10 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
-    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de la aceptacion de producto
-    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de la aceptacion de producto
-    private AceptacionProductoServicio aps; 
+    private Connection conexion; // Conexión a la Base de Datos
+    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de información del componente
+    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de información del componente
+    private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public AgregarVariableGUI() {
         inicializarVentanaYComponentes();
@@ -30,8 +33,6 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
         this.usuario = usuario;
         this.aceptacionPc1 = aceptacionPc1;
         this.aceptacionPc2 = aceptacionPc2;
-        this.conexion = Conexion.getInstance();
-        this.aps = new AceptacionProductoServicio();
         inicializarVentanaYComponentes();
     }
 
@@ -120,12 +121,24 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
             try {
                 agregarVariable(nuevaVariable);
             } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("Surgio un error al abrir RetencionDimensionalGUI", ex);
+                Utilidades.manejarExcepcion("ERROR al guardar la nueva Variable: ", ex);
+                Logger.getLogger(AgregarVariableGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.aps = new AceptacionProductoServicio();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir AgregarVariableGUI: ", ex);
+            Logger.getLogger(AgregarVariableGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
@@ -141,6 +154,7 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
 
     private void cerrarVentana() {
         AgregarVariableGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**

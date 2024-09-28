@@ -81,6 +81,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         btnDiagramaTortuga = new swing.Button(new Color(255, 199, 114),new Color(255, 170, 39));
         btnSolicitudCambio = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnNuevoProcesos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        btnModificarDT = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -97,7 +98,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         lblTitulo.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
         lblTitulo.setForeground(new java.awt.Color(10, 110, 255));
         lblTitulo.setText("PROCESO: ");
-        jPanel1.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 20, -1, -1));
+        jPanel1.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 60, -1, -1));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -108,7 +109,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
                 btnCerrarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 480, 130, 50));
+        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 500, 130, 50));
 
         tblProcedimientos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -128,7 +129,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(tblProcedimientos);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 1230, 350));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1230, 350));
 
         btnDiagramaTortuga.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/powerpoint.png"))); // NOI18N
         btnDiagramaTortuga.setToolTipText("");
@@ -148,7 +149,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
                 btnSolicitudCambioActionPerformed(evt);
             }
         });
-        jPanel1.add(btnSolicitudCambio, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 480, 300, 50));
+        jPanel1.add(btnSolicitudCambio, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 500, 300, 50));
 
         btnNuevoProcesos.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnNuevoProcesos.setForeground(new java.awt.Color(255, 255, 255));
@@ -159,9 +160,20 @@ public class ProcesosGUI extends javax.swing.JFrame {
                 btnNuevoProcesosActionPerformed(evt);
             }
         });
-        jPanel1.add(btnNuevoProcesos, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 470, 210, 50));
+        jPanel1.add(btnNuevoProcesos, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 490, 210, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1260, 550));
+        btnModificarDT.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnModificarDT.setForeground(new java.awt.Color(255, 255, 255));
+        btnModificarDT.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/modificar.png"))); // NOI18N
+        btnModificarDT.setText("ACTUALIZAR DIAGRAMA");
+        btnModificarDT.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnModificarDTActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnModificarDT, new org.netbeans.lib.awtextra.AbsoluteConstraints(990, 100, 250, -1));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1260, 570));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -209,8 +221,14 @@ public class ProcesosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSolicitudCambioActionPerformed
 
     private void btnNuevoProcesosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoProcesosActionPerformed
-        cds.abrirAgregarProcesoGUI(usuario, proceso);
+        cerrarVentana();
+        cds.abrirModificarInfoGUI(usuario, proceso);
     }//GEN-LAST:event_btnNuevoProcesosActionPerformed
+
+    private void btnModificarDTActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarDTActionPerformed
+        cerrarVentana();
+        cds.abrirModificarArchivosGUI(usuario, proceso);
+    }//GEN-LAST:event_btnModificarDTActionPerformed
 
     private void inicializarVentanaYComponentes() {
         configurarVentana();
@@ -220,7 +238,8 @@ public class ProcesosGUI extends javax.swing.JFrame {
     }
 
     private void configurarVisibilidadBoton() {
-        if (usuario.getId() == proceso.getUid() || usuario.getId() == 8) {
+        int uid = proceso == null ? usuario.getId() : proceso.getUid(); 
+        if (usuario.getId() == uid || usuario.getId() == 8) {
             btnSolicitudCambio.setVisible(true);
         } else {
             btnSolicitudCambio.setVisible(false);
@@ -398,6 +417,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnDiagramaTortuga;
+    private javax.swing.JButton btnModificarDT;
     private javax.swing.JButton btnNuevoProcesos;
     private javax.swing.JButton btnSolicitudCambio;
     private javax.swing.JPanel jPanel1;
@@ -406,5 +426,4 @@ public class ProcesosGUI extends javax.swing.JFrame {
     private javax.swing.JLabel lblTitulo;
     private javax.swing.JTable tblProcedimientos;
     // End of variables declaration//GEN-END:variables
-
 }

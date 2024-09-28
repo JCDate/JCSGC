@@ -12,6 +12,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,31 +26,19 @@ public class ModificarAPGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
-    private DatosFilaRD datosFila; // Objeto para el manejo de la información de los registros
+    private Connection conexion; // Conexión a la Base de Datos
+    private DatosFilaRD datosFila; // Objeto para el manejo de la información de los registros de retención Dimensional del componente
     private String componenteAnterior; // Valida que el componente no haya cambiado
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public ModificarAPGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al abrir ModificarAPGUI: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
     public ModificarAPGUI(Usuarios usuario) {
-        try {
-            this.usuario = usuario;
-            this.conexion = Conexion.getInstance();
-            this.datosFila = new DatosFilaRD();
-            this.aps = new AceptacionProductoServicio();
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error en ModificarAPGUI: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.usuario = usuario;
+        this.datosFila = new DatosFilaRD();
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -207,20 +196,17 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        AceptacionPc1 aceptacionPc1 = crearAceptacionPc1();
-
-        configurarFocusListener();
-
         try {
-            aps.modificarInfoRD(conexion, aceptacionPc1, datosFila);
+            AceptacionPc1 aceptacionPc1 = crearAceptacionPc1();
+            configurarFocusListener();
+            aps.modificarInfoRetencionDimensional(conexion, aceptacionPc1, datosFila);
+            JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
+            cerrarVentana();
+            aps.abrirAceptacionProductoGUI(usuario);
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al actualizar la información: ", ex);
+            Utilidades.manejarExcepcion("ERROR al guardar la información: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
-        cerrarVentana();
-        aps.abrirAceptacionProductoGUI(usuario);
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
@@ -228,10 +214,17 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         aps.abrirAceptacionProductoGUI(usuario);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        configurarVentana();
-        configurarComboBoxComponentes();
-        configurarComboBoxFecha();
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.aps = new AceptacionProductoServicio();
+            configurarComboBoxComponentes();
+            configurarComboBoxFecha();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al Abrir ModificarAPGUI: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void configurarVentana() {
@@ -243,79 +236,68 @@ public class ModificarAPGUI extends javax.swing.JFrame {
 
     private void configurarComboBoxComponentes() {
         try {
-            aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
+            aps.obtenerListaComponentes(conexion).forEach(cbxComponente::addItem);
             manejarComponenteSeleccionado();
             manejarFechaSeleccionada();
             cbxComponente.addActionListener(this::manejarComponenteSeleccionado);
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al configurar el ComboBox: ", ex);
+            Utilidades.manejarExcepcion("ERROR al configurar el comboBox de de los Componentes: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     private void manejarComponenteSeleccionado(ActionEvent evt) {
-        try {
-            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-            if (!componenteSeleccionado.equals(componenteAnterior)) {
-                componenteAnterior = componenteSeleccionado;
-                cbxFecha.removeAllItems();
-                List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
-                if (!fechasRD.isEmpty()) {
-                    fechasRD.forEach(cbxFecha::addItem);
-                } else {
-                    limpiarCampos();
-                }
-            }
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        actualizarComponenteSolicitado();
     }
 
     private void manejarComponenteSeleccionado() {
-        try {
-            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-            if (!componenteSeleccionado.equals(componenteAnterior)) {
+        actualizarComponenteSolicitado();
+    }
+
+    private void actualizarComponenteSolicitado() {
+        String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
+        if (!componenteSeleccionado.equals(componenteAnterior)) {
+            try {
                 componenteAnterior = componenteSeleccionado;
                 cbxFecha.removeAllItems();
-                List<String> fechasRD = aps.obtenerFechasRD(conexion, componenteSeleccionado);
+                List<String> fechasRD = aps.obtenerFechasRetencionDimensional(conexion, componenteSeleccionado);
                 if (!fechasRD.isEmpty()) {
                     fechasRD.forEach(cbxFecha::addItem);
                 } else {
                     limpiarCampos();
                 }
+            } catch (SQLException ex) {
+                Utilidades.manejarExcepcion("ERROR con el componente seleccionado: ", ex);
+                Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void configurarComboBoxFecha() {
-        cbxFecha.addActionListener(this::manejarFechaSeleccionada);
+    private void limpiarCampos() {
+        txtNoRollo.setText("");
+        txtInspVisual.setText("");
+        txtObservaciones.setText("");
+        txtNoOrden.setText("");
+        txtTamLote.setText("");
+        txtTamMta.setText("");
+        txtInsp.setText("");
+        txtTurno.setText("");
+        txtDisp.setText("");
     }
 
     private void manejarFechaSeleccionada(ActionEvent evt) {
-        try {
-            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-
-            if (cbxFecha.getSelectedItem() != null && !cbxFecha.getSelectedItem().toString().isEmpty()) {
-                datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
-            } else {
-                validarDatosFila();
-            }
-
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        actualizarFechaSeleccionada();
     }
 
     private void manejarFechaSeleccionada() {
+        actualizarFechaSeleccionada();
+    }
+
+    private void actualizarFechaSeleccionada() {
         try {
             String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
             if (cbxFecha.getSelectedItem() != null && !cbxFecha.getSelectedItem().toString().isEmpty()) {
-                datosFila = aps.obtenerInfoRD(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
+                datosFila = aps.obtenerInfoRetencionDimensional(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
             } else {
                 limpiarCampos();
             }
@@ -342,27 +324,8 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         }
     }
 
-    private void limpiarCampos() {
-        txtNoRollo.setText("");
-        txtInspVisual.setText("");
-        txtObservaciones.setText("");
-        txtNoOrden.setText("");
-        txtTamLote.setText("");
-        txtTamMta.setText("");
-        txtInsp.setText("");
-        txtTurno.setText("");
-        txtDisp.setText("");
-    }
-
-    private void configurarFocusListener() {
-        txtNoOrden.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                String newText = txtNoOrden.getText();
-                List<String> newNoOrdenList = Arrays.asList(newText.split("\\s*,\\s*"));
-                datosFila.setNoOrden(new ArrayList<>(newNoOrdenList));
-            }
-        });
+    private void configurarComboBoxFecha() {
+        cbxFecha.addActionListener(this::manejarFechaSeleccionada);
     }
 
     private AceptacionPc1 crearAceptacionPc1() {
@@ -375,8 +338,20 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         return aceptacionPc1;
     }
 
+    private void configurarFocusListener() {
+        txtNoOrden.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                String newText = txtNoOrden.getText();
+                List<String> nuevaListaNoOrden = Arrays.asList(newText.split("\\s*,\\s*"));
+                datosFila.setNoOrden(new ArrayList<>(nuevaListaNoOrden));
+            }
+        });
+    }
+
     private void cerrarVentana() {
         ModificarAPGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**

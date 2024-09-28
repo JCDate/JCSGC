@@ -1,8 +1,6 @@
 package Servicios;
 
 import Documentos.AgregarDocumentosGUI;
-import Documentos.AgregarFormatoGUI;
-import Documentos.AgregarProcesoGUI;
 import Documentos.ControlDocumentosGUI;
 import Documentos.ProcesosGUI;
 import Documentos.FormatosGUI;
@@ -30,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -48,12 +47,18 @@ import swing.Button;
 
 public class ControlDocumentacionServicio {
 
-    Conexion conexion = Conexion.getInstance();
+    Connection conexion = Conexion.getInstance().conectar();
 
     public boolean esUsuarioAutorizado(Usuarios usuario) {
         return usuario.getId() == 12 || usuario.getId() == 8;
     }
 
+    public void abrirModificarInfoGUI(Usuarios usr, ProcesosM procesos) {
+        ModificarInfoGUI doc = new ModificarInfoGUI(usr, procesos);
+        doc.setVisible(true);
+        doc.setLocationRelativeTo(null);
+    }
+    
     public void abrirModificarInfoGUI(Usuarios usr, ProcedimientosM procedimiento) {
         ModificarInfoGUI doc = new ModificarInfoGUI(usr, procedimiento);
         doc.setVisible(true);
@@ -62,6 +67,18 @@ public class ControlDocumentacionServicio {
 
     public void abrirModificarArchivosGUI(Usuarios usr, DocumentosM documento) {
         ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, documento);
+        doc.setVisible(true);
+        doc.setLocationRelativeTo(null);
+    }
+
+    public void abrirModificarArchivosGUI(Usuarios usr, ProcesosM proceso) {
+        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, proceso);
+        doc.setVisible(true);
+        doc.setLocationRelativeTo(null);
+    }
+
+    public void abrirModificarArchivosGUI(Usuarios usr, ProcedimientosM procedimiento) {
+        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, procedimiento);
         doc.setVisible(true);
         doc.setLocationRelativeTo(null);
     }
@@ -78,10 +95,10 @@ public class ControlDocumentacionServicio {
         doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
     }
 
-    public ProcesosM recuperarProceso(Conexion conexion, int id) throws SQLException {
+    public ProcesosM recuperarProceso(Connection conexion, int id) throws SQLException {
         ProcesosM proceso = null;
         String sql = "SELECT * FROM docProcesos WHERE id = ?";
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement consulta =  conexion.prepareStatement(sql)) {
             consulta.setInt(1, id);
 
             ResultSet resultado = consulta.executeQuery();
@@ -122,10 +139,10 @@ public class ControlDocumentacionServicio {
         return pdf; // Se regresa el archivo
     }
 
-    public List<ProcedimientosM> recuperarProcedimientos(Conexion conexion, int idp) throws SQLException {
+    public List<ProcedimientosM> recuperarProcedimientos(Connection conexion, int idp) throws SQLException {
         List<ProcedimientosM> procedimientos = new ArrayList<>();
         String sql = "SELECT * FROM docprocedimientos WHERE idp = ?";
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement consulta =  conexion.prepareStatement(sql)) {
             consulta.setInt(1, idp);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -145,10 +162,10 @@ public class ControlDocumentacionServicio {
         return procedimientos;
     }
 
-    public List<DocumentosM> recuperarDocumentos(Conexion conexion, int id) throws SQLException {
+    public List<DocumentosM> recuperarDocumentos(Connection conexion, int id) throws SQLException {
         List<DocumentosM> documentos = new ArrayList<>();
         String sql = "SELECT * FROM documentos WHERE idProcedimiento = ?";
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement consulta =  conexion.prepareStatement(sql)) {
             consulta.setInt(1, id);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -168,10 +185,10 @@ public class ControlDocumentacionServicio {
         return documentos;
     }
 
-    public List<FormatosM> recuperarFormatos(Conexion conexion, int id) throws SQLException {
+    public List<FormatosM> recuperarFormatos(Connection conexion, int id) throws SQLException {
         List<FormatosM> formatos = new ArrayList<>();
         String sql = "SELECT * FROM formatos WHERE idProcedimiento = ?";
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement consulta =  conexion.prepareStatement(sql)) {
             consulta.setInt(1, id);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -220,7 +237,7 @@ public class ControlDocumentacionServicio {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conexion.conectar().prepareStatement("SELECT diagramaTortuga FROM docprocesos WHERE id = ?");
+            ps =  conexion.prepareStatement("SELECT diagramaTortuga FROM docprocesos WHERE id = ?");
             ps.setInt(1, proceso.getId());
             rs = ps.executeQuery();
 
@@ -261,7 +278,7 @@ public class ControlDocumentacionServicio {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conexion.conectar().prepareStatement("SELECT contenido, nombre FROM documentos WHERE tipo = ? AND idProcedimiento = ?");
+            ps =  conexion.prepareStatement("SELECT contenido, nombre FROM documentos WHERE tipo = ? AND idProcedimiento = ?");
 
             ps.setString(1, tipoDocto);
             ps.setInt(2, procedimiento.getIdp());
@@ -274,7 +291,7 @@ public class ControlDocumentacionServicio {
 
                 String nombreArchivo = nombre;
                 try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream(procedimiento.getProcedimiento())) {
+                        OutputStream out = new FileOutputStream(nombre)) {
 
                     byte[] buffer = new byte[1024];
                     int bytesRead;
@@ -315,7 +332,7 @@ public class ControlDocumentacionServicio {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conexion.conectar().prepareStatement("SELECT contenido, nombre FROM formatos WHERE nombre = ?");
+            ps =  conexion.prepareStatement("SELECT contenido, nombre FROM formatos WHERE nombre = ?");
 
             ps.setString(1, nombreFormato);
 
@@ -368,7 +385,7 @@ public class ControlDocumentacionServicio {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conexion.conectar().prepareStatement("SELECT contenido, nombre FROM formatos WHERE nombre = ?");
+            ps =  conexion.prepareStatement("SELECT contenido, nombre FROM formatos WHERE nombre = ?");
             ps.setString(1, nombre);
             rs = ps.executeQuery();
 
@@ -435,7 +452,7 @@ public class ControlDocumentacionServicio {
 
     public void agregarSolicitud(SolicitudesM solicitud) {
         String sql = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, archivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement pstmtSelect =  conexion.prepareStatement(sql)) {
             pstmtSelect.setInt(1, solicitud.getId());
             pstmtSelect.setString(2, solicitud.getCodigo());
             pstmtSelect.setString(3, solicitud.getProceso());
@@ -454,10 +471,10 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public List<SolicitudesM> recuperarSolicitudes(Conexion conexion) throws SQLException {
+    public List<SolicitudesM> recuperarSolicitudes(Connection conexion) throws SQLException {
         List<SolicitudesM> listaSolicitudes = new ArrayList<>();
         String sqlConsulta = "SELECT * FROM solicitudescambio";
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(sqlConsulta)) {
+        try (PreparedStatement consulta =  conexion.prepareStatement(sqlConsulta)) {
 
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -507,7 +524,7 @@ public class ControlDocumentacionServicio {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conexion.conectar().prepareStatement("SELECT nombre, archivo, SUBSTRING_INDEX(nombre, '.', -1) AS extension FROM solicitudescambio WHERE codigo = ?");
+            ps =  conexion.prepareStatement("SELECT nombre, archivo, SUBSTRING_INDEX(nombre, '.', -1) AS extension FROM solicitudescambio WHERE codigo = ?");
             ps.setString(1, nombre);
             rs = ps.executeQuery();
 
@@ -558,7 +575,7 @@ public class ControlDocumentacionServicio {
     }
 
     public void eliminarSolicitud(String nombre) throws SQLException, ClassNotFoundException {
-        PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM solicitudescambio WHERE codigo = ?");
+        PreparedStatement ps =  conexion.prepareStatement("DELETE FROM solicitudescambio WHERE codigo = ?");
         ps.setString(1, nombre);
         ps.executeUpdate();
     }
@@ -570,12 +587,12 @@ public class ControlDocumentacionServicio {
         switch (solicitud.getAccion()) {
             case "ACTUALIZAR":
                 if (solicitud.getTipoArchivo().equals("MANUAL")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?");
+                    PreparedStatement ps =  conexion.prepareStatement("UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?");
                     ps.setString(1, solicitud.getRevNueva());
                     ps.setString(2, solicitud.getProcedimiento());
                     ps.executeUpdate();
 
-                    PreparedStatement ps1 = conexion.conectar().prepareStatement("UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo='manual' AND idProcedimiento = ?");
+                    PreparedStatement ps1 =  conexion.prepareStatement("UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo='manual' AND idProcedimiento = ?");
                     ps1.setString(1, solicitud.getRevNueva());
                     ps1.setString(2, fechaFormateada);
                     ps1.setString(3, solicitud.getNombre());
@@ -585,12 +602,12 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("DIAGRAMA DE FLUJO")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?");
+                    PreparedStatement ps =  conexion.prepareStatement("UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?");
                     ps.setString(1, solicitud.getRevNueva());
                     ps.setString(2, solicitud.getProcedimiento());
                     ps.executeUpdate();
 
-                    PreparedStatement ps1 = conexion.conectar().prepareStatement("UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo='diagrama_flujo' AND idProcedimiento = ?");
+                    PreparedStatement ps1 =  conexion.prepareStatement("UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo='diagrama_flujo' AND idProcedimiento = ?");
                     ps1.setString(1, solicitud.getRevNueva());
                     ps1.setString(2, fechaFormateada);
                     ps1.setString(3, solicitud.getNombre());
@@ -600,7 +617,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("DIAGRAMA DE TORTUGA")) {
-                    PreparedStatement ps1 = conexion.conectar().prepareStatement("UPDATE docprocesos SET nombreDt = ?, diagramaTortuga = ? WHERE proceso = ?");
+                    PreparedStatement ps1 =  conexion.prepareStatement("UPDATE docprocesos SET nombreDt = ?, diagramaTortuga = ? WHERE proceso = ?");
                     ps1.setString(1, solicitud.getNombre());
                     ps1.setBytes(2, solicitud.getArchivo());
                     ps1.setString(3, solicitud.getProceso());
@@ -608,7 +625,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("FORMATO")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("UPDATE formatos SET nombre = ?, contenido = ? WHERE idProcedimiento = ? AND nombre = ?");
+                    PreparedStatement ps =  conexion.prepareStatement("UPDATE formatos SET nombre = ?, contenido = ? WHERE idProcedimiento = ? AND nombre = ?");
                     ps.setString(1, solicitud.getNombre());
                     ps.setBytes(2, solicitud.getArchivo());
                     ps.setInt(3, solicitud.getId());
@@ -617,7 +634,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("INSTRUCTIVO")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("UPDATE documentos SET nombre = ?, contenido = ? WHERE idProceso = ? AND tipo_archivo = 'instructivo' AND nombre = ?");
+                    PreparedStatement ps =  conexion.prepareStatement("UPDATE documentos SET nombre = ?, contenido = ? WHERE idProceso = ? AND tipo_archivo = 'instructivo' AND nombre = ?");
                     ps.setString(1, solicitud.getNombre());
                     ps.setBytes(2, solicitud.getArchivo());
                     ps.setInt(3, solicitud.getId());
@@ -628,7 +645,7 @@ public class ControlDocumentacionServicio {
                 break;
             case "AGREGAR":
                 if (solicitud.getTipoArchivo().equals("MANUAL") || solicitud.getTipoArchivo().equals("DIAGRAMA DE FLUJO") || solicitud.getTipoArchivo().equals("INSTRUCTIVO")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES( (SELECT idProceso FROM docProcesos WHERE nombreProceso=?), ?, ?, ?, ?, ?, ?)");
+                    PreparedStatement ps =  conexion.prepareStatement("INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES( (SELECT idProceso FROM docProcesos WHERE nombreProceso=?), ?, ?, ?, ?, ?, ?)");
                     ps.setString(1, solicitud.getProceso());
                     ps.setInt(2, solicitud.getId());
                     ps.setString(3, solicitud.getRevNueva());
@@ -640,7 +657,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("FORMATO")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("INSERT INTO formatos(idProcedimiento, nombre, contenido) VALUES(?, ?, ?)");
+                    PreparedStatement ps =  conexion.prepareStatement("INSERT INTO formatos(idProcedimiento, nombre, contenido) VALUES(?, ?, ?)");
                     ps.setInt(1, solicitud.getId());
                     ps.setString(2, solicitud.getNombre());
                     ps.setBytes(3, solicitud.getArchivo());
@@ -649,7 +666,7 @@ public class ControlDocumentacionServicio {
                 break;
             case "ELIMINAR":
                 if (solicitud.getTipoArchivo().equals("MANUAL") || solicitud.getTipoArchivo().equals("DIAGRAMA DE FLUJO") || solicitud.getTipoArchivo().equals("INSTRUCTIVO")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM documentos WHERE idProcedimiento = ? AND tipo = ? AND nombre = ?");
+                    PreparedStatement ps =  conexion.prepareStatement("DELETE FROM documentos WHERE idProcedimiento = ? AND tipo = ? AND nombre = ?");
                     ps.setInt(1, solicitud.getId());
                     ps.setString(2, solicitud.getTipoArchivo());
                     ps.setString(3, solicitud.getNombre());
@@ -657,7 +674,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("FORMATO")) {
-                    PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM formatos WHERE idProcedimiento = ? AND nombre = ? AND contenido = ?)");
+                    PreparedStatement ps =  conexion.prepareStatement("DELETE FROM formatos WHERE idProcedimiento = ? AND nombre = ? AND contenido = ?)");
                     ps.setInt(1, solicitud.getId());
                     ps.setString(2, solicitud.getNombre());
                     ps.setBytes(3, solicitud.getArchivo());
@@ -671,7 +688,7 @@ public class ControlDocumentacionServicio {
 
     private void insertarRegistro(SolicitudesM solicitud, String fecha) {
         String sql = "INSERT INTO docregistros(idp, fechaModificacion, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombre) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement pstmtSelect =  conexion.prepareStatement(sql)) {
             pstmtSelect.setInt(1, solicitud.getId());
             pstmtSelect.setString(2, fecha);
             pstmtSelect.setString(3, solicitud.getCodigo());
@@ -689,13 +706,13 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public List<RegistrosM> recuperarRegistros(Conexion conexion, int id, Usuarios usr) throws SQLException {
+    public List<RegistrosM> recuperarRegistros(Connection conexion, int id, Usuarios usr) throws SQLException {
         List<RegistrosM> registros = new ArrayList<>();
 
         if (usr.getId() == 12 || usr.getId() == 8) {
 
             String sql = "SELECT * FROM docregistros WHERE idp = ?";
-            try (PreparedStatement consulta = conexion.conectar().prepareStatement(sql)) {
+            try (PreparedStatement consulta =  conexion.prepareStatement(sql)) {
                 consulta.setInt(1, id);
                 ResultSet resultado = consulta.executeQuery();
                 while (resultado.next()) {
@@ -723,7 +740,7 @@ public class ControlDocumentacionServicio {
                     + "AND tipoArchivo IN ('MANUAL', 'DIAGRAMA DE FLUJO', 'INSTRUCTIVO', 'FORMATO', 'DIAGRAMA DE TORTUGA') \n"
                     + "ORDER BY DATE(fechaModificacion) DESC \n"
                     + "LIMIT 1";
-            try (PreparedStatement consulta = conexion.conectar().prepareStatement(sql)) {
+            try (PreparedStatement consulta =  conexion.prepareStatement(sql)) {
                 consulta.setInt(1, id);
                 ResultSet resultado = consulta.executeQuery();
                 while (resultado.next()) {
@@ -749,9 +766,9 @@ public class ControlDocumentacionServicio {
         return registros;
     }
 
-    public void guardarCambiosProcedimiento(Conexion conexion, ProcedimientosM procedimiento) {
+    public void guardarCambiosProcedimiento(Connection conexion, ProcedimientosM procedimiento) {
         try {
-            PreparedStatement ps1 = conexion.conectar().prepareStatement("UPDATE docprocedimientos SET no = ?, codigo = ?, revision = ?, procedimiento = ?, encargado = ? WHERE id = ?");
+            PreparedStatement ps1 =  conexion.prepareStatement("UPDATE docprocedimientos SET no = ?, codigo = ?, revision = ?, procedimiento = ?, encargado = ? WHERE id = ?");
             ps1.setString(1, procedimiento.getNo());
             ps1.setString(2, procedimiento.getCodigo());
             ps1.setString(3, procedimiento.getRevision());
@@ -767,7 +784,7 @@ public class ControlDocumentacionServicio {
 
     public File seleccionarArchivo(Component parentComponent) {
         JnaFileChooser jfc = new JnaFileChooser();
-        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx", "doc", "docx");
+        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx", "doc", "docx", "png", "jpg", "jpeg", "png");
         boolean action = jfc.showOpenDialog((Window) parentComponent);
         if (action) {
             return jfc.getSelectedFile();
@@ -776,16 +793,30 @@ public class ControlDocumentacionServicio {
         return null;
     }
 
-    public void actualizarDocumento(Conexion conexion, DocumentosM documento) {
+    public void actualizarDocumento(Connection conexion, DocumentosM documento) {
         Date fechaActual = new Date();
         try {
-            PreparedStatement ps = conexion.conectar().prepareStatement("UPDATE documentos SET fechaActualizacion = ?, nombre = ?, contenido = ? WHERE id = ?");
+            PreparedStatement ps =  conexion.prepareStatement("UPDATE documentos SET fechaActualizacion = ?, nombre = ?, contenido = ? WHERE id = ?");
             ps.setString(1, formatearFecha(fechaActual));
             ps.setString(2, documento.getNombre());
             ps.setBytes(3, documento.getContenido());
             ps.setInt(4, documento.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Errror al Actualizar el documento: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void actualizarDiagramaTortuga(Connection conexion, ProcesosM proceso) {
+        try {
+            PreparedStatement ps =  conexion.prepareStatement("UPDATE docprocesos SET nombreDt = ?, diagramaTortuga = ? WHERE id = ?");
+            ps.setString(1, proceso.getNombreDT());
+            ps.setBytes(2, proceso.getDiagramaTortuga());
+            ps.setInt(3, proceso.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Errror al Actualizar el diagrama de tortuga: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -816,9 +847,9 @@ public class ControlDocumentacionServicio {
         JOptionPane.showMessageDialog(null, msg + ex, "ERROR", JOptionPane.ERROR_MESSAGE);
     }
 
-    public void eliminarDocumento(Conexion conexion, DocumentosM documento) {
+    public void eliminarDocumento(Connection conexion, DocumentosM documento) {
         try {
-            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM documentos WHERE id = ?");
+            PreparedStatement ps =  conexion.prepareStatement("DELETE FROM documentos WHERE id = ?");
             ps.setInt(1, documento.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -827,9 +858,9 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public void eliminarFormato(Conexion conexion, FormatosM formato) {
+    public void eliminarFormato(Connection conexion, FormatosM formato) {
         try {
-            PreparedStatement ps = conexion.conectar().prepareStatement("DELETE FROM formatos WHERE id = ?");
+            PreparedStatement ps =  conexion.prepareStatement("DELETE FROM formatos WHERE id = ?");
             ps.setInt(1, formato.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -838,15 +869,9 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public void abrirAgregarProcesoGUI(Usuarios usuario, ProcesosM proceso) {
-        AgregarProcesoGUI formatos = new AgregarProcesoGUI(usuario, proceso); // Se crea la instancia de la clase
-        formatos.setVisible(true); // Se muestra visible al usuario
-        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-    }
-
     public void agregarProcedimiento(ProcedimientosM procedimiento) {
         String sql = "INSERT INTO docprocedimientos(idp, no, codigo, revision, proceso, procedimiento, encargado) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement pstmtSelect =  conexion.prepareStatement(sql)) {
             pstmtSelect.setInt(1, procedimiento.getIdp());
             pstmtSelect.setString(2, procedimiento.getNo());
             pstmtSelect.setString(3, procedimiento.getCodigo());
@@ -866,10 +891,10 @@ public class ControlDocumentacionServicio {
         formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
     }
 
-    public void actualizarInfoDocumentos(Conexion conexion, DocumentosM documento) {
+    public void actualizarInfoDocumentos(Connection conexion, DocumentosM documento) {
         Date fechaActual = new Date();
         String sql = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement pstmtSelect =  conexion.prepareStatement(sql)) {
             pstmtSelect.setInt(1, documento.getIdProceso());
             pstmtSelect.setInt(2, documento.getIdProcedimiento());
             pstmtSelect.setString(3, documento.getRevision());
@@ -883,15 +908,9 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public void abrirAgregarFormatosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
-        AgregarFormatoGUI formatos = new AgregarFormatoGUI(usuario, procedimiento); // Se crea la instancia de la clase
-        formatos.setVisible(true); // Se muestra visible al usuario
-        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-    }
-
-    public void agregarFormatoNuevo(Conexion conexion, FormatosM formato) {
+    public void agregarFormatoNuevo(Connection conexion, FormatosM formato) {
         String sql = "INSERT INTO formatos(idProcedimiento, nombre, contenido) VALUES (?, ?, ?)";
-        try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement pstmtSelect =  conexion.prepareStatement(sql)) {
             pstmtSelect.setInt(1, formato.getIdP());
             pstmtSelect.setString(2, formato.getNombre());
             pstmtSelect.setBytes(3, formato.getContenido());

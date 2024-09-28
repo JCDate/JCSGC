@@ -1,13 +1,21 @@
 package Documentos;
 
 import Modelos.DocumentosM;
+import Modelos.FormatosM;
+import Modelos.ProcedimientosM;
+import Modelos.ProcesosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -16,12 +24,12 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
+    private Connection conexion; // Conexión a la Base de Datos
     private DocumentosM documento; // Manejar la informacion del archivo
-    private String texto;
+    private ProcesosM proceso; // Manejar la informacion del archivo
     private String rutaArchivo;
-    
-
+    private String tipoOperacion;
+    private ProcedimientosM procedimiento; // Manejar la informacion del formato
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
     public ModificarArchivosGUI() {
@@ -29,12 +37,45 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     }
 
     public ModificarArchivosGUI(Usuarios usuario, DocumentosM documento) {
-        this.usuario = usuario;
-        this.documento = documento;
-        this.conexion = Conexion.getInstance();
-        this.cds = new ControlDocumentacionServicio();
-        inicializarVentanaYComponentes();
+        try {
+            this.usuario = usuario;
+            this.documento = documento;
+            this.tipoOperacion = "documento";
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            inicializarVentanaYComponentes();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir ModificarArchivosGUI: ", ex);
+            Logger.getLogger(ModificarArchivosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
+    public ModificarArchivosGUI(Usuarios usuario, ProcesosM proceso) {
+        try {
+            this.usuario = usuario;
+            this.proceso = proceso;
+            this.tipoOperacion = "proceso";
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            inicializarVentanaYComponentes();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir ModificarArchivosGUI: ", ex);
+            Logger.getLogger(ModificarArchivosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public ModificarArchivosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
+        try {
+            this.usuario = usuario;
+            this.procedimiento = procedimiento;
+            this.tipoOperacion = "procedimiento";
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            inicializarVentanaYComponentes();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir ModificarArchivosGUI: ", ex);
+            Logger.getLogger(ModificarArchivosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -64,7 +105,6 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
         setMinimumSize(new java.awt.Dimension(730, 345));
-        setPreferredSize(new java.awt.Dimension(730, 345));
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jPanel1.setBackground(new java.awt.Color(251, 251, 251));
@@ -118,13 +158,15 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnNuevoArchivo, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 150, 170, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 740, 350));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 740, 340));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
+        Integer idProceso = procedimiento == null ? proceso.getId() : procedimiento.getIdp();
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, idProceso);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnNuevoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoArchivoActionPerformed
@@ -132,19 +174,22 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnNuevoArchivoActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        documento.setNombre(txtNombreArchivo.getText());
-        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
-            cds.cargarArchivo(rutaArchivo, documento::setContenido);
+        switch (tipoOperacion) {
+            case "documento":
+                actualizarDocumento();
+                break;
+            case "procedimiento":
+                actualizarFormato();
+                break;
+            default:
+                actualizarDiagrama();
+                break;
         }
-        cds.actualizarDocumento(conexion, documento);
-        cerrarVentana();
-        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
-        cds.abrirDocumentacionGUI(usuario, documento.getIdProceso());
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
         configurarVentana();
-        txtNombreArchivo.setText(documento.getNombre());
+        definirTitulo();
     }
 
     private void configurarVentana() {
@@ -154,11 +199,32 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    public void seleccionarArchivo() {
+    private void definirTitulo() {
+        switch (tipoOperacion) {
+            case "documento":
+                lblTitulo.setText("ACTUALIZAR DOCUMENTO: ");
+                break;
+            case "procedimiento":
+                lblTitulo.setText("AGREGAR FORMATO: ");
+                break;
+            case "proceso":
+                lblTitulo.setText("ACTUALIZAR DIAGRAMA: ");
+                break;
+            default:
+                lblTitulo.setText("ACTUALIZAR DOCUMENTOS: ");
+        }
+    }
+    
+    private void cerrarVentana() {
+        ModificarArchivosGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
+    }
+
+    private void seleccionarArchivo() {
         rutaArchivo = seleccionarArchivoCertificado(txtNombreArchivo, rutaArchivo);
     }
 
-    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
+    private String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
         File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
         if (archivoSeleccionado != null) {
             String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
@@ -168,8 +234,39 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         return rutaArchivo;
     }
 
-    public void cerrarVentana() {
-        ModificarArchivosGUI.this.dispose();
+    private void actualizarDocumento() {
+        documento.setNombre(txtNombreArchivo.getText());
+        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
+            cds.cargarArchivo(rutaArchivo, documento::setContenido);
+        }
+        cds.actualizarDocumento(conexion, documento);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
+        cds.abrirDocumentacionGUI(usuario, documento.getIdProceso());
+    }
+
+    private void actualizarFormato() {
+        FormatosM formato = new FormatosM();
+        formato.setNombre(txtNombreArchivo.getText());
+        formato.setIdP(procedimiento.getIdp());
+        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
+            cds.cargarArchivo(rutaArchivo, formato::setContenido);
+        }
+        cds.agregarFormatoNuevo(conexion, formato);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
+        cds.abrirFormatosGUI(usuario, procedimiento);
+    }
+    
+    private void actualizarDiagrama() {
+        proceso.setNombreDT(txtNombreArchivo.getText());
+        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
+            cds.cargarArchivo(rutaArchivo, proceso::setDiagramaTortuga);
+        }
+        cds.actualizarDiagramaTortuga(conexion, proceso);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
+        cds.abrirDocumentacionGUI(usuario, proceso.getId());
     }
 
     /**
@@ -188,13 +285,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ModificarArchivosGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ModificarArchivosGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ModificarArchivosGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(ModificarArchivosGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>

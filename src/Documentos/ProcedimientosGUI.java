@@ -262,7 +262,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
             tblDocumentos.setRowHeight(40);
             mostrarDatosTabla();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al inicializar laa tabla: ", ex);
+            Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
             Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

@@ -12,11 +12,11 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.PatternSyntaxException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -30,35 +30,23 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
+    private Connection conexion; // Conexión a la Base de Datos
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
-    private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
-    private TableRowSorter<DefaultTableModel> filtroTabla; // Objeto filtrador de campos de la tabla
-    private List<AceptacionProducto> listaAceptacionProducto; // Listas de información de aceptación de productos
+    private DefaultTableModel modeloTabla; // Define la estructura de la tabla
+    private TableRowSorter<DefaultTableModel> filtroTabla; // Permite filtraer y ordenar la tabla de acuerdo a los criterios definidos
+    private List<AceptacionProducto> listaAceptacionProducto; // Listas de información para la gestión de los archivos de aceptación de productos
 
     // Columnas de la tabla
     private static final int COLUMNA_COMPONENTE = 0;
     private static final int COLUMNA_ARCHIVO_RETENCION = 1;
 
     public AceptacionProductoGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI: ", ex);
-            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, "Error de conexión: " + ex.getMessage(), ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
     public AceptacionProductoGUI(Usuarios usuario) {
-        try {
-            this.usuario = usuario;
-            this.conexion = Conexion.getInstance();
-            this.aps = new AceptacionProductoServicio();
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI: ", ex);
-            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.usuario = usuario;
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -190,7 +178,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private void tblAceptacionProductoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAceptacionProductoMouseClicked
         int columnaSeleccionada = tblAceptacionProducto.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblAceptacionProducto.rowAtPoint(evt.getPoint());
-        if (esCeldaValida(columnaSeleccionada, filaSeleccionada)) {
+        if (aps.esCeldaValida(tblAceptacionProducto, filaSeleccionada, columnaSeleccionada)) {
             manejarCeldaSeleccionada(filaSeleccionada, columnaSeleccionada);
         }
     }//GEN-LAST:event_tblAceptacionProductoMouseClicked
@@ -207,7 +195,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
         if (confirmarEliminacion()) {
             eliminarComponente(nombreComponente);
-
         }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
@@ -222,12 +209,19 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         aps.abrirAceptacionProductoGUI2(usuario);
     }//GEN-LAST:event_btnCrearActionPerformed
 
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        configurarVentana();
-        configurarBuscador();
-        inicializarTabla();
-        inicializarListeners();
-        inicializarFiltroTabla();
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.aps = new AceptacionProductoServicio();
+            configurarBuscador();
+            inicializarTabla();
+            inicializarListeners();
+            inicializarFiltroTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI: ", ex);
+            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void configurarVentana() {
@@ -245,44 +239,13 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private void inicializarTabla() {
         try {
             this.modeloTabla = construirModeloTabla();
-            this.listaAceptacionProducto = aps.recuperarAPs(conexion);
+            this.listaAceptacionProducto = aps.obtenerAceptacionProducto(conexion);
             tblAceptacionProducto.setModel(modeloTabla);
             tblAceptacionProducto.setRowHeight(40);
             mostrarDatosTabla();
         } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
             Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private void inicializarListeners() {
-        txtBuscador.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(final KeyEvent ke) {
-                filtrarBusqueda();
-            }
-        });
-    }
-
-    private void inicializarFiltroTabla() {
-        filtroTabla = new TableRowSorter(tblAceptacionProducto.getModel());
-        tblAceptacionProducto.setRowSorter(filtroTabla);
-    }
-
-    private void filtrarBusqueda() {
-        String textoBusqueda = txtBuscador.getText();
-
-        if (textoBusqueda == null || textoBusqueda.trim().isEmpty()) {
-            filtroTabla.setRowFilter(null);
-            return;
-        }
-
-        try {
-            RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(textoBusqueda, 0);
-            filtroTabla.setRowFilter(rowFilter);
-        } catch (PatternSyntaxException e) {
-            filtroTabla.setRowFilter(null);
-            Utilidades.manejarExcepcion("Error al aplicar el filtrado de información: ", e);
         }
     }
 
@@ -301,10 +264,9 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         return modeloTabla;
     }
 
-    public void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
+    private void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
         limpiarTabla();
         llenarTabla();
-
         configurarRenderizacionTabla();
     }
 
@@ -324,7 +286,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private Object[] crearFila(AceptacionProducto aceptacionProducto) {
         Object[] fila = new Object[2];
         fila[COLUMNA_COMPONENTE] = aceptacionProducto.getComponente();
-        fila[COLUMNA_ARCHIVO_RETENCION] = Utilidades.crearBoton(aceptacionProducto.getRdPdf(), Iconos.ICONO_EXCEL_2, "Vacio");
+        fila[COLUMNA_ARCHIVO_RETENCION] = Utilidades.crearBoton(aceptacionProducto.getArchivo(), Iconos.ICONO_EXCEL_2, "Vacío");
         return fila;
     }
 
@@ -332,15 +294,38 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         tblAceptacionProducto.setDefaultRenderer(Object.class, new imgTabla());
     }
 
+    private void inicializarListeners() {
+        txtBuscador.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(final KeyEvent ke) {
+                filtrarBusqueda();
+            }
+        });
+    }
+
+    private void filtrarBusqueda() {
+        String textoBusqueda = txtBuscador.getText();
+
+        if (textoBusqueda == null || textoBusqueda.trim().isEmpty()) {
+            filtroTabla.setRowFilter(null);
+            return;
+        }
+
+        RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(textoBusqueda, 0);
+        filtroTabla.setRowFilter(rowFilter);
+    }
+
+    private void inicializarFiltroTabla() {
+        filtroTabla = new TableRowSorter(tblAceptacionProducto.getModel());
+        tblAceptacionProducto.setRowSorter(filtroTabla);
+    }
+
     private void cerrarVentana() {
         AceptacionProductoGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
-    private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
-        return filaSeleccionada < tblAceptacionProducto.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblAceptacionProducto.getColumnCount() && columnaSeleccionada >= 0;
-    }
-
-    public void manejarCeldaSeleccionada(int filaSeleccionada, int columnaSeleccionada) {
+    private void manejarCeldaSeleccionada(int filaSeleccionada, int columnaSeleccionada) {
         String componente = (String) tblAceptacionProducto.getValueAt(filaSeleccionada, 0);
         Object valor = tblAceptacionProducto.getValueAt(filaSeleccionada, columnaSeleccionada);
         if (valor instanceof JButton) {
@@ -350,18 +335,19 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     }
 
     private void procesarBoton(JButton boton, String componente, int columnaSeleccionada) {
-        String textoBoton = boton.getText();
-        switch (textoBoton) {
-            case "Vacio":
-                JOptionPane.showMessageDialog(this, "No hay archivo");
-                break;
-            default:
-                try {
+        try {
+            String textoBoton = boton.getText();
+            switch (textoBoton) {
+                case "Vacío":
+                    JOptionPane.showMessageDialog(this, "No hay archivo");
+                    break;
+                default:
                     aps.ejecutarArchivoXLSX(conexion, componente, columnaSeleccionada);
-                } catch (ClassNotFoundException | SQLException ex) {
-                    Utilidades.manejarExcepcion("Error al abrir el documento de RETENCIÓN-DIMENSIONAL.xlsx", ex);
-                }
-                break;
+                    break;
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Ejecutar el archivo xlsx", ex);
+            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -371,7 +357,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     }
 
     private void eliminarComponente(String componente) {
-        aps.eliminarAP(conexion, componente);
+        aps.eliminarAceptacionProducto(conexion, componente);
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
         aps.abrirAceptacionProductoGUI(usuario);

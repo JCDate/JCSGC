@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -69,8 +70,9 @@ public class InspeccionReciboServicio {
     private final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE " + this.tabla + " SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id_ir=?";
 
     public String direcciomImg = "img\\jc.png";
+    // Obtener la conexión a la base de datos
 
-    Conexion conexion = Conexion.getInstance(); // Obtener la conexión a la base de datos
+    Connection conexion; 
 
     public final String DIRECCION_IMG = "img\\jc.png";
     private static final String SQL_INSERCION_CALIBRE_IR = "INSERT INTO calibresir(calibre,medidas,especificacion) VALUES (?,?,?)";
@@ -78,8 +80,16 @@ public class InspeccionReciboServicio {
     private static final String SQL_CONSULTA_INSPECCION_RECIBO = "SELECT * FROM inspeccionrecibo";
     private final String SQL_CONSULTA_ESPECIFICACIONES_IR = "SELECT Especificacion FROM especificacionesir";
 
-    public void agregar(Conexion conexion, CalibreIRM cirm) throws SQLException {
-        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
+    public InspeccionReciboServicio() {
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+        } catch (SQLException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void agregar(Connection conexion, CalibreIRM cirm) throws SQLException {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
             sqlInsert.setString(1, cirm.getCalibre());
             sqlInsert.setString(2, cirm.getMedidas());
             sqlInsert.setString(3, cirm.getEspecificacion());
@@ -89,8 +99,8 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public void agregarDMP(Conexion conexion, CalibreIRM cirm) throws SQLException {
-        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
+    public void agregarDMP(Connection conexion, CalibreIRM cirm) throws SQLException {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
             sqlInsert.setString(1, cirm.getCalibre());
             sqlInsert.setString(2, cirm.getDescripcionMP());
             sqlInsert.setString(3, cirm.getMedidas());
@@ -100,9 +110,9 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public List<CalibreIRM> recuperarTodasMedidasCalibre(Conexion conexion) throws SQLException {
+    public List<CalibreIRM> recuperarTodasMedidasCalibre(Connection conexion) throws SQLException {
         List<CalibreIRM> listaCalibreIRM = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SQL_CONSULTA_INSPECCION_RECIBO);
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_INSPECCION_RECIBO);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 listaCalibreIRM.add(new CalibreIRM(resultado.getString("calibre"), resultado.getString("medidas"), resultado.getString("especificacion"), ""));
@@ -117,10 +127,10 @@ public class InspeccionReciboServicio {
         esGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
     }
 
-    public List<String> obtenerEspecificaciones(Conexion conexion) throws SQLException {
+    public List<String> obtenerEspecificaciones(Connection conexion) throws SQLException {
         // Se realizan las consultas SQL
         List<String> listaEspecificaciones = new ArrayList<>();
-        try (PreparedStatement consulta2 = conexion.conectar().prepareStatement(SQL_CONSULTA_ESPECIFICACIONES_IR);
+        try (PreparedStatement consulta2 = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACIONES_IR);
                 ResultSet resultado2 = consulta2.executeQuery()) {
             while (resultado2.next()) { // Se guardan los calibres en el comboBox
                 listaEspecificaciones.add(resultado2.getString("Especificacion"));
@@ -129,14 +139,14 @@ public class InspeccionReciboServicio {
         return listaEspecificaciones;
     }
 
-    public void agregar(Conexion conexion, InspeccionReciboM irm) throws SQLException {
+    public void agregar(Connection conexion, InspeccionReciboM irm) throws SQLException {
         try {
             // Inicia la transacción
-//            conexion.conectar().setAutoCommit(false);
+//            conexion.setAutoCommit(false);
 
             // Consulta para verificar si el noRollo ya está registrado
             String sql = "SELECT hojaInstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
-            try (PreparedStatement pstmtSelect = conexion.conectar().prepareStatement(sql)) {
+            try (PreparedStatement pstmtSelect = conexion.prepareStatement(sql)) {
                 pstmtSelect.setString(1, irm.getNoRollo());
                 ResultSet rs = pstmtSelect.executeQuery();
 
@@ -150,7 +160,7 @@ public class InspeccionReciboServicio {
 
                         // Inserta el nuevo registro con la hojainstruccion obtenida
                         String sqlInsert = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, pdfFactura, pdfCertificado, hojaInstruccion, nombreHJ, nombreFact, nombreCert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                        try (PreparedStatement pstmtInsert = conexion.conectar().prepareStatement(sqlInsert)) {
+                        try (PreparedStatement pstmtInsert = conexion.prepareStatement(sqlInsert)) {
                             pstmtInsert.setString(1, irm.getFechaFactura());
                             pstmtInsert.setString(2, irm.getProveedor());
                             pstmtInsert.setString(3, irm.getNoFactura());
@@ -172,7 +182,7 @@ public class InspeccionReciboServicio {
                     } else {
                         // Si hojainstruccion es nula o vacía, realiza la inserción normal
                         String sqlInsertNormal = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, pdfFactura, pdfCertificado, hojaInstruccion, nombreHJ, nombreFact, nombreCert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                        try (PreparedStatement pstmtInsertNormal = conexion.conectar().prepareStatement(sqlInsertNormal)) {
+                        try (PreparedStatement pstmtInsertNormal = conexion.prepareStatement(sqlInsertNormal)) {
                             pstmtInsertNormal.setString(1, irm.getFechaFactura());
                             pstmtInsertNormal.setString(2, irm.getProveedor());
                             pstmtInsertNormal.setString(3, irm.getNoFactura());
@@ -195,7 +205,7 @@ public class InspeccionReciboServicio {
                 } else {
                     // Si el noRollo no está registrado, realiza solo la inserción normal
                     String sqlInsertNormal = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, pdfFactura, pdfCertificado, hojaInstruccion, nombreHJ, nombreFact, nombreCert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    try (PreparedStatement pstmtInsertNormal = conexion.conectar().prepareStatement(sqlInsertNormal)) {
+                    try (PreparedStatement pstmtInsertNormal = conexion.prepareStatement(sqlInsertNormal)) {
                         pstmtInsertNormal.setString(1, irm.getFechaFactura());
                         pstmtInsertNormal.setString(2, irm.getProveedor());
                         pstmtInsertNormal.setString(3, irm.getNoFactura());
@@ -218,14 +228,14 @@ public class InspeccionReciboServicio {
             }
 
             // Confirma la transacción
-//            conexion.conectar().commit();
+//            conexion.commit();
         } catch (SQLException ex) {
             // Si hay algún error, realiza un rollback para deshacer los cambios
-//            conexion.conectar().rollback();
+//            conexion.rollback();
             throw new SQLException("Error al ejecutar la transacción SQL: " + ex.getMessage(), ex);
         } finally {
             // Restaura el modo de autocommit a true
-            conexion.conectar().setAutoCommit(true);
+            conexion.setAutoCommit(true);
         }
     }
 
@@ -273,9 +283,9 @@ public class InspeccionReciboServicio {
         return boton;
     }
 
-    private boolean noRolloExiste(Conexion conexion, String noRollo) throws SQLException {
+    private boolean noRolloExiste(Connection conexion, String noRollo) throws SQLException {
         String sql = "SELECT COUNT(*) FROM inspeccionrecibo WHERE noRollo = ?";
-        try (PreparedStatement pstmt = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conexion.prepareStatement(sql)) {
             pstmt.setString(1, noRollo);
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
@@ -284,18 +294,18 @@ public class InspeccionReciboServicio {
         }
     }
 
-    private void copiarHojaInstruccion(Conexion conexion, String noRollo, byte[] hojaIns) throws SQLException {
+    private void copiarHojaInstruccion(Connection conexion, String noRollo, byte[] hojaIns) throws SQLException {
         String sql = "INSERT INTO inspeccionrecibo(noRollo, hojainstruccion) SELECT ?, hojainstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
-        try (PreparedStatement pstmt = conexion.conectar().prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conexion.prepareStatement(sql)) {
             pstmt.setString(1, noRollo);
             pstmt.setString(2, noRollo);
             pstmt.executeUpdate();
         }
     }
 
-    public List<InspeccionReciboM> recuperarTodas(Conexion conexion) throws SQLException {
+    public List<InspeccionReciboM> recuperarTodas(Connection conexion) throws SQLException {
         List<InspeccionReciboM> listaIr = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SELECT_INSPECCION_RECIBO_SQL);
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(
@@ -325,9 +335,9 @@ public class InspeccionReciboServicio {
         return listaIr;
     }
 
-    public List<InspeccionReciboM> recuperarRegistrosIR(Conexion conexion) throws SQLException {
+    public List<InspeccionReciboM> recuperarRegistrosIR(Connection conexion) throws SQLException {
         List<InspeccionReciboM> listaIr = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SELECT_INSPECCION_RECIBO_SQL);
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(
@@ -357,10 +367,10 @@ public class InspeccionReciboServicio {
         return listaIr;
     }
 
-    public List<String> recuperarInspectores(Conexion conexion) {
+    public List<String> recuperarInspectores(Connection conexion) {
         List<String> inspectores = new ArrayList<>();
         try {
-            PreparedStatement slqNomProv = conexion.conectar().prepareStatement(SQL_CONSULTA_INSPECTORES);
+            PreparedStatement slqNomProv = conexion.prepareStatement(SQL_CONSULTA_INSPECTORES);
             slqNomProv.setInt(1, 5);
             ResultSet registro = slqNomProv.executeQuery();
             while (registro.next()) {
@@ -373,9 +383,9 @@ public class InspeccionReciboServicio {
         return inspectores;
     }
 
-    public List<String> recuperarProveedores(Conexion conexion) throws SQLException {
+    public List<String> recuperarProveedores(Connection conexion) throws SQLException {
         List<String> proveedores = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SELECT_NOMBRE_PROVEEDORES_SQL);
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_NOMBRE_PROVEEDORES_SQL);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 String proveedor = resultado.getString("nombre");
@@ -388,7 +398,7 @@ public class InspeccionReciboServicio {
     }
 
     public void eliminar(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) throws SQLException, ClassNotFoundException {
-        PreparedStatement ps = conexion.conectar().prepareStatement(DELETE_INSPECCION_RECIBO_SQL);
+        PreparedStatement ps = conexion.prepareStatement(DELETE_INSPECCION_RECIBO_SQL);
         ps.setString(1, noHoja);
         ps.setString(2, fechaFactura);
         ps.setString(3, noFactura);
@@ -397,9 +407,9 @@ public class InspeccionReciboServicio {
         ps.executeUpdate();
     }
 
-    public void modificar(Conexion conexion, InspeccionReciboM irm, InspeccionReciboM irm2) throws SQLException {
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SELECT_ID_INSPECCION_RECIBO_SQL);
-                PreparedStatement updateConsulta = conexion.conectar().prepareStatement(UPDATE_INSPECCION_RECIBO_SQL)) {
+    public void modificar(Connection conexion, InspeccionReciboM irm, InspeccionReciboM irm2) throws SQLException {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ID_INSPECCION_RECIBO_SQL);
+                PreparedStatement updateConsulta = conexion.prepareStatement(UPDATE_INSPECCION_RECIBO_SQL)) {
             consulta.setString(1, irm2.getCalibre());
             consulta.setString(2, irm2.getFechaFactura());
             consulta.setString(3, irm2.getNoRollo());
@@ -453,9 +463,9 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public void subirHI(Conexion conexion, InspeccionReciboM irm) throws SQLException {
+    public void subirHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
         String sqlInsertIr = "UPDATE " + this.tabla + " SET hojaInstruccion=? WHERE id_ir=?";
-        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setBytes(1, irm.getHojaIns());
             sqlInsert.setInt(2, irm.getId());
             sqlInsert.executeUpdate();
@@ -473,9 +483,9 @@ public class InspeccionReciboServicio {
         try {
             // Prepara la consulta SQL basada en la columna
             if (columna == 10) {
-                ps = conexion.conectar().prepareStatement(SELECT_FACTURA_SQL);
+                ps = conexion.prepareStatement(SELECT_FACTURA_SQL);
             } else if (columna == 11) {
-                ps = conexion.conectar().prepareStatement(SELECT_CERTIFICADO_SQL);
+                ps = conexion.prepareStatement(SELECT_CERTIFICADO_SQL);
             }
             ps.setString(1, id);
             rs = ps.executeQuery();
@@ -557,7 +567,7 @@ public class InspeccionReciboServicio {
         ResultSet rs;
         byte[] b = null;
         try {
-            PreparedStatement ps = conexion.conectar().prepareStatement(SELECT_HOJA_INSTRUCCION_SQL);
+            PreparedStatement ps = conexion.prepareStatement(SELECT_HOJA_INSTRUCCION_SQL);
             ps.setString(1, id);
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -596,9 +606,9 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public List<String> selectProveedores(Conexion conexion) throws SQLException {
+    public List<String> selectProveedores(Connection conexion) throws SQLException {
         List<String> listaProveedores = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SELECT_NOMBRE_PROVEEDORES_SQL);
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_NOMBRE_PROVEEDORES_SQL);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 String proveedor = resultado.getString("nombre");
@@ -622,7 +632,7 @@ public class InspeccionReciboServicio {
     public boolean existeNoRollo(String noRollo) throws ClassNotFoundException {
         try {
             String sql = "SELECT COUNT(noRollo) FROM " + this.tabla + " WHERE noRollo = ?";
-            PreparedStatement ps = conexion.conectar().prepareStatement(sql);
+            PreparedStatement ps = conexion.prepareStatement(sql);
             ps.setString(1, noRollo);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -653,8 +663,8 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public void agregarEspecificacion(Conexion conexion, String especificacion) {
-        try (PreparedStatement insertEspecificacion = conexion.conectar().prepareStatement("INSERT INTO especificacionesir(Especificacion) VALUES (?)")) {
+    public void agregarEspecificacion(Connection conexion, String especificacion) {
+        try (PreparedStatement insertEspecificacion = conexion.prepareStatement("INSERT INTO especificacionesir(Especificacion) VALUES (?)")) {
             insertEspecificacion.setString(1, especificacion);
             insertEspecificacion.executeUpdate();
         } catch (SQLException ex) {
@@ -781,9 +791,9 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public int getIdHI(Conexion conexion, InspeccionReciboM irm) throws SQLException {
+    public int getIdHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
         String sqlInsertIr = "SELECT id_ir FROM inspeccionrecibo WHERE fechaFactura=? AND noFactura=? AND noPedido=? AND noRollo=? AND pzKg=? AND noHoja=?";
-        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setString(1, irm.getFechaFactura());
             sqlInsert.setString(2, irm.getNoFactura());
             sqlInsert.setString(3, irm.getNoPedido());
@@ -804,9 +814,9 @@ public class InspeccionReciboServicio {
         return 0;
     }
 
-    public int getData(Conexion conexion, int id) throws SQLException {
+    public int getData(Connection conexion, int id) throws SQLException {
         String sqlInsertIr = "SELECT * FROM inspeccionrecibo WHERE id_ir=?";
-        try (PreparedStatement sqlInsert = conexion.conectar().prepareStatement(sqlInsertIr)) {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setInt(1, id);
             ResultSet rs = sqlInsert.executeQuery();
             return id;
@@ -835,10 +845,10 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public List<String> recuperarDescripciones(Conexion conexion, InspeccionReciboM inspeccionRecibo) {
+    public List<String> recuperarDescripciones(Connection conexion, InspeccionReciboM inspeccionRecibo) {
         List<String> descripciones = new ArrayList<>();
         try {
-            PreparedStatement consulta = conexion.conectar().prepareStatement("SELECT * FROM materiaprimasc WHERE calibre LIKE ? AND descripcionMP LIKE ?");
+            PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM materiaprimasc WHERE calibre LIKE ? AND descripcionMP LIKE ?");
             consulta.setString(1, "%" + inspeccionRecibo.getCalibre().substring(0, 2) + "%");
             consulta.setString(2, "%" + inspeccionRecibo.getpLamina() + "%");
 
@@ -854,10 +864,10 @@ public class InspeccionReciboServicio {
         return descripciones;
     }
 
-    public List<String> recuperarMedidas(Conexion conexion, InspeccionReciboM inspeccionRecibo) {
+    public List<String> recuperarMedidas(Connection conexion, InspeccionReciboM inspeccionRecibo) {
         List<String> medidas = new ArrayList<>();
         try {
-            PreparedStatement consulta = conexion.conectar().prepareStatement(SQL_CONSULTA_CALIBRE);
+            PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_CALIBRE);
             consulta.setString(1, "%" + inspeccionRecibo.getCalibre().substring(0, 2) + "%");
             ResultSet resultado = consulta.executeQuery();
 
@@ -872,9 +882,9 @@ public class InspeccionReciboServicio {
         return medidas;
     }
 
-    public List<String> recuperarMedidasCalibre(Conexion conexion, InspeccionReciboM inspeccionRecibo) {
+    public List<String> recuperarMedidasCalibre(Connection conexion, InspeccionReciboM inspeccionRecibo) {
         List<String> medidasCalibre = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SQL_CONSULTA_MEDIDAS_CALIBRE)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_MEDIDAS_CALIBRE)) {
             consulta.setString(1, "%" + inspeccionRecibo.getCalibre().substring(0, 2) + "%");
             ResultSet resultado2 = consulta.executeQuery();
 
@@ -888,9 +898,9 @@ public class InspeccionReciboServicio {
         return medidasCalibre;
     }
 
-    public List<String> recuperarEspecificaciones(Conexion conexion, String calibre) {
+    public List<String> recuperarEspecificaciones(Connection conexion, String calibre) {
         List<String> especificaciones = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.conectar().prepareStatement(SQL_CONSULTA_ESPECIFICACION)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_ESPECIFICACION)) {
             consulta.setString(1, calibre);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -904,10 +914,10 @@ public class InspeccionReciboServicio {
         return especificaciones;
     }
 
-    public EspecificacionM recuperarReferenciasEspecificacion(Conexion conexion, String especificacionTecnica) {
+    public EspecificacionM recuperarReferenciasEspecificacion(Connection conexion, String especificacionTecnica) {
         EspecificacionM especificacion = new EspecificacionM();
         try {
-            PreparedStatement consulta = conexion.conectar().prepareStatement(SQL_CONSULTA_REF_ESPECIFICACION);
+            PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_REF_ESPECIFICACION);
             consulta.setString(1, especificacionTecnica);
             ResultSet resultado = consulta.executeQuery();
             if (resultado.next()) { // Se obtiene la información de la bd

@@ -5,35 +5,44 @@ import Modelos.ProcedimientosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 public class AgregarDocumentosGUI extends javax.swing.JFrame {
 
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
-    private DocumentosM documento;
-    private ProcedimientosM procedimiento;
-
-    private String rutaArchivo;
-
+    private Connection conexion; // Conexión a la Base de Datos
+    private DocumentosM documento; // Maneja la información del documento 
+    private ProcedimientosM procedimiento; // maneja la información del procedimiento actual
+    private String rutaArchivo; // Guarda la ruta del nuevo documento
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
     public AgregarDocumentosGUI() {
-        initComponents();
+        inicializarVentanaYComponentes();
     }
 
     public AgregarDocumentosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
-        this.usuario = usuario;
-        this.conexion = Conexion.getInstance();
-        this.procedimiento = procedimiento;
-        this.documento = new DocumentosM();
-        this.cds = new ControlDocumentacionServicio();
-        initComponents();
+        try {
+            this.usuario = usuario;
+            this.conexion = Conexion.getInstance().conectar();
+            this.procedimiento = procedimiento;
+            this.documento = new DocumentosM();
+            this.cds = new ControlDocumentacionServicio();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir AgregarDocumentosGUI: ", ex);
+            Logger.getLogger(AgregarDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     @Override
@@ -147,6 +156,25 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
+        configurarDocumento();
+        cds.actualizarInfoDocumentos(conexion, documento);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
+        cds.abrirDocumentacionGUI(usuario, documento.getIdProceso());
+    }//GEN-LAST:event_btnGuardarActionPerformed
+
+    private void inicializarVentanaYComponentes() {
+        configurarVentana();
+    }
+
+    private void configurarVentana() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+    
+    private void configurarDocumento() {
         documento.setIdProcedimiento(procedimiento.getId());
         documento.setIdProceso(procedimiento.getIdp());
         documento.setRevision(txtRevision.getText());
@@ -155,12 +183,7 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
         if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
             cds.cargarArchivo(rutaArchivo, documento::setContenido);
         }
-
-        cds.actualizarInfoDocumentos(conexion, documento);
-        cerrarVentana();
-        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
-        cds.abrirDocumentacionGUI(usuario, documento.getIdProceso());
-    }//GEN-LAST:event_btnGuardarActionPerformed
+    }
 
     public void seleccionarArchivo() {
         rutaArchivo = seleccionarArchivoCertificado(txtNombreArchivo, rutaArchivo);
@@ -175,9 +198,10 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
         }
         return rutaArchivo;
     }
-
+   
     private void cerrarVentana() {
         AgregarDocumentosGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**
@@ -199,8 +223,6 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(AgregarDocumentosGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
         //</editor-fold>
 
         /* Create and display the form */
@@ -227,4 +249,4 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
 /*
 
 
-*/
+ */

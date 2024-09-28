@@ -4,18 +4,18 @@ public class AceptacionProducto {
 
     private int id;
     private String componente;
-    private byte[] rdPdf;
+    private byte[] archivo;
 
     public AceptacionProducto() {
         this.id = 0;
         this.componente = "";
-        this.rdPdf = null;
+        this.archivo = null;
     }
 
-    public AceptacionProducto(int id, String componente, byte[] rdPdf) {
+    public AceptacionProducto(int id, String componente, byte[] archivo) {
         this.id = id;
         this.componente = componente;
-        this.rdPdf = rdPdf;
+        this.archivo = archivo;
     }
 
     public int getId() {
@@ -34,11 +34,11 @@ public class AceptacionProducto {
         this.componente = componente;
     }
 
-    public byte[] getRdPdf() {
-        return rdPdf;
+    public byte[] getArchivo() {
+        return archivo;
     }
 
-    public void setRdPdf(byte[] rdPdf) {
-        this.rdPdf = rdPdf;
+    public void setArchivo(byte[] archivo) {
+        this.archivo = archivo;
     }
 }

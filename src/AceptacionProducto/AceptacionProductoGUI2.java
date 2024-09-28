@@ -7,6 +7,7 @@ import Servicios.Conexion;
 import Servicios.Utilidades;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.logging.Level;
@@ -18,30 +19,18 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
-    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de la aceptacion de producto
+    private Connection conexion; // Conexión a la Base de Datos
+    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de información del componente
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public AceptacionProductoGUI2() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI2: ", ex);
-            Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, "Error de conexión: " + ex.getMessage(), ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
     public AceptacionProductoGUI2(Usuarios usuario) {
-        try {
-            this.usuario = usuario;
-            this.conexion = Conexion.getInstance();
-            this.aceptacionPc1 = new AceptacionPc1();
-            this.aps = new AceptacionProductoServicio();
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI2: ", ex);
-            Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.usuario = usuario;
+        this.aceptacionPc1 = new AceptacionPc1();
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -161,18 +150,25 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
             return;
         }
 
-        String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // formato: "dd/mm/aaaa" 
+        String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // Se formatea a formato: "dd/mm/aaaa" 
 
         asignarValoresAceptacionProducto(fechaLiberacion);
         cerrarVentana();
         aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1);
     }//GEN-LAST:event_btnContinuarActionPerformed
 
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        configurarVentana();
-        configurarComponentes();
-        definirValoresPredeterminados();
-        inicializarListeners();
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.aps = new AceptacionProductoServicio();
+            configurarComponentes();
+            definirValoresPredeterminados();
+            inicializarListeners();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir AceptacionProductoGUI2: ", ex);
+            Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void configurarVentana() {
@@ -185,9 +181,9 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
     private void configurarComponentes() {
         try {
             aps.cargarNoRollos(conexion, cbxNoRollo);
-            aps.obtenerComponetes(conexion).forEach(cbxComponente::addItem);
+            aps.obtenerListaComponentes(conexion).forEach(cbxComponente::addItem);
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al Cargar los números de rollo: ", ex);
+            Utilidades.manejarExcepcion("ERROR al configurar los componentes: ", ex);
             Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -202,16 +198,17 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
         cbxComponente.addActionListener(cbxNoRollo);
     }
 
+    private void cerrarVentana() {
+        AceptacionProductoGUI2.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
+    }
+
     private void asignarValoresAceptacionProducto(String fechaLiberacion) {
         aceptacionPc1.setComponente(cbxComponente.getSelectedItem().toString());
         aceptacionPc1.setFecha(fechaLiberacion);
         aceptacionPc1.setNoRollo(cbxNoRollo.getSelectedItem().toString());
         aceptacionPc1.setInspVisual(txtInspeccionVisual.getText());
         aceptacionPc1.setObservacion(txtObservaciones.getText());
-    }
-
-    private void cerrarVentana() {
-        AceptacionProductoGUI2.this.dispose();
     }
 
     /**

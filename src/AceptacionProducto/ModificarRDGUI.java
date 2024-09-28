@@ -10,6 +10,7 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.logging.Level;
@@ -21,35 +22,24 @@ public class ModificarRDGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
-    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de la aceptacion de producto
-    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de la aceptacion de producto
-    private AceptacionPc3 aceptacionPc3; // Objeto para el manejo de la aceptacion de producto
-    private AceptacionPc3 aceptacionPc3Auxiliar; // Objeto auxiliar para el manejo de la aceptacion de producto
+    private Connection conexion; // Conexión a la Base de Datos
+    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de información del componente
+    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de información del componente
+    private AceptacionPc3 aceptacionPc3; // Objeto para el manejo de información del componente
+    private AceptacionPc3 aceptacionPc3Auxiliar; // Objeto auxiliar para el manejo de información del componente
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public ModificarRDGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Surgio un error al abrir ModificarRDGUI", ex);
-            Logger.getLogger(ModificarRDGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
     public ModificarRDGUI(AceptacionPc3 aceptacionPc3, Usuarios usuario, AceptacionPc1 aceptacionPc1, AceptacionPc2 aceptacionPc2) {
-        try {
-            this.usuario = usuario;
-            this.aceptacionPc1 = aceptacionPc1;
-            this.aceptacionPc2 = aceptacionPc2;
-            this.aceptacionPc3 = aceptacionPc3;
-            this.conexion = Conexion.getInstance();
-            this.aps = new AceptacionProductoServicio();
-            this.aceptacionPc3Auxiliar = inicializarAceptacionPc3Auxiliar(aceptacionPc3);
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al inicializar la ventana y componentes", ex);
-        }
+        this.usuario = usuario;
+        this.aceptacionPc1 = aceptacionPc1;
+        this.aceptacionPc2 = aceptacionPc2;
+        this.aceptacionPc3 = aceptacionPc3;
+        this.aceptacionPc3Auxiliar = inicializarAceptacionPc3Auxiliar(aceptacionPc3);
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -162,7 +152,7 @@ public class ModificarRDGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        if (aps.verificarRango(txtEspecificacion.getText(), txtValor.getText())) {
+        if (aps.esValorValido(txtEspecificacion.getText(), txtValor.getText())) {
             actualizarDatos();
             modificarDatos();
         } else {
@@ -175,23 +165,16 @@ public class ModificarRDGUI extends javax.swing.JFrame {
         aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1, aceptacionPc2);
     }//GEN-LAST:event_btnCancelarActionPerformed
 
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        configurarVentana();
-        definirValoresPredeterminados();
-    }
-
-    private AceptacionPc3 inicializarAceptacionPc3Auxiliar(AceptacionPc3 aceptacionPc3) {
-        return new AceptacionPc3(
-                aceptacionPc3.getId(),
-                aceptacionPc3.getComponente(),
-                aceptacionPc3.getNoOp(),
-                aceptacionPc3.getNoTroquel(),
-                aceptacionPc3.getFecha(),
-                aceptacionPc3.getVariable(),
-                aceptacionPc3.getEspecificacion(),
-                aceptacionPc3.getValor(),
-                0
-        );
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.aps = new AceptacionProductoServicio();
+            definirValoresPredeterminados();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Surgio un error al abrir ModificarRDGUI: ", ex);
+            Logger.getLogger(ModificarRDGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void configurarVentana() {
@@ -209,6 +192,20 @@ public class ModificarRDGUI extends javax.swing.JFrame {
         txtNoOperacion.setText(aceptacionPc3.getNoOp());
         txtVariable.setText(aceptacionPc3.getVariable());
         txtEspecificacion.setText(aceptacionPc3.getEspecificacion());
+    }
+
+    private AceptacionPc3 inicializarAceptacionPc3Auxiliar(AceptacionPc3 aceptacionPc3) {
+        return new AceptacionPc3(
+                aceptacionPc3.getId(),
+                aceptacionPc3.getComponente(),
+                aceptacionPc3.getNoOp(),
+                aceptacionPc3.getNoTroquel(),
+                aceptacionPc3.getFecha(),
+                aceptacionPc3.getVariable(),
+                aceptacionPc3.getEspecificacion(),
+                aceptacionPc3.getValor(),
+                0
+        );
     }
 
     private void actualizarDatos() {
@@ -231,19 +228,21 @@ public class ModificarRDGUI extends javax.swing.JFrame {
         }
     }
 
-    private void cerrarVentana() {
-        ModificarRDGUI.this.dispose();
-    }
-
     private void modificarDatos() {
         try {
-            aps.modificar(conexion, aceptacionPc3, aceptacionPc3Auxiliar);
+            aps.modificarAceptacionPc3(conexion, aceptacionPc3, aceptacionPc3Auxiliar);
             JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
             cerrarVentana();
             aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1, aceptacionPc2);
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Ha surgido un error y no se ha podido guardar el registro.", ex);
+            Utilidades.manejarExcepcion("ERROR al guardar el registro: ", ex);
+            Logger.getLogger(ModificarRDGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    private void cerrarVentana() {
+        ModificarRDGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**
@@ -290,5 +289,4 @@ public class ModificarRDGUI extends javax.swing.JFrame {
     private javax.swing.JTextField txtValor;
     private javax.swing.JTextField txtVariable;
     // End of variables declaration//GEN-END:variables
-
 }

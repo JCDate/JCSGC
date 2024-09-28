@@ -8,6 +8,7 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,34 +20,18 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
+    private Connection conexion; // Conexión a la Base de Datos
     private List<SolicitudesM> listaSolicitudes; // Lista de solicitudes de cambio
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
-    // Usuarios permitidos para ver solicitudes de cambio
-    private static final int USUARIO_ID_1 = 12; // Calidad
-    private static final int USUARIO_ID_2 = 8; // Sistemas
-
     public ControlDocumentosGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al abrir ControlDocumentosGUI: ", ex);
-            Logger.getLogger(ControlDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
     public ControlDocumentosGUI(Usuarios usuario) {
-        try {
-            this.usuario = usuario;
-            this.conexion = Conexion.getInstance();
-            this.listaSolicitudes = new ArrayList<>();
-            this.cds = new ControlDocumentacionServicio();
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al abrir ControlDocumentosGUI: ", ex);
-            Logger.getLogger(ControlDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.usuario = usuario;
+        this.listaSolicitudes = new ArrayList<>();
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -239,53 +224,53 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnDocAlmacenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocAlmacenActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 1);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 1);
     }//GEN-LAST:event_btnDocAlmacenActionPerformed
 
     private void btnDocRecursosHumanosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocRecursosHumanosActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 2);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 2);
     }//GEN-LAST:event_btnDocRecursosHumanosActionPerformed
 
     private void btnDocCalidadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocCalidadActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 3);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 3);
     }//GEN-LAST:event_btnDocCalidadActionPerformed
 
     private void btnDocVentasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocVentasActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 4);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 4);
     }//GEN-LAST:event_btnDocVentasActionPerformed
 
     private void btnDocManufacturaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocManufacturaActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 5);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 5);
     }//GEN-LAST:event_btnDocManufacturaActionPerformed
 
     private void btnDocComprasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocComprasActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 6);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 6);
     }//GEN-LAST:event_btnDocComprasActionPerformed
 
     private void btnDocProduccionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocProduccionActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 7);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 7);
     }//GEN-LAST:event_btnDocProduccionActionPerformed
 
     private void btnDocSatisfaccionClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocSatisfaccionClienteActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 8);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 8);
     }//GEN-LAST:event_btnDocSatisfaccionClienteActionPerformed
 
     private void btnDocRevisionGerencialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocRevisionGerencialActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 9);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 9);
     }//GEN-LAST:event_btnDocRevisionGerencialActionPerformed
 
     private void btnDocMejoraContinuaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDocMejoraContinuaActionPerformed
-        cds.abrirDocumentacionGUI(usuario, 10);
         cerrarVentana();
+        cds.abrirDocumentacionGUI(usuario, 10);
     }//GEN-LAST:event_btnDocMejoraContinuaActionPerformed
 
     private void btnSolicitudCambioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudCambioActionPerformed
@@ -293,14 +278,16 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
         cds.abrirSolicitudCambioGUI(usuario);
     }//GEN-LAST:event_btnSolicitudCambioActionPerformed
 
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        configurarVentana();
-        listaSolicitudes = cds.recuperarSolicitudes(conexion);
-
-        boolean usuarioAutorizado = usuario.getId() == USUARIO_ID_1 || usuario.getId() == USUARIO_ID_2;
-        boolean mostrarBoton = usuarioAutorizado && !listaSolicitudes.isEmpty();
-
-        btnSolicitudCambio.setVisible(mostrarBoton);
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            definirVisibilidadBotonSolicitud();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al abrir ControlDocumentosGUI: ", ex);
+            Logger.getLogger(ControlDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void configurarVentana() {
@@ -310,8 +297,24 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void definirVisibilidadBotonSolicitud() {
+        try {
+            if (cds.esUsuarioAutorizado(usuario)) {
+                this.listaSolicitudes = cds.obtenerSolicitudes(conexion);
+                boolean mostrarBoton = !listaSolicitudes.isEmpty();
+                btnSolicitudCambio.setVisible(mostrarBoton);
+            } else {
+                btnSolicitudCambio.setVisible(false);
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al validar el Usuario: ", ex);
+            Logger.getLogger(ControlDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     private void cerrarVentana() {
         ControlDocumentosGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**

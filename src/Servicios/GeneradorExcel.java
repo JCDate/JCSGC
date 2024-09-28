@@ -9,9 +9,10 @@ import Modelos.DatosIRM;
 import Modelos.InspeccionReciboM;
 import Modelos.RugosidadDurezaM;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -40,10 +41,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class GeneradorExcel {
 
-    private Conexion conexion;
+    private Connection conexion;
 
     public GeneradorExcel() {
-        this.conexion = Conexion.getInstance();
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+        } catch (SQLException ex) {
+            Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     // Servicios y Utilidades
@@ -230,21 +235,32 @@ public class GeneradorExcel {
         return celda.getStringCellValue().equalsIgnoreCase("√");
     }
 
-    public String generarHojaInstruccion(Conexion conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, List<JTable> listTablas, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
-        String filePath = "HojaInstruccion.xlsx"; // Se obtiene el formato editable de la Hoja de Instrucción
+    public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, List<JTable> listTablas, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("jc/doctos/HojaInstruccion.xlsx");
 
-        try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
-            XSSFWorkbook workbook = new XSSFWorkbook(fileInputStream);
+        if (inputStream != null) {
+            XSSFWorkbook workbook = null;
+            try {
+                workbook = new XSSFWorkbook(inputStream);  // Crear el workbook usando el inputStream
+                procesarPaginaUnoHJ(workbook, irm, dirm, listaAL, listaRD);
+                procesarPaginaDosHJ(workbook, conexion, dirm, listTablas);
 
-            procesarPaginaUnoHJ(workbook, irm, dirm, listaAL, listaRD);
-            procesarPaginaDosHJ(workbook, conexion, dirm, listTablas);
+                // Crear un nuevo archivo de Excel para guardar los cambios
+                nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(dirm.getFechaInspeccion()) + ".xlsx ";  // Ruta del nuevo archivo de Excel
+                FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo);
+                workbook.write(fos);
 
-            // Crear un nuevo archivo de Excel para guardar los cambios
-            nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(dirm.getFechaInspeccion()) + ".xlsx ";  // Ruta del nuevo archivo de Excel
-            FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo);
-            workbook.write(fos);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error al GENERAR LA HOJA DE INSTRUCCIÓN EXCEL EDITOR: " + e.getMessage());
+            } catch (IOException e) {
+                aps.manejarExcepcion("Error al procesar el archivo Excel: ", e);
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Utilidades.manejarExcepcion("Error al generar el Archivo de Retención Dimensional: ", e);
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "No se pudo encontrar el archivo Excel.");
         }
         return nuevaRutaArchivo;
     }
@@ -340,7 +356,7 @@ public class GeneradorExcel {
         setValorCeldasHojaInstruccion(sheet, 60, 1, dirm.getInspector());
     }
 
-    private void procesarPaginaDosHJ(XSSFWorkbook workbook, Conexion conexion, DatosIRM dirm, List<JTable> listTablas) throws SQLException {
+    private void procesarPaginaDosHJ(XSSFWorkbook workbook, Connection conexion, DatosIRM dirm, List<JTable> listTablas) throws SQLException {
         Sheet sheet2 = workbook.getSheetAt(1);
         workbook.setSheetName(workbook.getSheetIndex(sheet2), formato.eliminarSeparadores(dirm.getFechaInspeccion()));
 
@@ -424,32 +440,47 @@ public class GeneradorExcel {
         }
     }
 
-    public String generarExcelRD(Conexion conexion, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
-        String filePath = "RETENCION-DIMENSIONAL.xlsx";
+    public String generarArchivoRetencionDimensional(Connection conexion, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("jc/doctos/RETENCION-DIMENSIONAL.xlsx");
 
-        try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
-            XSSFWorkbook workbook = new XSSFWorkbook(fileInputStream);
-   
-            
-            List<AceptacionPc1> ap1m = aps.recuperarAP1(conexion, ap3m.get(0).getComponente());
+        if (inputStream != null) {
+            XSSFWorkbook workbook = null;
+            try {
+                workbook = new XSSFWorkbook(inputStream);  // Crear el workbook usando el inputStream
 
-            if (ap1m == null || ap1m.isEmpty()) { // Si es null y vacío...
-                JOptionPane.showMessageDialog(null, "No se encontró información sobre los componentes");
-            } else {
-                procesarPaginaUnoRD(workbook, ap1m);
-                procesarPaginaDosRD(conexion, workbook, ap1m, ap3m, aps, apc2);
+                // Recuperar la información relacionada
+                List<AceptacionPc1> ap1m = aps.recuperarAP1(conexion, ap3m.get(0).getComponente());
+
+                if (ap1m == null || ap1m.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "No se encontró información sobre los componentes");
+                } else {
+                    // Procesar el contenido del archivo Excel
+                    procesarPaginaUnoRD(workbook, ap1m);
+                    procesarPaginaDosRD(conexion, workbook, ap1m, ap3m, aps, apc2);
+                }
+
+                // Crear un nuevo archivo Excel para guardar los cambios
+                String newFilePath = "-" + ap1m.get(0).getComponente() + ".xlsx";
+                try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
+                    workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
+                    nuevaRutaArchivoRD = newFilePath;
+                }
+
+            } catch (IOException e) {
+                aps.manejarExcepcion("Error al procesar el archivo Excel: ", e);
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Utilidades.manejarExcepcion("Error al generar el Archivo de Retención Dimensional: ", e);
+                }
             }
-
-            // Crear un nuevo archivo de Excel para guardar los cambios
-            String newFilePath = "-" + ap1m.get(0).getComponente() + ".xlsx";
-            try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
-                workbook.write(fos);
-                nuevaRutaArchivoRD = newFilePath;
-            }
-        } catch (IOException e) {
-            aps.manejarExcepcion("Error al procesar el archivo Excel: ", e); // Se muestra el mensaje de la excepción al usuario
+        } else {
+            JOptionPane.showMessageDialog(null, "No se pudo encontrar el archivo Excel.");
         }
+
         return nuevaRutaArchivoRD;
+
     }
 
     private void procesarPaginaUnoRD(XSSFWorkbook workbook, List<AceptacionPc1> ap1m) {
@@ -482,7 +513,7 @@ public class GeneradorExcel {
         }
     }
 
-    private void procesarPaginaDosRD(Conexion conexion, XSSFWorkbook workbook, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m, AceptacionProductoServicio aps, AceptacionPc2 apc2) {
+    private void procesarPaginaDosRD(Connection conexion, XSSFWorkbook workbook, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m, AceptacionProductoServicio aps, AceptacionPc2 apc2) {
         XSSFSheet hoja2 = workbook.getSheetAt(1);
 
         mostrarComponentes(hoja2, ap1m, ap3m);
@@ -657,9 +688,8 @@ public class GeneradorExcel {
 
                     Map<String, String> variablesMap = entrada2.getValue();
                     int columna = columnaBase; // Inicializar la columna en función de columnaBase
-//////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Crear el estilo de celda fuera del bucle
+                    // Crear el estilo de celda fuera del bucle
                     CellStyle cellStyle = workbook.createCellStyle();
                     Row sourceRow = sheet2.getRow(9);
                     Cell sourceCell = sourceRow.getCell(columnaBase);
@@ -717,7 +747,7 @@ public class GeneradorExcel {
                         columna += 2;
                     }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    ////////////////////////////////////////////////////////////
                     // Concatenar valores de 'noOrden'
                     Set<String> valoresUnicosNoOrden = new HashSet<>();
                     Set<String> valoresUnicosTamLote = new HashSet<>();
@@ -852,11 +882,13 @@ public class GeneradorExcel {
     private void mostrarProcesos(XSSFSheet sheet, List<AceptacionPc1> ap1m) {
         String noOps = ap1m.get(0).getNoOps();
 
-        for (int i = 1; i <= 5; i++) {  // Asumiendo que 5 es el valor máximo para noOps en formato numérico.
+
+        for (int i = 1; i <= 5; i++) {
+
             Row rowNoOps;
             Cell cellNoOps;
 
-            if (noOps.equals(String.valueOf(i)) || noOps.equalsIgnoreCase("IF")) {
+            if (noOps.equalsIgnoreCase("IF")) {
                 rowNoOps = sheet.getRow(118);
                 if (rowNoOps == null) {
                     rowNoOps = sheet.createRow(118);
@@ -866,56 +898,69 @@ public class GeneradorExcel {
                     cellNoOps = rowNoOps.createCell(28);
                 }
                 cellNoOps.setCellValue("X");
-                break;  // No need to check other cases once the condition is met
-            } else {
-                switch (i) {
-                    case 1:
-                        rowNoOps = sheet.getRow(4);
-                        if (rowNoOps == null) {
-                            rowNoOps = sheet.createRow(4);
-                        }
-                        cellNoOps = rowNoOps.getCell(12);
-                        if (cellNoOps == null) {
-                            cellNoOps = rowNoOps.createCell(12);
-                        }
-                        cellNoOps.setCellValue("X");
-                        break;
-                    case 2:
-                        rowNoOps = sheet.getRow(4);
-                        if (rowNoOps == null) {
-                            rowNoOps = sheet.createRow(4);
-                        }
-                        cellNoOps = rowNoOps.getCell(16);
-                        if (cellNoOps == null) {
-                            cellNoOps = rowNoOps.createCell(16);
-                        }
-                        cellNoOps.setCellValue("X");
-                        break;
-                    case 3:
-                        rowNoOps = sheet.getRow(42);
-                        if (rowNoOps == null) {
-                            rowNoOps = sheet.createRow(42);
-                        }
-                        cellNoOps = rowNoOps.getCell(20);
-                        if (cellNoOps == null) {
-                            cellNoOps = rowNoOps.createCell(20);
-                        }
-                        cellNoOps.setCellValue("X");
-                        break;
-                    case 4:
-                        rowNoOps = sheet.getRow(80);
-                        if (rowNoOps == null) {
-                            rowNoOps = sheet.createRow(80);
-                        }
-                        cellNoOps = rowNoOps.getCell(24);
-                        if (cellNoOps == null) {
-                            cellNoOps = rowNoOps.createCell(24);
-                        }
-                        cellNoOps.setCellValue("XXX");
-                        break;
-                }
+                break;
+            }
+
+            switch (i) {
+                case 1:
+                    rowNoOps = sheet.getRow(4);
+                    if (rowNoOps == null) {
+                        rowNoOps = sheet.createRow(4);
+                    }
+                    cellNoOps = rowNoOps.getCell(12);
+                    if (cellNoOps == null) {
+                        cellNoOps = rowNoOps.createCell(12);
+                    }
+                    cellNoOps.setCellValue("X");
+                    break;
+                case 2:
+                    rowNoOps = sheet.getRow(4);
+                    if (rowNoOps == null) {
+                        rowNoOps = sheet.createRow(4);
+                    }
+                    cellNoOps = rowNoOps.getCell(16);
+                    if (cellNoOps == null) {
+                        cellNoOps = rowNoOps.createCell(16);
+                    }
+                    cellNoOps.setCellValue("X");
+                    break;
+                case 3:
+                    rowNoOps = sheet.getRow(42);
+                    if (rowNoOps == null) {
+                        rowNoOps = sheet.createRow(42);
+                    }
+                    cellNoOps = rowNoOps.getCell(20);
+                    if (cellNoOps == null) {
+                        cellNoOps = rowNoOps.createCell(20);
+                    }
+                    cellNoOps.setCellValue("X");
+                    break;
+                case 4:
+  
+                    rowNoOps = sheet.getRow(80);
+                    if (rowNoOps == null) {
+                        rowNoOps = sheet.createRow(80);
+                    }
+                    cellNoOps = rowNoOps.getCell(24);
+                    if (cellNoOps == null) {
+                        cellNoOps = rowNoOps.createCell(24);
+                    }
+                    cellNoOps.setCellValue("X");
+                    break;
+                case 5:
+                    rowNoOps = sheet.getRow(118);
+                    if (rowNoOps == null) {
+                        rowNoOps = sheet.createRow(118);
+                    }
+                    cellNoOps = rowNoOps.getCell(28);
+                    if (cellNoOps == null) {
+                        cellNoOps = rowNoOps.createCell(28);
+                    }
+                    cellNoOps.setCellValue("X");
+                    break;
             }
         }
+
     }
 
     private void mostrarComponentes(XSSFSheet sheet, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m) {
