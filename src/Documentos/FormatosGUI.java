@@ -1,6 +1,5 @@
 package Documentos;
 
-import AceptacionProducto.AceptacionProductoGUI;
 import Modelos.FormatosM;
 import Modelos.Iconos;
 import Modelos.ProcedimientosM;
@@ -157,7 +156,7 @@ public class FormatosGUI extends javax.swing.JFrame {
     private void tblFormatosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblFormatosMouseClicked
         int columnaSeleccionada = tblFormatos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblFormatos.rowAtPoint(evt.getPoint());
-        if (esCeldaValida(filaSeleccionada, columnaSeleccionada)) {
+        if (Utilidades.esCeldaValida(tblFormatos, filaSeleccionada, columnaSeleccionada)) {
             manejarCeldaSeleccionada(filaSeleccionada, columnaSeleccionada);
         }
     }//GEN-LAST:event_tblFormatosMouseClicked
@@ -210,10 +209,6 @@ public class FormatosGUI extends javax.swing.JFrame {
         modeloTabla.setColumnIdentifiers(nombresColumnas);
 
         return modeloTabla;
-    }
-
-    private boolean esCeldaValida(int filaSeleccionada, int columnaSeleccionada) {
-        return filaSeleccionada < tblFormatos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblFormatos.getColumnCount() && columnaSeleccionada >= 0;
     }
 
     public void mostrarDatosTabla() {

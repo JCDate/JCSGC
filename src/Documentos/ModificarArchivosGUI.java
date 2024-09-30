@@ -18,7 +18,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 
 public class ModificarArchivosGUI extends javax.swing.JFrame {
 
@@ -27,8 +26,8 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     private Connection conexion; // Conexión a la Base de Datos
     private DocumentosM documento; // Manejar la informacion del archivo
     private ProcesosM proceso; // Manejar la informacion del archivo
-    private String rutaArchivo;
-    private String tipoOperacion;
+    private String rutaArchivo; // Almacena la dirección del archivo
+    private String tipoOperacion; // Define si la operación corresponde a un documento, proceso o procedimiento
     private ProcedimientosM procedimiento; // Manejar la informacion del formato
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
@@ -214,24 +213,19 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
                 lblTitulo.setText("ACTUALIZAR DOCUMENTOS: ");
         }
     }
-    
+
     private void cerrarVentana() {
         ModificarArchivosGUI.this.dispose();
         Conexion.getInstance().desconectar(conexion);
     }
 
     private void seleccionarArchivo() {
-        rutaArchivo = seleccionarArchivoCertificado(txtNombreArchivo, rutaArchivo);
-    }
-
-    private String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
         File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
         if (archivoSeleccionado != null) {
             String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
             rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
-            textField.setText(nombreArchivo);
+            txtNombreArchivo.setText(nombreArchivo);
         }
-        return rutaArchivo;
     }
 
     private void actualizarDocumento() {
@@ -257,7 +251,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
         cds.abrirFormatosGUI(usuario, procedimiento);
     }
-    
+
     private void actualizarDiagrama() {
         proceso.setNombreDT(txtNombreArchivo.getText());
         if (rutaArchivo != null && !rutaArchivo.isEmpty()) {

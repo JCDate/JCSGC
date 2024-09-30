@@ -3,27 +3,29 @@ package InspeccionRecibo;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.InspeccionReciboServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
 
-    // Usuario y Conexión a la base de datos
-    private Usuarios usuario;
-    private Conexion conexion;
-    
-    // Servicios y Utilidades
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Connection conexion; // Conexión a la Base de Datos
+    private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
 
     public AgregarEspecificacionHIGUI() {
         inicializarVentanaYComponentes();
     }
 
-    public AgregarEspecificacionHIGUI(Connection conexion, Usuarios usuario) {
+    public AgregarEspecificacionHIGUI(Usuarios usuario) {
         this.usuario = usuario;
         inicializarVentanaYComponentes();
     }
@@ -110,15 +112,26 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.irs = new InspeccionReciboServicio();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir AgregarEspecificacionHIGUI: ", ex);
+            Logger.getLogger(AgregarEspecificacionHIGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private void configurarVentana() {
         initComponents(); 
         this.setResizable(false); 
         this.setLocationRelativeTo(null); 
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
-        this.conexion = Conexion.getInstance(); 
     }
 
     private void cerrarVentana() {
         AgregarEspecificacionHIGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**

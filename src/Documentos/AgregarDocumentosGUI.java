@@ -16,10 +16,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 
 public class AgregarDocumentosGUI extends javax.swing.JFrame {
 
+    // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
     private DocumentosM documento; // Maneja la información del documento 
@@ -32,17 +32,10 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
     }
 
     public AgregarDocumentosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
-        try {
-            this.usuario = usuario;
-            this.conexion = Conexion.getInstance().conectar();
-            this.procedimiento = procedimiento;
-            this.documento = new DocumentosM();
-            this.cds = new ControlDocumentacionServicio();
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Abrir AgregarDocumentosGUI: ", ex);
-            Logger.getLogger(AgregarDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
+        this.usuario = usuario;
+        this.procedimiento = procedimiento;
+        this.documento = new DocumentosM();
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -164,7 +157,14 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
-        configurarVentana();
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir AgregarDocumentosGUI: ", ex);
+            Logger.getLogger(AgregarDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void configurarVentana() {
@@ -173,7 +173,16 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
-    
+
+    private void seleccionarArchivo() {
+        File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
+        if (archivoSeleccionado != null) {
+            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
+            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
+            txtNombreArchivo.setText(nombreArchivo);
+        }
+    }
+
     private void configurarDocumento() {
         documento.setIdProcedimiento(procedimiento.getId());
         documento.setIdProceso(procedimiento.getIdp());
@@ -185,20 +194,6 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
         }
     }
 
-    public void seleccionarArchivo() {
-        rutaArchivo = seleccionarArchivoCertificado(txtNombreArchivo, rutaArchivo);
-    }
-
-    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
-        File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
-            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
-            textField.setText(nombreArchivo);
-        }
-        return rutaArchivo;
-    }
-   
     private void cerrarVentana() {
         AgregarDocumentosGUI.this.dispose();
         Conexion.getInstance().desconectar(conexion);
@@ -246,7 +241,3 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
     private javax.swing.JTextField txtRevision;
     // End of variables declaration//GEN-END:variables
 }
-/*
-
-
- */

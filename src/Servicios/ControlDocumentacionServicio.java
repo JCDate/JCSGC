@@ -50,7 +50,7 @@ public class ControlDocumentacionServicio {
     Connection conexion = Conexion.getInstance().conectar();
 
     public boolean esUsuarioAutorizado(Usuarios usuario) {
-        return usuario.getId() == 12 || usuario.getId() == 8;
+        return usuario.getId() == 12 || usuario.getId() == 8 || usuario.getId() == 15 || usuario.getId() == 17;
     }
 
     public void abrirModificarInfoGUI(Usuarios usr, ProcesosM procesos) {
@@ -162,7 +162,7 @@ public class ControlDocumentacionServicio {
         return procedimientos;
     }
 
-    public List<DocumentosM> recuperarDocumentos(Connection conexion, int id) throws SQLException {
+    public List<DocumentosM> obtenerDocumentos(Connection conexion, int id) throws SQLException {
         List<DocumentosM> documentos = new ArrayList<>();
         String sql = "SELECT * FROM documentos WHERE idProcedimiento = ?";
         try (PreparedStatement consulta =  conexion.prepareStatement(sql)) {
@@ -471,7 +471,7 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public List<SolicitudesM> recuperarSolicitudes(Connection conexion) throws SQLException {
+    public List<SolicitudesM> obtenerSolicitudes(Connection conexion) throws SQLException {
         List<SolicitudesM> listaSolicitudes = new ArrayList<>();
         String sqlConsulta = "SELECT * FROM solicitudescambio";
         try (PreparedStatement consulta =  conexion.prepareStatement(sqlConsulta)) {

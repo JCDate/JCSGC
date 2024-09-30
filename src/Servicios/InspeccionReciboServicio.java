@@ -383,7 +383,7 @@ public class InspeccionReciboServicio {
         return inspectores;
     }
 
-    public List<String> recuperarProveedores(Connection conexion) throws SQLException {
+    public List<String> obtenerProveedores(Connection conexion) throws SQLException {
         List<String> proveedores = new ArrayList<>();
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_NOMBRE_PROVEEDORES_SQL);
                 ResultSet resultado = consulta.executeQuery()) {

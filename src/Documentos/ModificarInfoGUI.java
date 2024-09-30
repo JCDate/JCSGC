@@ -5,9 +5,14 @@ import Modelos.ProcesosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
@@ -15,11 +20,11 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
-    private ProcesosM proceso;
+    private Connection conexion; // Conexión a la Base de Datos
+    private ProcesosM proceso; // Gestiona la información del proceso
     private ProcedimientosM procedimiento; // Manejar la información del procedimiento
     private ControlDocumentacionServicio cds; // Servicios y Utilidades
-    private String tipoOperacion;
+    private String tipoOperacion; // Define si la operación corresponde a un documento, proceso o procedimiento
 
     public ModificarInfoGUI() {
         inicializarVentanaYComponentes();
@@ -27,20 +32,16 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
 
     public ModificarInfoGUI(Usuarios usuario, ProcedimientosM procedimiento) {
         this.usuario = usuario;
-        this.conexion = Conexion.getInstance();
         this.procedimiento = procedimiento;
         this.tipoOperacion = "modificar";
-        this.cds = new ControlDocumentacionServicio();
         inicializarVentanaYComponentes();
     }
 
     public ModificarInfoGUI(Usuarios usuario, ProcesosM proceso) {
         this.usuario = usuario;
-        this.conexion = Conexion.getInstance();
         this.proceso = proceso;
         this.procedimiento = new ProcedimientosM();
         this.tipoOperacion = "agregar";
-        this.cds = new ControlDocumentacionServicio();
         inicializarVentanaYComponentes();
     }
 
@@ -158,7 +159,6 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
         if (tipoOperacion.equals("modificar")) {
             actualizarInformacion();
             cds.guardarCambiosProcedimiento(conexion, procedimiento);
-
             cerrarVentana();
             JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
             cds.abrirDocumentacionGUI(usuario, procedimiento.getIdp());
@@ -167,14 +167,20 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
             cds.agregarProcedimiento(procedimiento);
             cerrarVentana();
             JOptionPane.showMessageDialog(this, "DATOS GUARDADOS");
-
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
-        configurarVentana();
-        if (tipoOperacion.equals("modificar")) {
-            inicializarCampos();
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            if (tipoOperacion.equals("modificar")) {
+                inicializarCampos();
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir ModificarInfoGUI: ", ex);
+            Logger.getLogger(ModificarInfoGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -185,10 +191,6 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void cerrarVentana() {
-        ModificarInfoGUI.this.dispose();
-    }
-
     private void inicializarCampos() {
         txtNo.setText(procedimiento.getNo());
         txtCodigo.setText(procedimiento.getCodigo());
@@ -197,10 +199,25 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
         txtDueñoProceso.setText(procedimiento.getEncargado());
     }
 
+    private void cerrarVentana() {
+        ModificarInfoGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
+    }
+
     private void actualizarInformacion() {
         procedimiento.setNo(txtNo.getText());
         procedimiento.setCodigo(txtCodigo.getText());
         procedimiento.setRevision(txtRevision.getText());
+        procedimiento.setProcedimiento(txtProcedimiento.getText());
+        procedimiento.setEncargado(txtDueñoProceso.getText());
+    }
+
+    private void agregarInformacion() {
+        procedimiento.setIdp(proceso.getId());
+        procedimiento.setNo(txtNo.getText());
+        procedimiento.setCodigo(txtCodigo.getText());
+        procedimiento.setRevision(txtRevision.getText());
+        procedimiento.setProceso(proceso.getProceso());
         procedimiento.setProcedimiento(txtProcedimiento.getText());
         procedimiento.setEncargado(txtDueñoProceso.getText());
     }
@@ -221,13 +238,7 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ModificarInfoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ModificarInfoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ModificarInfoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(ModificarInfoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
@@ -255,15 +266,4 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
     private javax.swing.JTextField txtProcedimiento;
     private javax.swing.JTextField txtRevision;
     // End of variables declaration//GEN-END:variables
-
-    private void agregarInformacion() {
-
-        procedimiento.setIdp(proceso.getId());
-        procedimiento.setNo(txtNo.getText());
-        procedimiento.setCodigo(txtCodigo.getText());
-        procedimiento.setRevision(txtRevision.getText());
-        procedimiento.setProceso(proceso.getProceso());
-        procedimiento.setProcedimiento(txtProcedimiento.getText());
-        procedimiento.setEncargado(txtDueñoProceso.getText());
-    }
 }

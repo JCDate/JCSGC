@@ -1,7 +1,6 @@
 package Documentos;
 
 import Modelos.Iconos;
-import Modelos.ProcesosM;
 import Modelos.SolicitudesM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
@@ -11,6 +10,7 @@ import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +26,11 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
-    private ProcesosM proceso; // Objeto para manejar la información del proceso
+    private Connection conexion; // Conexión a la Base de Datos
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
     private List<SolicitudesM> listaSolicitudes; // Lista de Solicitudes
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
-    // Columnas de la tabla 
     // Columnas de la tabla
     private static final int COLUMNA_CODIGO = 0;
     private static final int COLUMNA_PROCESO = 1;
@@ -48,25 +46,13 @@ public class SolicitudesGUI extends javax.swing.JFrame {
     private static final int COLUMNA_BTN_RECHAZAR = 11;
 
     public SolicitudesGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al abrir SolicitudesGUI: ", ex);
-            Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
     public SolicitudesGUI(Usuarios usuario) {
-        try {
-            this.usuario = usuario;
-            this.conexion = Conexion.getInstance();
-            this.listaSolicitudes = new ArrayList<>();
-            this.cds = new ControlDocumentacionServicio();
-            inicializarVentanaYComponentes();
-        } catch (ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al abrir SolicitudesGUI: ", ex);
-            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.usuario = usuario;
+        this.listaSolicitudes = new ArrayList<>();
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -151,7 +137,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         int columnaSeleccionada = tblSolicitudes.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblSolicitudes.rowAtPoint(evt.getPoint());
 
-        if (esCeldaValida(filaSeleccionada, columnaSeleccionada)) {
+        if (Utilidades.esCeldaValida(tblSolicitudes, filaSeleccionada, columnaSeleccionada)) {
             String id = (String) tblSolicitudes.getValueAt(filaSeleccionada, 0);
             Object value = tblSolicitudes.getValueAt(filaSeleccionada, columnaSeleccionada);
 
@@ -169,27 +155,37 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
     public void cerrarVentana() {
         SolicitudesGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
-    private void inicializarVentanaYComponentes() throws ClassNotFoundException {
-        configurarVentana();
-        inicializarTabla();
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            inicializarTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al abrir SolicitudesGUI: ", ex);
+            Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    private boolean esCeldaValida(int filaSeleccionada, int columnaSeleccionada) {
-        return filaSeleccionada < tblSolicitudes.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblSolicitudes.getColumnCount() && columnaSeleccionada >= 0;
+    private void configurarVentana() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
     private void inicializarTabla() {
         try {
             this.modeloTabla = construirModeloTabla();
-            listaSolicitudes = cds.recuperarSolicitudes(conexion);
-            DefaultTableModel tableModel = construirModeloTabla();
-            tblSolicitudes.setModel(tableModel);
+            listaSolicitudes = cds.obtenerSolicitudes(conexion);
+            tblSolicitudes.setModel(modeloTabla);
             tblSolicitudes.setRowHeight(40);
             mostrarDatosTabla();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al inicializar laa tabla: ", ex);
+            Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
             Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -208,21 +204,10 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         return modeloTabla;
     }
 
-    private void configurarVentana() {
-        initComponents();
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-    }
-
     public void mostrarDatosTabla() {
         limpiarTabla();
         llenarTabla();
         configurarRenderizacionTabla();
-    }
-
-    private void configurarRenderizacionTabla() {
-        tblSolicitudes.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     private void limpiarTabla() {
@@ -257,6 +242,84 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         fila[COLUMNA_BTN_ACEPTAR] = btnAceptar;
         fila[COLUMNA_BTN_RECHAZAR] = btnRechazar;
         return fila;
+    }
+
+    private void configurarRenderizacionTabla() {
+        tblSolicitudes.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    private void manejarBoton(String textoBoton, String id, int filaSeleccionada, int columnaSeleccionada) {
+        switch (textoBoton) {
+            case "Vacío":
+                JOptionPane.showMessageDialog(null, "No hay archivo");
+                break;
+            default:
+                manejarAccion(columnaSeleccionada, id, filaSeleccionada);
+                break;
+        }
+    }
+
+    private void manejarAccion(int columnaSeleccionada, String id, int filaSeleccionada) {
+        switch (columnaSeleccionada) {
+            case 9: {
+                try {
+                    cds.ejecutarArchivoSC(id);
+                } catch (ClassNotFoundException | SQLException ex) {
+                    Utilidades.manejarExcepcion("ERROR al ejecutar el archivo: ", ex);
+                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            break;
+            case 10: {
+                try {
+                    aprobarSolicitud(filaSeleccionada);
+                } catch (SQLException | ClassNotFoundException ex) {
+                    Utilidades.manejarExcepcion("ERROR al aprobar la solicitud: ", ex);
+                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            break;
+            case 11: {
+                try {
+                    eliminarSolicitud(id);
+                } catch (SQLException ex) {
+                    Utilidades.manejarExcepcion("ERROR al eliminar la solicitud: ", ex);
+                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            break;
+        }
+    }
+
+    private void aprobarSolicitud(int filaSeleccionada) throws SQLException, ClassNotFoundException {
+        int respuestaA = JOptionPane.showConfirmDialog(this,
+                "LA ACTUALIZACIÓN DE DOCUMENTOS SERÁ IRREVERSIBLE, ¿ESTÁS DE ACUERDO?",
+                "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+
+        if (respuestaA == JOptionPane.YES_OPTION) {
+            cds.aceptarSolicitud(listaSolicitudes.get(filaSeleccionada));
+            JOptionPane.showMessageDialog(null, "LA SOLICITUD DE CAMBIO FUE APROBADA");
+            cerrarVentana();
+            cds.abrirSolicitudCambioGUI(usuario);
+        }
+    }
+
+    private void eliminarSolicitud(String id) throws SQLException {
+        int respuestaE = JOptionPane.showConfirmDialog(this,
+                "LA INFORMACIÓN DE LA SOLICITUD DE CAMBIO SERÁ ELIMINADA, ¿ESTÁS DE ACUERDO?",
+                "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+
+        if (respuestaE == JOptionPane.YES_OPTION) {
+            try {
+                cds.eliminarSolicitud(id);
+                cerrarVentana();
+                JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
+                cds.abrirSolicitudCambioGUI(usuario);
+            } catch (ClassNotFoundException ex) {
+                Utilidades.manejarExcepcion("ERROR al eliminar el archivo: ", ex);
+                Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
     /**
@@ -294,74 +357,4 @@ public class SolicitudesGUI extends javax.swing.JFrame {
     private javax.swing.JLabel lblSolicitudesCambios;
     private javax.swing.JTable tblSolicitudes;
     // End of variables declaration//GEN-END:variables
-
-    private void manejarBoton(String textoBoton, String id, int filaSeleccionada, int columnaSeleccionada) {
-        switch (textoBoton) {
-            case "Vacío":
-                JOptionPane.showMessageDialog(null, "No hay archivo");
-                break;
-            default:
-                manejarAccion(columnaSeleccionada, id, filaSeleccionada);
-                break;
-        }
-    }
-
-    private void manejarAccion(int columnaSeleccionada, String id, int filaSeleccionada) {
-        switch (columnaSeleccionada) {
-            case 9: {
-                try {
-                    cds.ejecutarArchivoSC(id);
-                } catch (ClassNotFoundException | SQLException ex) {
-                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            break;
-            case 10: {
-                try {
-                    aprobarSolicitud(filaSeleccionada);
-                } catch (SQLException | ClassNotFoundException ex) {
-                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            break;
-            case 11: {
-                try {
-                    eliminarSolicitud(id);
-                } catch (SQLException ex) {
-                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            break;
-        }
-    }
-
-    private void aprobarSolicitud(int filaSeleccionada) throws SQLException, ClassNotFoundException {
-        int respuestaA = JOptionPane.showConfirmDialog(this,
-                "LA ACTUALIZACIÓN DE DOCUMENTOS SERÁ IRREVERSIBLE, ¿ESTÁS DE ACUERDO?",
-                "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-
-        if (respuestaA == JOptionPane.YES_OPTION) {
-            cds.aceptarSolicitud(listaSolicitudes.get(filaSeleccionada));
-            JOptionPane.showMessageDialog(null, "LA SOLICITUD DE CAMBIO FUE APROBADA");
-            cerrarVentana();
-            cds.abrirSolicitudCambioGUI(usuario);
-        }
-    }
-
-    private void eliminarSolicitud(String id) throws SQLException {
-        int respuestaE = JOptionPane.showConfirmDialog(this,
-                "LA INFORMACIÓN DE LA SOLICITUD DE CAMBIO SERÁ ELIMINADA, ¿ESTÁS DE ACUERDO?",
-                "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-
-        if (respuestaE == JOptionPane.YES_OPTION) {
-            try {
-                cds.eliminarSolicitud(id);
-                cerrarVentana();
-                JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
-                cds.abrirSolicitudCambioGUI(usuario);
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
 }

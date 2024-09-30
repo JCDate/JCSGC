@@ -8,55 +8,44 @@ import Modelos.SolicitudesM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
-import Servicios.InspeccionReciboServicio;
 import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 
 public class SolicitudGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
+    private Connection conexion; // Conexión a la Base de Datos
     private ProcesosM proceso; // Objeto para manejar la información del proceso
-    private SolicitudesM solicitudes; // Objeto para manejar las solicitudes del proceso
     private List<ProcedimientosM> listaProcedimientos; // Lista de procedimientos
     private List<DocumentosM> listaInstructivos; // Lista de otros instructivos
     private List<FormatosM> listaFormatos; // Lista de Formatos
     private int indexSeleccionado; // atributos para la posicion de los procedimientos 
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
-    private InspeccionReciboServicio irs; // Servicio para manejar el control de documentos
 
     private String rutaArchivo;
-    
+
     public SolicitudGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al abrir SolicitudGUI(): ", ex);
-            Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    public SolicitudGUI(Usuarios usuario, ProcesosM proceso) throws SQLException, ClassNotFoundException {
-        this.usuario = usuario;
-        this.proceso = proceso;
-        this.conexion = Conexion.getInstance();
-        this.cds = new ControlDocumentacionServicio();
-        this.irs = new InspeccionReciboServicio();
         inicializarVentanaYComponentes();
     }
-    
+
+    public SolicitudGUI(Usuarios usuario, ProcesosM proceso) {
+        this.usuario = usuario;
+        this.proceso = proceso;
+        inicializarVentanaYComponentes();
+    }
+
     @Override
     public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
@@ -89,7 +78,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         lblEncargado = new javax.swing.JLabel();
         txtEncargado = new swing.TextField();
         txtRevAnterior = new swing.TextField();
-        txtNombre = new swing.TextField();
+        txtNombreArchivo = new swing.TextField();
         lblTipo = new javax.swing.JLabel();
         cbxTipoArchivo = new swing.ComboBoxSuggestion();
         lblProcedimiento = new javax.swing.JLabel();
@@ -113,7 +102,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         lblSolicitud.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
         lblSolicitud.setForeground(new java.awt.Color(10, 110, 255));
         lblSolicitud.setText("SOLICITUD DE CAMBIO");
-        jPanel1.add(lblSolicitud, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 10, 340, 50));
+        jPanel1.add(lblSolicitud, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 10, 340, 50));
 
         lblProceso.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
         lblProceso.setForeground(new java.awt.Color(10, 110, 255));
@@ -184,7 +173,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         txtEncargado.setEnabled(false);
         jPanel1.add(txtEncargado, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 110, 300, -1));
         jPanel1.add(txtRevAnterior, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 300, 170, -1));
-        jPanel1.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 410, 190, -1));
+        jPanel1.add(txtNombreArchivo, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 410, 190, -1));
 
         lblTipo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblTipo.setForeground(new java.awt.Color(10, 110, 255));
@@ -225,26 +214,9 @@ public class SolicitudGUI extends javax.swing.JFrame {
 
     private void btnSolicitudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudActionPerformed
         JOptionPane.showMessageDialog(this, "SE HA REALIZADO LA SOLICITUD DE CAMBIO");
-        
-        ProcedimientosM procedimientoSeleccionado = listaProcedimientos.get(indexSeleccionado);
-        
-        String codigo = procedimientoSeleccionado.getCodigo();
-        String nombreProceso = proceso.getProceso();
-        String nombreProcedimiento = procedimientoSeleccionado.getProcedimiento();
-        String antiguaRev = txtRevAnterior.getText();
-        String nuevaRev = txtNuevaRevision.getText();
-        String encargado = txtEncargado.getText();
-        String accion = cbxAccion.getSelectedItem().toString();
-        String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
-        String nombreDocumento = cbxDocumentos.isVisible() ? cbxDocumentos.getSelectedItem().toString() : "";
-        String nombreArchivo = txtNombre.getText();
-        
-        SolicitudesM solicitudCambio = new SolicitudesM(procedimientoSeleccionado.getId(), codigo, nombreProceso, nombreProcedimiento, antiguaRev, nuevaRev, encargado, accion, tipoArchivo, nombreDocumento, nombreArchivo, null);
-        
-        irs.cargarArchivo(rutaArchivo, solicitudCambio::setArchivo);
-        
+        SolicitudesM solicitudCambio = crearSolicitudCambio();
+        cds.cargarArchivo(rutaArchivo, solicitudCambio::setArchivo);
         cds.agregarSolicitud(solicitudCambio);
-        
         cerrarVentana();
         cds.abrirControlDocumentosGUI(usuario);
     }//GEN-LAST:event_btnSolicitudActionPerformed
@@ -256,13 +228,13 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private void cbxProcedimientosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxProcedimientosActionPerformed
         cbxDocumentos.removeAllItems();
         indexSeleccionado = cbxProcedimientos.getSelectedIndex();
-        
+
         if (indexSeleccionado >= 0) {
             txtRevAnterior.setText(listaProcedimientos.get(indexSeleccionado).getRevision());
         }
-        
+
         String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
-        
+
         switch (tipoArchivo) {
             case "INSTRUCTIVO":
             case "FORMATO":
@@ -270,35 +242,34 @@ public class SolicitudGUI extends javax.swing.JFrame {
                 break;
         }
     }//GEN-LAST:event_cbxProcedimientosActionPerformed
-    
-    private void manejarTipoArchivo(String tipoArchivo, int index) {
-        lblDocumentos.setVisible(true);
-        cbxDocumentos.setVisible(true);
+
+    private void inicializarVentanaYComponentes() {
         try {
-            actualizarDoctos(tipoArchivo, index);
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al actualizar los " + tipoArchivo + "s", ex);
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            configurarLabelsYTextFields();
+            configurarProcedimientosComboBox();
+            configurarAccionComboBox();
+            ocultarDocumentos();
+        } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("ERROR al abrir SolicitudGUI: ", ex);
             Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    public void cerrarVentana() {
-        SolicitudGUI.this.dispose();
+
+    private void configurarVentana() {
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
-    
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        configurarVentana();
-        configurarLabelsYTextFields();
-        configurarProcedimientosComboBox();
-        configurarAccionComboBox();
-        ocultarDocumentos();
-    }
-    
+
     private void configurarLabelsYTextFields() {
         lblProceso.setText("PROCESO: " + proceso.getProceso());
         txtEncargado.setText(proceso.getEncargado());
     }
-    
+
     private void configurarProcedimientosComboBox() throws SQLException, ClassNotFoundException {
         listaProcedimientos = cds.recuperarProcedimientos(conexion, proceso.getId());
         listaProcedimientos.forEach((procedimiento) -> {
@@ -306,48 +277,14 @@ public class SolicitudGUI extends javax.swing.JFrame {
         });
         solicitarActualizacion();
     }
-    
-    private void configurarAccionComboBox() {
-        cbxAccion.addActionListener((ActionEvent ae) -> {
-            String accion = cbxAccion.getSelectedItem().toString();
-            switch (accion) {
-                case "ACTUALIZAR":
-                    solicitarActualizacion();
-                    break;
-                case "AGREGAR":
-                    solicitarInsercion();
-                    break;
-                case "ELIMINAR":
-                    eliminarElemento();
-                    break;
-            }
-        });
-    }
-    
-    private void eliminarElemento() {
-        System.out.println("Elemento eliminado");  // Reemplazar con lógica real
-    }
-    
-    private void ocultarDocumentos() {
-        lblDocumentos.setVisible(false);
-        cbxDocumentos.setVisible(false);
-    }
-    
-    private void configurarVentana() {
-        initComponents();
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-    }
-    
+
     private void solicitarActualizacion() {
         cbxTipoArchivo.addActionListener((ActionEvent ae) -> {
             String archivo = cbxTipoArchivo.getSelectedItem().toString();
             actualizarVisibilidadComponentes(archivo);
         });
-        
     }
-    
+
     private void actualizarVisibilidadComponentes(String archivo) {
         try {
             ocultarTodosLosComponentes();
@@ -372,7 +309,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
             Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void ocultarTodosLosComponentes() {
         lblDocumentos.setVisible(false);
         cbxDocumentos.setVisible(false);
@@ -383,78 +320,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         lblRevNueva.setVisible(false);
         txtRevAnterior.setVisible(false);
     }
-    
-    public void seleccionarArchivo() {
-        rutaArchivo = seleccionarArchivoCertificado(txtNombre, rutaArchivo);
-    }
-    
-    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
-        File archivoSeleccionado = this.irs.seleccionarArchivo(this); // Se selecciona el archivo
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
-            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
-            textField.setText(nombreArchivo);
-        }
-        return rutaArchivo;
-    }
-    
-    private void actualizarDoctos(String tipoDocumento, int index) throws SQLException {
-        lblDocumentos.setVisible(true);
-        cbxDocumentos.setVisible(true);
-        cbxDocumentos.removeAllItems();
-        
-        if (tipoDocumento.equals("instructivos")) {
-            cargarInstructivos(index);
-        } else {
-            cargarFormatos(index);
-        }
-    }
-    
-    private void cargarInstructivos(int index) {
-        try {
-            listaInstructivos = cds.recuperarDocumentos(conexion, listaProcedimientos.get(index).getId());
-            boolean tieneInstructivos = false;
-            
-            for (DocumentosM documento : listaInstructivos) {
-                if (documento.getTipo().equalsIgnoreCase("instructivo")) {
-                    cbxDocumentos.addItem(documento.getNombre());
-                    tieneInstructivos = true;
-                }
-            }
-            visualizarCbxDocumentos(tieneInstructivos);
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al cargar los instrumentos y/o formatos", ex);
-            Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    private void cargarFormatos(int index) throws SQLException {
-        listaFormatos = cds.recuperarFormatos(conexion, listaProcedimientos.get(index).getId());
-        boolean tieneFormatos = false;
-        
-        for (FormatosM formato : listaFormatos) {
-            cbxDocumentos.addItem(formato.getNombre());
-            tieneFormatos = true;
-        }
-        visualizarCbxDocumentos(tieneFormatos);
-    }
-    
-    public void visualizarCbxDocumentos(boolean documentos) {
-        if (!documentos) {
-            lblDocumentos.setVisible(false);
-            cbxDocumentos.setVisible(false);
-        } else {
-            lblDocumentos.setVisible(true);
-            cbxDocumentos.setVisible(true);
-        }
-    }
-    
-    private void solicitarInsercion() {
-        txtRevAnterior.setVisible(false);
-        lblRevAnterior.setVisible(false);
-        lblRevNueva.setText("REVISIÓN: ");
-    }
-    
+
     private void mostrarComponentesManualesDiagramas() {
         lblProcedimiento.setVisible(true);
         cbxProcedimientos.setVisible(true);
@@ -463,7 +329,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         lblRevNueva.setVisible(true);
         txtRevAnterior.setVisible(true);
     }
-    
+
     private void mostrarComponentesInstructivosFormatos() {
         lblProcedimiento.setVisible(true);
         cbxProcedimientos.setVisible(true);
@@ -471,6 +337,132 @@ public class SolicitudGUI extends javax.swing.JFrame {
         txtNuevaRevision.setVisible(false);
         lblRevNueva.setVisible(false);
         txtRevAnterior.setVisible(false);
+    }
+
+    private void configurarAccionComboBox() {
+        cbxAccion.addActionListener((ActionEvent ae) -> {
+            String accion = cbxAccion.getSelectedItem().toString();
+            switch (accion) {
+                case "ACTUALIZAR":
+                    solicitarActualizacion();
+                    break;
+                case "AGREGAR":
+                    solicitarInsercion();
+                    break;
+                case "ELIMINAR":
+                    eliminarElemento();
+                    break;
+            }
+        });
+    }
+
+    private void solicitarInsercion() {
+        txtRevAnterior.setVisible(false);
+        lblRevAnterior.setVisible(false);
+        lblRevNueva.setText("REVISIÓN: ");
+    }
+
+    private void eliminarElemento() {
+        System.out.println("Elemento eliminado");
+    }
+    
+    private void ocultarDocumentos() {
+        lblDocumentos.setVisible(false);
+        cbxDocumentos.setVisible(false);
+    }
+
+    private void cerrarVentana() {
+        SolicitudGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
+    }
+
+    private SolicitudesM crearSolicitudCambio() {
+        ProcedimientosM procedimientoSeleccionado = listaProcedimientos.get(indexSeleccionado);
+        String codigo = procedimientoSeleccionado.getCodigo();
+        String nombreProceso = proceso.getProceso();
+        String nombreProcedimiento = procedimientoSeleccionado.getProcedimiento();
+        String antiguaRev = txtRevAnterior.getText();
+        String nuevaRev = txtNuevaRevision.getText();
+        String encargado = txtEncargado.getText();
+        String accion = cbxAccion.getSelectedItem().toString();
+        String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
+        String nombreDocumento = cbxDocumentos.isVisible() ? cbxDocumentos.getSelectedItem().toString() : "";
+        String nombreArchivo = txtNombreArchivo.getText();
+
+        return new SolicitudesM(procedimientoSeleccionado.getId(), codigo, nombreProceso, nombreProcedimiento,
+                antiguaRev, nuevaRev, encargado, accion, tipoArchivo, nombreDocumento,
+                nombreArchivo, null);
+    }
+    
+    private void seleccionarArchivo() {
+        File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
+        if (archivoSeleccionado != null) {
+            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
+            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
+            txtNombreArchivo.setText(nombreArchivo);
+        }
+    }
+
+    private void manejarTipoArchivo(String tipoArchivo, int index) {
+        lblDocumentos.setVisible(true);
+        cbxDocumentos.setVisible(true);
+        try {
+            actualizarDoctos(tipoArchivo, index);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al actualizar los " + tipoArchivo + "s", ex);
+            Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private void actualizarDoctos(String tipoDocumento, int index) throws SQLException {
+        lblDocumentos.setVisible(true);
+        cbxDocumentos.setVisible(true);
+        cbxDocumentos.removeAllItems();
+
+        if (tipoDocumento.equals("instructivos")) {
+            cargarInstructivos(index);
+        } else {
+            cargarFormatos(index);
+        }
+    }
+
+    private void cargarInstructivos(int index) {
+        try {
+            listaInstructivos = cds.obtenerDocumentos(conexion, listaProcedimientos.get(index).getId());
+            boolean tieneInstructivos = false;
+
+            for (DocumentosM documento : listaInstructivos) {
+                if (documento.getTipo().equalsIgnoreCase("instructivo")) {
+                    cbxDocumentos.addItem(documento.getNombre());
+                    tieneInstructivos = true;
+                }
+            }
+            visualizarCbxDocumentos(tieneInstructivos);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al cargar los instrumentos y/o formatos: ", ex);
+            Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private void visualizarCbxDocumentos(boolean documentos) {
+        if (!documentos) {
+            lblDocumentos.setVisible(false);
+            cbxDocumentos.setVisible(false);
+        } else {
+            lblDocumentos.setVisible(true);
+            cbxDocumentos.setVisible(true);
+        }
+    }
+
+    private void cargarFormatos(int index) throws SQLException {
+        listaFormatos = cds.recuperarFormatos(conexion, listaProcedimientos.get(index).getId());
+        boolean tieneFormatos = false;
+
+        for (FormatosM formato : listaFormatos) {
+            cbxDocumentos.addItem(formato.getNombre());
+            tieneFormatos = true;
+        }
+        visualizarCbxDocumentos(tieneFormatos);
     }
 
     /**
@@ -522,7 +514,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private javax.swing.JLabel lblSolicitud;
     private javax.swing.JLabel lblTipo;
     private javax.swing.JTextField txtEncargado;
-    private javax.swing.JTextField txtNombre;
+    private javax.swing.JTextField txtNombreArchivo;
     private javax.swing.JTextField txtNuevaRevision;
     private javax.swing.JTextField txtRevAnterior;
     // End of variables declaration//GEN-END:variables

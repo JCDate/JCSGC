@@ -14,6 +14,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
@@ -29,7 +30,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
+    private Connection conexion; // Conexión a la Base de Datos
     private ProcesosM proceso; // Objeto para manejar la documentacion por procesos
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
     private List<ProcedimientosM> listaProcedimientos; // Lista de procedimientos
@@ -38,25 +39,24 @@ public class ProcesosGUI extends javax.swing.JFrame {
     public ProcesosGUI() {
         inicializarVentanaYComponentes();
     }
-
+    
     public ProcesosGUI(Usuarios usuario) {
         this.usuario = usuario;
         inicializarVentanaYComponentes();
     }
-
+    
     public ProcesosGUI(Usuarios usuario, int idProceso) {
         try {
             this.usuario = usuario;
-            this.conexion = Conexion.getInstance();
             this.cds = new ControlDocumentacionServicio();
             this.proceso = cds.recuperarProceso(conexion, idProceso);
             inicializarVentanaYComponentes();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al abrir ProcesosGUI: ", ex);
+            Utilidades.manejarExcepcion("ERROR al Abrir ProcesosGUI: ", ex);
             Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     @Override
     public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
@@ -186,20 +186,20 @@ public class ProcesosGUI extends javax.swing.JFrame {
     private void tblProcedimientosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblProcedimientosMouseClicked
         int columnaSeleccionada = tblProcedimientos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblProcedimientos.rowAtPoint(evt.getPoint());
-
-        if (!esCeldaValida(columnaSeleccionada, filaSeleccionada)) {
+        
+        if (!Utilidades.esCeldaValida(tblProcedimientos, columnaSeleccionada, filaSeleccionada)) {
             return;
         }
-
+        
         String id = (String) tblProcedimientos.getValueAt(filaSeleccionada, 0);
         int posicion = buscarProcedimientoPorId(id);
-
+        
         if (posicion == -1) {
             return;
         }
-
+        
         Object value = tblProcedimientos.getValueAt(filaSeleccionada, columnaSeleccionada);
-
+        
         if (value instanceof JButton) {
             manejarAccionBoton((JButton) value, columnaSeleccionada, posicion);
         }
@@ -229,30 +229,36 @@ public class ProcesosGUI extends javax.swing.JFrame {
         cerrarVentana();
         cds.abrirModificarArchivosGUI(usuario, proceso);
     }//GEN-LAST:event_btnModificarDTActionPerformed
-
+    
     private void inicializarVentanaYComponentes() {
-        configurarVentana();
-        configurarVisibilidadBoton();
-        lblTitulo.setText("PROCESO: " + proceso.getProceso());
-        inicializarTabla();
-    }
-
-    private void configurarVisibilidadBoton() {
-        int uid = proceso == null ? usuario.getId() : proceso.getUid(); 
-        if (usuario.getId() == uid || usuario.getId() == 8) {
-            btnSolicitudCambio.setVisible(true);
-        } else {
-            btnSolicitudCambio.setVisible(false);
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            configurarVisibilidadBoton();
+            lblTitulo.setText("PROCESO: " + proceso.getProceso());
+            inicializarTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir ProcesosGUI: ", ex);
+            Logger.getLogger(ProcesosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
-
+    
+    private void configurarVisibilidadBoton() {
+        int uid = proceso == null ? usuario.getId() : proceso.getUid();
+        if (usuario.getId() == uid || usuario.getId() == 8) {
+            btnSolicitudCambio.setVisible(true);
+        } else {
+            btnSolicitudCambio.setVisible(false);
+        }
+    }
+    
     private void inicializarTabla() {
         try {
             this.modeloTabla = construirModeloTabla();
@@ -265,21 +271,37 @@ public class ProcesosGUI extends javax.swing.JFrame {
             Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
+    private DefaultTableModel construirModeloTabla() {
+        final String[] nombresColumnas;
+        
+        if (cds.esUsuarioAutorizado(usuario)) {
+            nombresColumnas = new String[]{"NO", "CÓDIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS", "MODIFICAR"};
+        } else {
+            nombresColumnas = new String[]{"NO", "CÓDIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS"};
+        }
+        
+        modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        
+        modeloTabla.setColumnIdentifiers(nombresColumnas);
+        return modeloTabla;
+    }
+    
     public void mostrarDatosTabla() {
         limpiarTabla();
         llenarTabla();
         configurarRenderizacionTabla();
     }
-
-    private void configurarRenderizacionTabla() {
-        tblProcedimientos.setDefaultRenderer(Object.class, new imgTabla());
-    }
-
+    
     private void limpiarTabla() {
         modeloTabla.setRowCount(0);
     }
-
+    
     private void llenarTabla() {
         if (listaProcedimientos != null && !listaProcedimientos.isEmpty()) {
             listaProcedimientos.forEach(procedimiento -> {
@@ -288,18 +310,18 @@ public class ProcesosGUI extends javax.swing.JFrame {
             });
         }
     }
-
+    
     private Object[] crearFila(ProcedimientosM procedimiento) {
         Button botonVerDocumentos = new Button();
         Button botonVerRegistros = new Button();
         Button botonModificar = new Button();
-
+        
         botonVerDocumentos.setIcon(Iconos.ICONO_VER);
         botonVerRegistros.setIcon(Iconos.ICONO_SOLICITUD);
         botonModificar.setIcon(Iconos.ICONO_MODIFICAR);
-
+        
         Object fila[];
-
+        
         if (cds.esUsuarioAutorizado(usuario)) {
             fila = new Object[8];
             fila[0] = procedimiento.getNo();
@@ -322,29 +344,14 @@ public class ProcesosGUI extends javax.swing.JFrame {
         }
         return fila;
     }
-
-    private DefaultTableModel construirModeloTabla() {
-        final String[] nombresColumnas;
-
-        if (cds.esUsuarioAutorizado(usuario)) {
-            nombresColumnas = new String[]{"NO", "CODIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS", "MODIFICAR"};
-        } else {
-            nombresColumnas = new String[]{"NO", "CODIGO", "REVISIÓN", "PROCEDIMIENTO", "DUEÑO DE PROCESO", "VER DOCUMENTOS", "REGISTROS"};
-        }
-
-        modeloTabla = new DefaultTableModel() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        modeloTabla.setColumnIdentifiers(nombresColumnas);
-        return modeloTabla;
+    
+    private void configurarRenderizacionTabla() {
+        tblProcedimientos.setDefaultRenderer(Object.class, new imgTabla());
     }
-
-    private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
-        return filaSeleccionada < tblProcedimientos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblProcedimientos.getColumnCount() && columnaSeleccionada >= 0;
+    
+    public void cerrarVentana() {
+        ProcesosGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     private int buscarProcedimientoPorId(String id) {
@@ -353,17 +360,22 @@ public class ProcesosGUI extends javax.swing.JFrame {
                 .findFirst()
                 .orElse(-1);
     }
-
+    
     private void manejarAccionBoton(JButton boton, int columnaSeleccionada, int posicion) {
         String textoBoton = boton.getText();
-
+        
         switch (textoBoton) {
             case "Vacío":
                 JOptionPane.showMessageDialog(null, "No hay documentos");
                 break;
             default:
-
-                switch (columnaSeleccionada) {
+                manejarAccionDefault(columnaSeleccionada, posicion); 
+                break;
+        }
+    }
+    
+    private void manejarAccionDefault(int columnaSeleccionada, int posicion) {
+        switch (columnaSeleccionada) {
                     case 5:
                         cerrarVentana();
                         cds.abrirProcedimientosGUI(usuario, listaProcedimientos.get(posicion));
@@ -379,12 +391,6 @@ public class ProcesosGUI extends javax.swing.JFrame {
                     default:
                         break;
                 }
-                break;
-        }
-    }
-
-    public void cerrarVentana() {
-        ProcesosGUI.this.dispose();
     }
 
     /**

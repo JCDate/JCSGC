@@ -3,6 +3,7 @@ package Servicios;
 import java.awt.Font;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import swing.Button;
 
 public class Utilidades {
@@ -31,5 +32,15 @@ public class Utilidades {
     
     public static void manejarExcepcion(String msg, Exception ex) {
         JOptionPane.showMessageDialog(null, msg + ex, "ERROR", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    
+    public static boolean esCeldaValida(JTable tabla, int filaSeleccionada, int columnaSeleccionada) {
+        return filaSeleccionada < tabla.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tabla.getColumnCount() && columnaSeleccionada >= 0;
+    }
+    
+    public static boolean confirmarEliminacion() {
+        int respuesta = JOptionPane.showConfirmDialog(null, "SE ELIMINARÁ EL SIGUIENTE ARCHIVO, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+        return respuesta == JOptionPane.YES_OPTION;
     }
 }

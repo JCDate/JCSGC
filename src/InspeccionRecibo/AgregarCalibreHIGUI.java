@@ -17,36 +17,29 @@ import javax.swing.JOptionPane;
 
 public class AgregarCalibreHIGUI extends javax.swing.JFrame {
 
-    // Usuario y Conexión a la base de datos
-    private Usuarios usuario;
-    private Conexion conexion;
-
-    private InspeccionReciboM inspeccionRecibo;
-    private CalibreIRM calibreIRM = new CalibreIRM();
-
-    // Servicios y Utilidades
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Connection conexion; // Conexión a la Base de Datos
+    private InspeccionReciboM inspeccionRecibo; // Maneja la información de la inspección 
+    private CalibreIRM calibreIRM; // Maneja la información sobre el calibre
+    private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
 
     public AgregarCalibreHIGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public AgregarCalibreHIGUI(Usuarios usr) throws SQLException, ClassNotFoundException {
         inicializarVentanaYComponentes();
     }
 
-    public AgregarCalibreHIGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException {
+    public AgregarCalibreHIGUI(Usuarios usr) {
+        inicializarVentanaYComponentes();
+    }
+
+    public AgregarCalibreHIGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) {
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
         inicializarVentanaYComponentes();
     }
 
     @Override
-    public Image getIconImage() {
+    public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
@@ -152,8 +145,8 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
             cerrarVentana();
             irs.abrirEspecificacionesGUI(usuario, inspeccionRecibo);
         } catch (SQLException | ClassNotFoundException ex) {
+            irs.manejarExcepcion("ERROR al abrir EspecificacionesGUI: ", ex);
             Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
-            irs.manejarExcepcion("ERROR al abrir EspecificacionesGUI", ex);
         }
     }//GEN-LAST:event_btnCancelarActionPerformed
 
@@ -163,7 +156,7 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         String especificacion = cbxEspecificaciones.getSelectedItem().toString();
         String descripcion = txtDescripcionMP.getText();
 
-        if (!calibres.trim().equals("") || !medidas.trim().equals("")) {
+        if (camposCompletos(calibres, medidas)) {
             calibreIRM.setCalibre(calibres);
             calibreIRM.setMedidas(medidas);
             calibreIRM.setEspecificacion(especificacion);
@@ -181,27 +174,50 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.irs = new InspeccionReciboServicio();
+            this.calibreIRM = new CalibreIRM();
+
+            chkDescripcionMP.addActionListener(e -> {
+                actualizarDescripcion();
+            });
+
+            cargarEspecificaciones();
+        } catch (SQLException ex) {
+            Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance();
+    }
 
-        chkDescripcionMP.addActionListener(e -> {
-            if (chkDescripcionMP.isSelected()) {
-                txtDescripcionMP.setText("Lamina en Hoja. Cal. " + txtCalibre.getText());
-            } else {
-                txtDescripcionMP.setText("Lamina en Cinta. Cal." + txtCalibre.getText());
-            }
-        });
+    private void actualizarDescripcion() {
+        if (chkDescripcionMP.isSelected()) {
+            txtDescripcionMP.setText("Lamina en Hoja. Cal. " + txtCalibre.getText());
+        } else {
+            txtDescripcionMP.setText("Lamina en Cinta. Cal." + txtCalibre.getText());
+        }
+    }
 
+    private void cargarEspecificaciones() throws SQLException {
         cbxEspecificaciones.addItem("");
         irs.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem);
     }
 
     private void cerrarVentana() {
         AgregarCalibreHIGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
+    }
+
+    private boolean camposCompletos(String calibre, String medidas) {
+        return !calibre.isEmpty() && !medidas.isEmpty();
     }
 
     /**

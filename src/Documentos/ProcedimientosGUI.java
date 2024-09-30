@@ -11,6 +11,7 @@ import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
@@ -25,7 +26,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Conexion conexion; // Conexión a la Base de Datos
+    private Connection conexion; // Conexión a la Base de Datos
     private ProcedimientosM procedimiento; // Objeto para manejar la documentacion por procedimiento
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
     private List<DocumentosM> listaDocumentos; // Listas para el control del formato
@@ -40,19 +41,12 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private static final int COLUMNA_ELIMINAR = 5;
 
     public ProcedimientosGUI() {
-        try {
-            inicializarVentanaYComponentes();
-        } catch (SQLException | ClassNotFoundException ex) {
-            Utilidades.manejarExcepcion("Error al abrir ProcedimientosGUI: ", ex);
-            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        inicializarVentanaYComponentes();
     }
 
-    public ProcedimientosGUI(Usuarios usuario, ProcedimientosM procedimiento) throws SQLException, ClassNotFoundException {
+    public ProcedimientosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
         this.usuario = usuario;
         this.procedimiento = procedimiento;
-        this.conexion = Conexion.getInstance();
-        this.cds = new ControlDocumentacionServicio();
         inicializarVentanaYComponentes();
     }
 
@@ -161,7 +155,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         int columnaSeleccionada = tblDocumentos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblDocumentos.rowAtPoint(evt.getPoint());
 
-        if (esCeldaValida(columnaSeleccionada, filaSeleccionada)) {
+        if (Utilidades.esCeldaValida(tblDocumentos, filaSeleccionada, columnaSeleccionada)) {
             Object value = tblDocumentos.getValueAt(filaSeleccionada, columnaSeleccionada);
             if (value instanceof JButton) {
                 JButton boton = (JButton) value;
@@ -185,65 +179,17 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         cds.abrirAgregarDocumentosGUI(usuario, procedimiento);
     }//GEN-LAST:event_btnAgregarDocumentosActionPerformed
 
-    private void manejarAccionBoton(JButton boton, int filaSeleccionada, int columnaSeleccionada) {
-        String textoPrimeraCelda = obtenerTextoPrimeraCelda(filaSeleccionada);
-
-        switch (boton.getText()) {
-            case "Vacío":
-                JOptionPane.showMessageDialog(null, "No hay archivo");
-                break;
-            default:
-                manejarAccionDefault(textoPrimeraCelda, columnaSeleccionada, listaDocumentos.get(filaSeleccionada));
-                break;
-        }
-    }
-
-    private String obtenerTextoPrimeraCelda(int filaSeleccionada) {
-        Object firstCellValue = tblDocumentos.getValueAt(filaSeleccionada, 0);
-        return firstCellValue != null ? firstCellValue.toString() : "";
-    }
-
-    private void manejarAccionDefault(String textoPrimeraCelda, int columnaSeleccionada, DocumentosM documento) {
+    private void inicializarVentanaYComponentes() {
         try {
-            if (columnaSeleccionada == 3) {
-                cds.ejecutarManual(procedimiento, textoPrimeraCelda);
-            }
-            if (columnaSeleccionada == 4) {
-                cerrarVentana();
-                cds.abrirModificarArchivosGUI(usuario, documento);
-            }
-
-            if (columnaSeleccionada == 5) {
-
-                int filaSeleccionada = tblDocumentos.getSelectedRow();
-
-                if (filaSeleccionada == -1) {
-                    JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
-                    return;
-                }
-
-                if (confirmarEliminacion()) {
-                    eliminarDocumento(listaDocumentos.get(filaSeleccionada));
-
-                }
-
-                cerrarVentana();
-                cds.abrirModificarArchivosGUI(usuario, documento);
-            }
-
-        } catch (ClassNotFoundException | SQLException ex) {
+            configurarVentana();
+            lblProcedimiento.setText("<html>PROCEDIMIENTO: <br>" + procedimiento.getProcedimiento() + "</html>");
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+            inicializarTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al abrir ProcedimientosGUI: ", ex);
             Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-
-    public void cerrarVentana() {
-        ProcedimientosGUI.this.dispose();
-    }
-
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
-        configurarVentana();
-        lblProcedimiento.setText("<html>PROCEDIMIENTO: <br>" + procedimiento.getProcedimiento() + "</html>");
-        inicializarTabla();
     }
 
     private void configurarVentana() {
@@ -256,9 +202,8 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private void inicializarTabla() {
         try {
             this.modeloTabla = construirModeloTabla();
-            this.listaDocumentos = cds.recuperarDocumentos(conexion, procedimiento.getId());
-            DefaultTableModel tableModel = construirModeloTabla();
-            tblDocumentos.setModel(tableModel);
+            this.listaDocumentos = cds.obtenerDocumentos(conexion, procedimiento.getId());
+            tblDocumentos.setModel(modeloTabla);
             tblDocumentos.setRowHeight(40);
             mostrarDatosTabla();
         } catch (SQLException ex) {
@@ -288,18 +233,10 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         return modeloTabla;
     }
 
-    private boolean esCeldaValida(int columnaSeleccionada, int filaSeleccionada) {
-        return filaSeleccionada < tblDocumentos.getRowCount() && filaSeleccionada >= 0 && columnaSeleccionada < tblDocumentos.getColumnCount() && columnaSeleccionada >= 0;
-    }
-
     public void mostrarDatosTabla() {
         limpiarTabla();
         llenarTabla();
         configurarRenderizacionTabla();
-    }
-
-    private void configurarRenderizacionTabla() {
-        tblDocumentos.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     private void limpiarTabla() {
@@ -339,9 +276,62 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         return fila;
     }
 
-    private boolean confirmarEliminacion() {
-        int respuesta = JOptionPane.showConfirmDialog(this, "SE ELIMINARÁ EL SIGUIENTE ARCHIVO, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-        return respuesta == JOptionPane.YES_OPTION;
+    private void configurarRenderizacionTabla() {
+        tblDocumentos.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    private void manejarAccionBoton(JButton boton, int filaSeleccionada, int columnaSeleccionada) {
+        String textoPrimeraCelda = obtenerTextoPrimeraCelda(filaSeleccionada);
+        switch (boton.getText()) {
+            case "Vacío":
+                JOptionPane.showMessageDialog(null, "No hay archivo");
+                break;
+            default:
+                manejarAccionDefault(textoPrimeraCelda, columnaSeleccionada, listaDocumentos.get(filaSeleccionada));
+                break;
+        }
+    }
+
+    private void manejarAccionDefault(String textoPrimeraCelda, int columnaSeleccionada, DocumentosM documento) {
+        try {
+            if (columnaSeleccionada == 3) {
+                cds.ejecutarManual(procedimiento, textoPrimeraCelda);
+            }
+
+            if (columnaSeleccionada == 4) {
+                cerrarVentana();
+                cds.abrirModificarArchivosGUI(usuario, documento);
+            }
+
+            if (columnaSeleccionada == 5) {
+                int filaSeleccionada = tblDocumentos.getSelectedRow();
+
+                if (filaSeleccionada == -1) {
+                    JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
+                    return;
+                }
+
+                if (Utilidades.confirmarEliminacion()) {
+                    eliminarDocumento(listaDocumentos.get(filaSeleccionada));
+                }
+
+                cerrarVentana();
+                cds.abrirModificarArchivosGUI(usuario, documento);
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR en la operación: ", ex);
+            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void cerrarVentana() {
+        ProcedimientosGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
+    }
+
+    private String obtenerTextoPrimeraCelda(int filaSeleccionada) {
+        Object firstCellValue = tblDocumentos.getValueAt(filaSeleccionada, 0);
+        return firstCellValue != null ? firstCellValue.toString() : "";
     }
 
     private void eliminarDocumento(DocumentosM documento) {

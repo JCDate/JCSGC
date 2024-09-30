@@ -15,6 +15,7 @@ import Servicios.Conexion;
 import Servicios.EspecificacionesServicio;
 import Servicios.InspeccionReciboServicio;
 import Servicios.RugosidadDurezaServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -36,9 +37,9 @@ import javax.swing.table.TableColumnModel;
 
 public class EspecificacionesGUI extends JFrame {
 
-    // Usuario y Conexión a la base de datos
-    private Usuarios usuario;
-    private Connection conexion;
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Connection conexion; // Conexión a la Base de Datos
 
     // Objetos para manipulación de los datos
     private DatosIRM datosIR;
@@ -64,24 +65,23 @@ public class EspecificacionesGUI extends JFrame {
     private List listaRugosidadDureza = new ArrayList<>();
     private List<JTable> tablas = new ArrayList<>();
 
-    public EspecificacionesGUI() throws SQLException, ClassNotFoundException {
+    public EspecificacionesGUI() {
         inicializarVentanaYComponentes();
     }
 
-    public EspecificacionesGUI(Usuarios usuario) throws SQLException, ClassNotFoundException {
-        inicializarVentanaYComponentes();
+    public EspecificacionesGUI(Usuarios usuario) {
         this.usuario = usuario;
+        inicializarVentanaYComponentes();
+
     }
 
-    public EspecificacionesGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException {
-
+    public EspecificacionesGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) {
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
         inicializarVentanaYComponentes();
     }
 
-    public EspecificacionesGUI(Usuarios usuario, DatosIRM datosIR, InspeccionReciboM inspeccionRecibo, JTable tblRugosidadDureza, JTable tblAnchoLargo) throws SQLException, ClassNotFoundException {
-
+    public EspecificacionesGUI(Usuarios usuario, DatosIRM datosIR, InspeccionReciboM inspeccionRecibo, JTable tblRugosidadDureza, JTable tblAnchoLargo) {
         this.usuario = usuario;
         this.datosIR = datosIR;
         this.inspeccionRecibo = inspeccionRecibo;
@@ -212,17 +212,13 @@ public class EspecificacionesGUI extends JFrame {
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
         cerrarVentana();
-
         int idIR = obtenerIdHojaInstruccion();
-
         listaAnchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
         listaRugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
-
         irs.abrirHojaInstruccionGUI(usuario, inspeccionRecibo, datosIR, listaAnchoLargo, listaRugosidadDureza);
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-
         try {
             int idIR = obtenerIdHojaInstruccion();
 
@@ -234,9 +230,7 @@ public class EspecificacionesGUI extends JFrame {
             inspeccionRecibo.setHojaIns(this.irs.leerArchivo(HojaIns));
 
             irs.subirHI(conexion, inspeccionRecibo);
-
-            cerrarVentana();
-
+           cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);
         } catch (IOException | SQLException | ClassNotFoundException ex) {
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -244,34 +238,43 @@ public class EspecificacionesGUI extends JFrame {
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
-    private void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+    private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+
+            pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
+
+            listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
+            listaMedidasCalibre.forEach(cbxCalibre::addItem);
+
+            actualizarEspecificacionesTecnicas();
+
+            cbxCalibre.addActionListener(e -> actualizarEspecificacionesTecnicas());
+
+            btnAceptar.addActionListener(e -> {
+                String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
+                String calibre = (String) cbxCalibre.getSelectedItem();
+                try {
+                    crearTabla(espeTecnica, calibre);
+                } catch (SQLException | ClassNotFoundException ex) {
+                    Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                    irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
+                }
+            });
+
+            btnEliminar.addActionListener(ae -> eliminarUltimaTabla());
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir EspecificacionesGUI: ", ex);
+            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance().conectar();
-
-        pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
-
-        listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
-        listaMedidasCalibre.forEach(cbxCalibre::addItem);
-
-        actualizarEspecificacionesTecnicas();
-
-        cbxCalibre.addActionListener(e -> actualizarEspecificacionesTecnicas());
-
-        btnAceptar.addActionListener(e -> {
-            String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
-            String calibre = (String) cbxCalibre.getSelectedItem();
-            try {
-                crearTabla(espeTecnica, calibre);
-            } catch (SQLException | ClassNotFoundException ex) {
-                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
-            }
-        });
-
-        btnEliminar.addActionListener(ae -> eliminarUltimaTabla());
     }
 
     private void actualizarEspecificacionesTecnicas() {
@@ -349,11 +352,6 @@ public class EspecificacionesGUI extends JFrame {
         columnModel.getColumn(6).setCellEditor(new CheckBoxEditor());
     }
 
-    private void configurarTamañoColumna(TableColumnModel columnModel, int columnIndex, int minWidth, int maxWidth) {
-        columnModel.getColumn(columnIndex).setMinWidth(minWidth);
-        columnModel.getColumn(columnIndex).setMaxWidth(maxWidth);
-    }
-
     private void establecerValoresEnTabla(DefaultTableModel modeloTabla, List<PropiedadMecanicaM> propiedadesMecanicas, List<ComposicionQuimicaM> composicionQuimica) {
         int columnaPropiedades = 3;
         int columnaPropiedadesCM = 5;
@@ -368,15 +366,21 @@ public class EspecificacionesGUI extends JFrame {
         }
     }
 
+    private void configurarTamañoColumna(TableColumnModel columnModel, int columnIndex, int minWidth, int maxWidth) {
+        columnModel.getColumn(columnIndex).setMinWidth(minWidth);
+        columnModel.getColumn(columnIndex).setMaxWidth(maxWidth);
+    }
+
+    private void cerrarVentana() {
+        EspecificacionesGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
+    }
+
     private void eliminarUltimaTabla() {
         listaTablas.removeAll(tablas);
         pnlTablas.removeAll();
         pnlTablas.revalidate();
         pnlTablas.repaint();
-    }
-
-    private void cerrarVentana() {
-        EspecificacionesGUI.this.dispose();
     }
 
     private int obtenerIdHojaInstruccion() {
@@ -412,11 +416,7 @@ public class EspecificacionesGUI extends JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            try {
-                new EspecificacionesGUI().setVisible(true);
-            } catch (SQLException | ClassNotFoundException ex) {
-                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            new EspecificacionesGUI().setVisible(true);
         });
     }
 
