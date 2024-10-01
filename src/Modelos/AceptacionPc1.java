@@ -1,7 +1,7 @@
 package Modelos;
 
 public class AceptacionPc1 {
-    
+
     private String id;
     private String componente;
     private String fecha;
@@ -10,7 +10,7 @@ public class AceptacionPc1 {
     private String observacion;
     private String noParte;
     private String noOps;
-    
+
     public AceptacionPc1() {
         this.id = "";
         this.componente = "";
@@ -96,5 +96,4 @@ public class AceptacionPc1 {
     public void setNoOps(String noOps) {
         this.noOps = noOps;
     }
-  
 }

@@ -4,6 +4,7 @@ import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.InspeccionReciboServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -11,8 +12,6 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,7 +23,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Conexion conexion;
+    private Connection conexion;
 
     // Objetos para manejar la información
     private InspeccionReciboM inspeccionRecibo;
@@ -36,14 +35,14 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     private String rutaArchivoHojaInstruccion;
 
     // Servicios y Utilidades
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    private InspeccionReciboServicio irs;
 
     // Constructores
     public ModificarIrGUI() {
         inicializarVentanaYComponentes();
     }
 
-    public ModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario) throws ClassNotFoundException {
+    public ModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario) {
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
         inicializarVentanaYComponentes();
@@ -307,11 +306,21 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnAgregarHojaInstruccionesActionPerformed
 
     private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            this.irs = new InspeccionReciboServicio();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir ModificarIrGUI: ", ex);
+            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance();
     }
 
     private void cargarDatosEnComponentes() {
@@ -332,11 +341,11 @@ public class ModificarIrGUI extends javax.swing.JFrame {
 
     private void cargarProveedoresEnComboBox() {
         try {
-            List<String> proveedores = irs.recuperarProveedores(conexion);
+            List<String> proveedores = irs.obtenerProveedores(conexion);
             proveedores.forEach(cbxProveedor::addItem);
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al cargar la lista de proveedores: ", ex);
             Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Error al cargar la lista de proveedores: " + ex);
         }
     }
 
@@ -366,6 +375,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
 
     public void cerrarVentana() {
         ModificarIrGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     public boolean camposCompletos(String... campos) {
@@ -404,12 +414,24 @@ public class ModificarIrGUI extends javax.swing.JFrame {
             cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Ha surgido un error al actualizar el registro: ", ex);
             Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Ha surgido un error al actualizar el registro: " + ex);
         }
     }
 
-    public String seleccionarArchivoCertificado(JTextField textField, String rutaArchivo) {
+    public void seleccionarFactura() {
+        rutaArchivoFactura = seleccionarArchivo(txtNombreFactura, rutaArchivoFactura);
+    }
+
+    public void seleccionarCertificado() {
+        rutaArchivoCertificado = seleccionarArchivo(txtNombreCertificado, rutaArchivoCertificado);
+    }
+
+    public void seleccionarHojaInstruccion() {
+        rutaArchivoHojaInstruccion = seleccionarArchivo(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
+    }
+
+    public String seleccionarArchivo(JTextField textField, String rutaArchivo) {
         File archivoSeleccionado = this.irs.seleccionarArchivo(this);
         if (archivoSeleccionado != null) {
             String nombreArchivo = archivoSeleccionado.getName();
@@ -417,18 +439,6 @@ public class ModificarIrGUI extends javax.swing.JFrame {
             textField.setText(nombreArchivo);
         }
         return rutaArchivo;
-    }
-
-    public void seleccionarFactura() {
-        rutaArchivoFactura = seleccionarArchivoCertificado(txtNombreFactura, rutaArchivoFactura);
-    }
-
-    public void seleccionarCertificado() {
-        rutaArchivoCertificado = seleccionarArchivoCertificado(txtNombreCertificado, rutaArchivoCertificado);
-    }
-
-    public void seleccionarHojaInstruccion() {
-        rutaArchivoHojaInstruccion = seleccionarArchivoCertificado(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
     }
 
     /**
@@ -450,7 +460,6 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(ModificarIrGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */

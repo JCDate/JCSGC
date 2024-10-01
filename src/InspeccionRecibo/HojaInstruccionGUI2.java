@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import Servicios.AnchoLargoServicio;
 import Servicios.GeneradorExcel;
 import Servicios.RugosidadDurezaServicio;
-import java.util.Date;
+import Servicios.Utilidades;
 import java.util.List;
 import javax.swing.JFrame;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -40,35 +40,34 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Conexion conexion;
+    private Connection conexion;
 
     // Lista de proveedores
-    List<String> listaInspectores = new ArrayList<>();
+    List<String> listaInspectores;
 
     // Servicios y Utilidades
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
-    private RugosidadDurezaServicio rds = new RugosidadDurezaServicio();
-    private AnchoLargoServicio als = new AnchoLargoServicio();
-    private GeneradorExcel excel = new GeneradorExcel();
-    private ExcelFormato formato = new ExcelFormato();
+    private InspeccionReciboServicio irs;
+    private RugosidadDurezaServicio rds;
+    private AnchoLargoServicio als;
+    private GeneradorExcel excel;
+    private ExcelFormato formato;
 
     // Objetos para la manipulación de los datos
     private InspeccionReciboM inspeccionRecibo;
-    private DatosIRM dirm = new DatosIRM();
+    private DatosIRM dirm;
 
     // Objetos para editar el archivo Excel
     private XSSFWorkbook workbook;
     private Sheet hoja1;
 
-    // Objetos para el formato de la fecha y para guardar la ruta del archivo Excel
-    private String formatoFecha;
+    // Objetos para guardar la ruta del archivo Excel
     private String rutaArchivo;
 
-    public HojaInstruccionGUI2() throws SQLException, ClassNotFoundException {
+    public HojaInstruccionGUI2() {
         inicializarVentanaYComponentes();
     }
 
-    public HojaInstruccionGUI2(Usuarios usuario, String rutaArchivo, InspeccionReciboM inspeccionRecibo) throws SQLException, ClassNotFoundException, IOException {
+    public HojaInstruccionGUI2(Usuarios usuario, String rutaArchivo, InspeccionReciboM inspeccionRecibo) {
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
         this.rutaArchivo = rutaArchivo;
@@ -320,8 +319,8 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
             cerrarVentana();
             irs.abrirModificarIrGUI(inspeccionRecibo, usuario, guardarCambios(rutaArchivo));
         } catch (IOException | ParseException ex) {
+            Utilidades.manejarExcepcion("Error al guardar la información: ", ex);
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
-            irs.manejarExcepcion("Error al abrir ModificarGUI", ex);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
@@ -333,164 +332,123 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_chkHoyActionPerformed
 
-    public final void inicializarVentanaYComponentes() throws SQLException, ClassNotFoundException {
+    public final void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            inicializarServicios();
+            this.conexion = Conexion.getInstance().conectar();
+            this.dirm = new DatosIRM();
+            this.listaInspectores = new ArrayList<>();
+            inicializarComboBoxInspectores();
+            definirTablas();
+            try {
+                leerDatosExcel();
+            } catch (IOException ex) {
+                Utilidades.manejarExcepcion("Error al cargar el archivo excel: ", ex);
+                Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir HojaInstruccionGUI2: ", ex);
+            Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance();
+    }
 
+    private void inicializarServicios() {
+        this.irs = new InspeccionReciboServicio();
+        this.rds = new RugosidadDurezaServicio();
+        this.als = new AnchoLargoServicio();
+        this.excel = new GeneradorExcel();
+        this.formato = new ExcelFormato();
+    }
+
+    private void inicializarComboBoxInspectores() {
         listaInspectores = irs.recuperarInspectores(conexion);
         listaInspectores.forEach(cbxNombreInspector::addItem);
+    }
 
+    private void definirTablas() {
         als.setTbl(tblAnchoLargo);
         rds.setTbl(tblRugosidadDureza);
-
-        try {
-            leerDatosExcel();
-        } catch (IOException ex) {
-            Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
-            irs.manejarExcepcion("Error al cargar el archivo excel: ", ex);
-        }
     }
 
     private void leerDatosExcel() throws IOException {
+        cargarHojaExcel();
+        configurarCamposTexto();
+        cargarTablas();
+    }
+
+    private void cargarHojaExcel() throws IOException {
         FileInputStream fileInputStream = new FileInputStream(new File(rutaArchivo));
         workbook = new XSSFWorkbook(fileInputStream);
-        hoja1 = workbook.getSheetAt(0); // Obtener la primera hoja        
+        hoja1 = workbook.getSheetAt(0);
+    }
 
+    private void configurarCamposTexto() {
         txtHojaInstrucciones.setText(inspeccionRecibo.getNoHoja());
-        formatoFecha = "d 'de' MMMM 'de' yyyy";
-        SimpleDateFormat sdf = new SimpleDateFormat(formatoFecha);
-
+        SimpleDateFormat sdf = new SimpleDateFormat("d 'de' MMMM 'de' yyyy");
         try {
             dchFechaInspeccion.setDate(sdf.parse(excel.getDatosCeldas(hoja1, 5, 6)));
         } catch (ParseException ex) {
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
-
         txtDescripcionMP.setText(excel.getDatosCeldas(hoja1, 9, 1));
         txtToleranciaLamina.setText(excel.getDatosCeldas(hoja1, 13, 1));
         txtObservacionesRD.setText(excel.getDatosCeldas(hoja1, 34, 1));
         cbxObservacionesMP.setSelectedItem(excel.getDatosCeldas(hoja1, 42, 1));
         cbxNombreInspector.setSelectedItem(excel.getDatosCeldas(hoja1, 60, 1));
+    }
 
-        // Tabla Ancho/Largo
+    private void cargarTablas() {
+        cargarTablaAnchoLargo();
+        cargarTablaRugosidadDureza();
+    }
+
+    private void cargarTablaAnchoLargo() {
         int numFila = 20;
         for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 2; j++) {
-                Row filaAnchoLargo = hoja1.getRow(numFila);
-                Cell cellAnchoLargo = filaAnchoLargo.getCell(2);
-                tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, j);
-            }
+            Row filaAnchoLargo = hoja1.getRow(numFila);
+            Cell cellAnchoLargo = filaAnchoLargo.getCell(2);
+            tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 0); // Asume 2 columnas
+            tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 1);
             numFila++;
-        }
-
-        numFila = 43;
-        int numColExcel = 2; // Columna inicial en Excel (columna 2)
-        for (int i = 0; i < 5; i++) { // 5 filas en tu tabla
-            // Accedemos a la fila correspondiente en Excel (43 y 44)
-            Row filaAnchoLargo43 = hoja1.getRow(43);
-            Row filaAnchoLargo44 = hoja1.getRow(44);
-
-            // Recuperamos las celdas de la columna actual en Excel
-            Cell cellAnchoLargo43 = filaAnchoLargo43.getCell(numColExcel + i); // fila 43
-            Cell cellAnchoLargo44 = filaAnchoLargo44.getCell(numColExcel + i); // fila 44
-
-            // Colocamos los valores en las celdas de la tabla
-            tblRugosidadDureza.setValueAt(cellAnchoLargo43.getStringCellValue(), i, 0); // Primera columna
-            tblRugosidadDureza.setValueAt(cellAnchoLargo44.getStringCellValue(), i, 1); // Segunda columna
         }
     }
 
-    public String guardarCambios(String nuevaRutaArchivo) throws FileNotFoundException, IOException, ParseException {
-        String fechaInspeccion = "";
-        if (dchFechaInspeccion.getDate() != null) {
-            Date selectedDate = dchFechaInspeccion.getDate();
-            SimpleDateFormat dateFormat = new SimpleDateFormat(formatoFecha);
-            String formattedDate = dateFormat.format(selectedDate);
-            fechaInspeccion = formattedDate;
+    private void cargarTablaRugosidadDureza() {
+        int numColExcel = 2;
+        for (int i = 0; i < 5; i++) {
+            Row fila43 = hoja1.getRow(43);
+            Row fila44 = hoja1.getRow(44);
+
+            tblRugosidadDureza.setValueAt(fila43.getCell(numColExcel + i).getStringCellValue(), i, 0);
+            tblRugosidadDureza.setValueAt(fila44.getCell(numColExcel + i).getStringCellValue(), i, 1);
         }
+    }
 
-        excel.setDatosCeldas(hoja1, 5, 6, fechaInspeccion); // Fecha de Inspección
-        excel.setDatosCeldas(hoja1, 9, 1, txtDescripcionMP.getText()); // DescripciónMP
-        excel.setDatosCeldas(hoja1, 13, 1, txtToleranciaLamina.getText()); // Calibre Lamina
-        excel.setDatosCeldas(hoja1, 34, 1, txtObservacionesRD.getText()); // ObservacionesRD
-        excel.setDatosCeldas(hoja1, 42, 1, cbxObservacionesMP.getSelectedItem().toString()); // ObservacionesMP
-        excel.setDatosCeldas(hoja1, 60, 1, cbxNombreInspector.getSelectedItem().toString()); // Inspector
+    private String guardarCambios(String nuevaRutaArchivo) throws FileNotFoundException, IOException, ParseException {
+        String fechaInspeccion = irs.formatearFecha(dchFechaInspeccion.getDate());
+        cargarDatos(fechaInspeccion);
+        validarEstadoAceptacionRechazo();
 
-        if (chkAceptacion.isSelected()) {
-            excel.setDatosCeldas(hoja1, 39, 2, "√"); // Aceptación
-            excel.setDatosCeldas(hoja1, 39, 7, ""); // Rechazo
-        } else {
-            excel.setDatosCeldas(hoja1, 39, 2, ""); // Aceptación
-            excel.setDatosCeldas(hoja1, 39, 7, "√"); // Rechazo
-        }
+        String numeroStr = obtenerNoHoja();
 
-        String[] partes = txtHojaInstrucciones.getText().split("/"); // Se divide el valor de NoHoja para solo obtener el número
-        String numeroStr = partes[1];
-        int numero = Integer.parseInt(numeroStr);
-        if (numero < 10) {
-            numeroStr = String.valueOf(numero);
-        }
-
-        int numeroFila = 20; // indice de la Tabla Ancho/Largo
         try {
             int idHojaInstruccion = irs.getIdHI(conexion, inspeccionRecibo);
-            // Ancho/Largo 
-            List anchoLargo = als.capturarValores(idHojaInstruccion, dirm.getAnchoLargo());
-
-            for (int i = 0; i < anchoLargo.size(); i++) {
-                AnchoLargoM medida = (AnchoLargoM) anchoLargo.get(i);
-                Row row = hoja1.getRow(numeroFila);
-
-                excel.setDatosCeldas(hoja1, numeroFila, 1, medida.getAncho()); // Ancho
-                excel.setDatosCeldas(hoja1, numeroFila, 2, medida.getLargo()); // Largo
-
-                numeroFila++;
-
-                //Aplicación del formato
-                row.getCell(1).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
-                row.getCell(2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
-            }
-
-            // Rugosidad/Dureza
-            
-            numeroFila = 43;
-            List<RugosidadDurezaM> rugosidadDureza = rds.recuperarTodas(idHojaInstruccion, dirm.getAnchoLargo());
-
-// Se asume que solo hay 5 elementos en la lista para que se ajusten a las 5 columnas consecutivas.
-            if (rugosidadDureza.size() == 5) {
-                // Imprimir valores de Rugosidad en la primera fila
-                for (int j = 0; j < 5; j++) {
-                    RugosidadDurezaM valores = rugosidadDureza.get(j);
-                    excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getRugosidad()); // Rugosidad en fila 1
-                }
-
-                // Imprimir valores de Dureza en la fila siguiente
-                numeroFila++; // Avanzar a la siguiente fila
-                Row row = hoja1.getRow(numeroFila);
-                for (int j = 0; j < 5; j++) {
-                    RugosidadDurezaM valores = rugosidadDureza.get(j);
-                    excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getDureza()); // Dureza en fila 2
-                }
-
-                // Aplicación del formato a cada celda en las 5 columnas para ambas filas
-                for (int j = 0; j < 5; j++) {
-                    hoja1.getRow(numeroFila - 1).getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Rugosidad
-                    row.getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Dureza
-                }
-            }
-
+            obtenerDatosTblAnchoLargo(idHojaInstruccion);
+            obtenerDatosTblRugosidadDureza(idHojaInstruccion);
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Eror al obtener los valores de las tablas: ", ex);
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        Date fechaSeleccionada = dchFechaInspeccion.getDate();
-        String fechaFormateada = irs.formatearFecha(fechaSeleccionada);
-        excel.setDatosCeldas(hoja1, 5, 1, numeroStr);
-
-        nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(fechaFormateada) + ".xlsx ";
+        nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(fechaInspeccion) + ".xlsx ";
 
         try (FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo)) {
             workbook.write(fos);
@@ -499,12 +457,80 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         return nuevaRutaArchivo;
     }
 
-    public void cerrarVentana() {
-        HojaInstruccionGUI2.this.dispose();
+    private void cargarDatos(String fechaInspeccion) {
+        excel.setDatosCeldas(hoja1, 5, 6, fechaInspeccion); // Fecha de Inspección
+        excel.setDatosCeldas(hoja1, 9, 1, txtDescripcionMP.getText()); // DescripciónMP
+        excel.setDatosCeldas(hoja1, 13, 1, txtToleranciaLamina.getText()); // Calibre Lamina
+        excel.setDatosCeldas(hoja1, 34, 1, txtObservacionesRD.getText()); // ObservacionesRD
+        excel.setDatosCeldas(hoja1, 42, 1, cbxObservacionesMP.getSelectedItem().toString()); // ObservacionesMP
+        excel.setDatosCeldas(hoja1, 60, 1, cbxNombreInspector.getSelectedItem().toString()); // Inspector
     }
 
-    public String getRutaArchivo() {
-        return rutaArchivo;
+    private void validarEstadoAceptacionRechazo() {
+        if (chkAceptacion.isSelected()) {
+            excel.setDatosCeldas(hoja1, 39, 2, "√"); // Aceptación
+            excel.setDatosCeldas(hoja1, 39, 7, ""); // Rechazo
+        } else {
+            excel.setDatosCeldas(hoja1, 39, 2, ""); // Aceptación
+            excel.setDatosCeldas(hoja1, 39, 7, "√"); // Rechazo
+        }
+    }
+
+    private void obtenerDatosTblAnchoLargo(int idHojaInstruccion) {
+        int numeroFila = 20; // indice de la Tabla Ancho/Largo
+        List anchoLargo = als.capturarValores(idHojaInstruccion, dirm.getAnchoLargo());
+
+        for (Object anchoLargo1 : anchoLargo) {
+            AnchoLargoM medida = (AnchoLargoM) anchoLargo1;
+            Row row = hoja1.getRow(numeroFila);
+            excel.setDatosCeldas(hoja1, numeroFila, 1, medida.getAncho()); // Ancho
+            excel.setDatosCeldas(hoja1, numeroFila, 2, medida.getLargo()); // Largo
+            numeroFila++;
+            //Aplicación del formato
+            row.getCell(1).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+            row.getCell(2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+        }
+    }
+
+    private void obtenerDatosTblRugosidadDureza(int idHojaInstruccion) {
+        int numeroFila = 43;
+        List<RugosidadDurezaM> rugosidadDureza = rds.recuperarTodas(idHojaInstruccion, dirm.getAnchoLargo());
+
+        if (rugosidadDureza.size() == 5) {
+            for (int j = 0; j < 5; j++) {
+                RugosidadDurezaM valores = rugosidadDureza.get(j);
+                excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getRugosidad()); // Rugosidad en fila 1
+            }
+
+            numeroFila++; // Avanzar a la siguiente fila
+            Row row = hoja1.getRow(numeroFila);
+            for (int j = 0; j < 5; j++) {
+                RugosidadDurezaM valores = rugosidadDureza.get(j);
+                excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getDureza()); // Dureza en fila 2
+            }
+
+            for (int j = 0; j < 5; j++) {
+                hoja1.getRow(numeroFila - 1).getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Rugosidad
+                row.getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Dureza
+            }
+        }
+    }
+
+    private String obtenerNoHoja() {
+        String[] partes = txtHojaInstrucciones.getText().split("/"); // Se divide el valor de NoHoja para solo obtener el número
+        String numeroStr = partes[1];
+        int numero = Integer.parseInt(numeroStr);
+
+        if (numero < 10) {
+            numeroStr = String.valueOf(numero);
+        }
+        excel.setDatosCeldas(hoja1, 5, 1, numeroStr);
+        return numeroStr;
+    }
+
+    private void cerrarVentana() {
+        HojaInstruccionGUI2.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**
@@ -530,11 +556,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> { // Crea y muestra el form
-            try {
-                new HojaInstruccionGUI2().setVisible(true);
-            } catch (SQLException | ClassNotFoundException ex) {
-                Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            new HojaInstruccionGUI2().setVisible(true);
         });
     }
 

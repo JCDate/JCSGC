@@ -125,5 +125,4 @@ public class SolicitudesM {
     public void setArchivo(byte[] archivo) {
         this.archivo = archivo;
     }
-
 }

@@ -95,7 +95,4 @@ public class ProcesosM {
     public void setDiagramaTortuga(byte[] diagramaTortuga) {
         this.diagramaTortuga = diagramaTortuga;
     }
-    
-    
-    
 }

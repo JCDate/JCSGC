@@ -1,5 +1,6 @@
 package Servicios;
 
+import InspeccionRecibo.AgregarCalibreHIGUI;
 import InspeccionRecibo.AgregarIrGUI;
 import InspeccionRecibo.EspecificacionesGUI;
 import InspeccionRecibo.HojaInstruccionGUI;
@@ -72,7 +73,7 @@ public class InspeccionReciboServicio {
     public String direcciomImg = "img\\jc.png";
     // Obtener la conexión a la base de datos
 
-    Connection conexion; 
+    Connection conexion;
 
     public final String DIRECCION_IMG = "img\\jc.png";
     private static final String SQL_INSERCION_CALIBRE_IR = "INSERT INTO calibresir(calibre,medidas,especificacion) VALUES (?,?,?)";
@@ -303,7 +304,7 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public List<InspeccionReciboM> recuperarTodas(Connection conexion) throws SQLException {
+    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion) throws SQLException {
         List<InspeccionReciboM> listaIr = new ArrayList<>();
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL);
                 ResultSet resultado = consulta.executeQuery()) {
@@ -948,6 +949,12 @@ public class InspeccionReciboServicio {
             // Archivo de Hoja de Instrucción
             cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
         }
+    }
+
+    public void abrirAgregarCalibreHIGUI(Usuarios usuario) {
+        AgregarCalibreHIGUI irGUI = new AgregarCalibreHIGUI(usuario);
+        irGUI.setVisible(true);
+        irGUI.setLocationRelativeTo(null);
     }
 
 }

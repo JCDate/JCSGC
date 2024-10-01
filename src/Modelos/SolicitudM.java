@@ -85,5 +85,4 @@ public class SolicitudM {
     public void setNuevo(byte[] nuevo) {
         this.nuevo = nuevo;
     }
-    
 }

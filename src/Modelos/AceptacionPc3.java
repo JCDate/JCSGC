@@ -107,5 +107,4 @@ public class AceptacionPc3 {
     public void setNoTroquel(String noTroquel) {
         this.noTroquel = noTroquel;
     }
-    
-}
+    }

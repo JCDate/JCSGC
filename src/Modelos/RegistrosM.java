@@ -125,5 +125,4 @@ public class RegistrosM {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
 }

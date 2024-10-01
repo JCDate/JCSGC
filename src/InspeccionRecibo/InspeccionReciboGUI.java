@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
+import java.sql.Connection;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -34,7 +35,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     // Usuario y Conexión a la base de datos
     private Usuarios usuario;
-    private Conexion conexion;
+    private Connection conexion;
 
     // Definición de la estructura de la tabla
     private DefaultTableModel modeloTabla;
@@ -270,8 +271,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             String noPedido = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_NO_PEDIDO);
             String pzKg = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_PZKG);
 
-            int respuesta = JOptionPane.showConfirmDialog(this, "LA INFORMACIÓN SELECCIONADA SE ELIMINARÁ,¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-            if (respuesta == JOptionPane.YES_NO_OPTION) {
+            if (Utilidades.confirmarEliminacion()) {
                 eliminarRegistro(noHoja, fechaFactura, noFactura, noPedido, pzKg);
             }
         } else {
@@ -293,50 +293,15 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         int columnaSeleccionada = tblInspeccionRecibo.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblInspeccionRecibo.rowAtPoint(evt.getPoint());
 
-        if (esCeldaValida(filaSeleccionada, columnaSeleccionada)) {
-            String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, 0);
-            int posicion = -1;
+        if (Utilidades.esCeldaValida(tblInspeccionRecibo, filaSeleccionada, columnaSeleccionada)) {
+            manejarCeldaSeleccionada(filaSeleccionada, columnaSeleccionada);
 
-            for (int i = 0; i < listaInspeccionRecibo.size(); i++) {
-                InspeccionReciboM elemento = listaInspeccionRecibo.get(i);
-                if (elemento.getNoHoja().equals(noHoja)) {
-                    posicion = i;
-                    break;
-                }
-            }
-
-            Object value = tblInspeccionRecibo.getValueAt(filaSeleccionada, columnaSeleccionada);
-
-            if (value instanceof JButton) {
-                JButton boton = (Button) value;
-                String textoBoton = boton.getText();
-                switch (textoBoton) {
-                    case "Vacío":
-                        JOptionPane.showMessageDialog(null, "No hay archivo");
-                        break;
-                    case "Realizar":
-                        cerrarVentana();
-                        irs.abrirHojaInstruccionGUI(usuario, listaInspeccionRecibo.get(posicion));
-                        break;
-                    default:
-                        try {
-                            if (columnaSeleccionada == 10 || columnaSeleccionada == 11) {
-                                irs.ejecutarArchivoPDF(noHoja, columnaSeleccionada);
-                            } else if (columnaSeleccionada == 12) {
-                                irs.ejecutarArchivoXLSX(noHoja, columnaSeleccionada);
-                            }
-                        } catch (ClassNotFoundException | SQLException ex) {
-                            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        break;
-                }
-            }
         }
     }//GEN-LAST:event_tblInspeccionReciboMouseClicked
 
     private void btnToExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnToExcelActionPerformed
         try {
-            excel.generarInspeccionReciboXLS(); // Generar el excel
+            excel.generarInspeccionReciboXLS();
         } catch (SQLException | ParseException ex) {
             Utilidades.manejarExcepcion("Error al genear el archivo InspeccionRecibo.xlsx: ", ex);
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -353,39 +318,57 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 filtrarTabla();
             }
         });
-        trs = new TableRowSorter(tblInspeccionRecibo.getModel());
-        tblInspeccionRecibo.setRowSorter(trs);
     }//GEN-LAST:event_txtBuscadorKeyTyped
 
     private void btnAgregarCalibreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCalibreActionPerformed
-        try {
-            AgregarCalibreHIGUI irGUI = new AgregarCalibreHIGUI(usuario);
-            irGUI.setVisible(true);
-            irGUI.setLocationRelativeTo(null);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        irs.abrirAgregarCalibreHIGUI(usuario);
     }//GEN-LAST:event_btnAgregarCalibreActionPerformed
 
     private void inicializarVentanaYComponentes() {
+        try {
+            configurarVentana();
+            this.conexion = Conexion.getInstance().conectar();
+            inicializarServicios();
+            configurarBuscador();
+            inicializarTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Abrir InspeccionReciboGUI: ", ex);
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.conexion = Conexion.getInstance();
+    }
 
+    private void inicializarServicios() {
+        this.irs = new InspeccionReciboServicio();
+        this.excel = new GeneradorExcel();
+    }
+
+    private void configurarBuscador() {
         txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
         txtBuscador.setHint("Buscar...");
+    }
 
-        modeloTabla = construirModeloTabla();
-
-        tblInspeccionRecibo.setModel(modeloTabla);
-        trs = new TableRowSorter<>(modeloTabla);
-        tblInspeccionRecibo.setRowSorter(trs);
-        tblInspeccionRecibo.setRowHeight(27);
-        tblInspeccionRecibo.setPreferredSize(new Dimension(4500, 4500));  // CONSIDERAR QUITARLAS
-        tblInspeccionRecibo.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // CONSIDERAR QUITARLAS
-        mostrarDatosTabla();
+    private void inicializarTabla() {
+        try {
+            this.modeloTabla = construirModeloTabla();
+            this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion);
+            tblInspeccionRecibo.setModel(modeloTabla);
+            this.trs = new TableRowSorter(tblInspeccionRecibo.getModel());
+            tblInspeccionRecibo.setRowSorter(trs);
+            tblInspeccionRecibo.setRowHeight(27);
+            tblInspeccionRecibo.setPreferredSize(new Dimension(4500, 4500));  // CONSIDERAR QUITARLAS
+            tblInspeccionRecibo.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // CONSIDERAR QUITARLAS
+            mostrarDatosTabla();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al inicializar la tabla: ", ex);
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private DefaultTableModel construirModeloTabla() {
@@ -405,43 +388,52 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         return modeloTabla;
     }
 
-    public void mostrarDatosTabla() {
-        try {
-            modeloTabla.setRowCount(0);
-            listaInspeccionRecibo = irs.recuperarTodas(conexion);
+    private void mostrarDatosTabla() {
+        limpiarTabla();
+        llenarTabla();
+        configurarRenderizacionTabla();
+    }
 
-            if (listaInspeccionRecibo != null) {
-                listaInspeccionRecibo.stream().map((ir) -> { // Se utiliza la expresión lambda y las funcion stream para el manejo de la información
-                    Object fila[] = new Object[13];
-                    fila[COLUMNA_NO_HOJA] = ir.getNoHoja();
-                    fila[COLUMNA_FECHA] = ir.getFechaFactura();
-                    fila[COLUMNA_PROVEEDOR] = ir.getProveedor();
-                    fila[COLUMNA_NO_FACTURA] = ir.getNoFactura();
-                    fila[COLUMNA_NO_PEDIDO] = ir.getNoPedido();
-                    fila[COLUMNA_CALIBRE] = ir.getCalibre();
-                    fila[COLUMNA_PRESENTACION_LAMINA] = ir.getpLamina();
-                    fila[COLUMNA_NO_ROLLO] = ir.getNoRollo();
-                    fila[COLUMNA_PZKG] = ir.getPzKg();
-                    fila[COLUMNA_ESTATUS] = ir.getEstatus();
+    private void limpiarTabla() {
+        modeloTabla.setRowCount(0);
+    }
 
-                    // Se crean los botones para el resto de campos
-                    fila[COLUMNA_VER_FACTURA] = irs.crearBoton(ir.getFacturapdf(), Iconos.ICONO_PDF, "Vacío");
-                    fila[COLUMNA_VER_CERTIFICADO] = irs.crearBoton(ir.getCertificadopdf(), Iconos.ICONO_PDF, "Vacío");
-                    fila[COLUMNA_VER_HOJA_INSTRUCCION] = irs.crearBoton(ir.getHojaIns(), Iconos.ICONO_EXCEL_2, "Realizar");
-                    return fila;
-                }).forEachOrdered((fila) -> { // Cada elemento que se encuentra se agrega como fila a la tabla
-                    modeloTabla.addRow(fila);
-                });
-            }
-            tblInspeccionRecibo.setDefaultRenderer(Object.class, new imgTabla());
-        } catch (SQLException ex) {
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Error al cargar los registros de inspección Recibo: " + ex);
+    private void llenarTabla() {
+        if (listaInspeccionRecibo != null && !listaInspeccionRecibo.isEmpty()) {
+            listaInspeccionRecibo.forEach(aceptacionProducto -> {
+                Object[] fila = crearFila(aceptacionProducto);
+                modeloTabla.addRow(fila);
+            });
         }
     }
 
-    public void cerrarVentana() {
+    private Object[] crearFila(InspeccionReciboM inspeccionRecibo) {
+        Object fila[] = new Object[13];
+        fila[COLUMNA_NO_HOJA] = inspeccionRecibo.getNoHoja();
+        fila[COLUMNA_FECHA] = inspeccionRecibo.getFechaFactura();
+        fila[COLUMNA_PROVEEDOR] = inspeccionRecibo.getProveedor();
+        fila[COLUMNA_NO_FACTURA] = inspeccionRecibo.getNoFactura();
+        fila[COLUMNA_NO_PEDIDO] = inspeccionRecibo.getNoPedido();
+        fila[COLUMNA_CALIBRE] = inspeccionRecibo.getCalibre();
+        fila[COLUMNA_PRESENTACION_LAMINA] = inspeccionRecibo.getpLamina();
+        fila[COLUMNA_NO_ROLLO] = inspeccionRecibo.getNoRollo();
+        fila[COLUMNA_PZKG] = inspeccionRecibo.getPzKg();
+        fila[COLUMNA_ESTATUS] = inspeccionRecibo.getEstatus();
+
+        // Se crean los botones para el resto de campos
+        fila[COLUMNA_VER_FACTURA] = irs.crearBoton(inspeccionRecibo.getFacturapdf(), Iconos.ICONO_PDF, "Vacío");
+        fila[COLUMNA_VER_CERTIFICADO] = irs.crearBoton(inspeccionRecibo.getCertificadopdf(), Iconos.ICONO_PDF, "Vacío");
+        fila[COLUMNA_VER_HOJA_INSTRUCCION] = irs.crearBoton(inspeccionRecibo.getHojaIns(), Iconos.ICONO_EXCEL_2, "Realizar");
+        return fila;
+    }
+
+    private void configurarRenderizacionTabla() {
+        tblInspeccionRecibo.setDefaultRenderer(Object.class, new imgTabla());
+    }
+
+    private void cerrarVentana() {
         InspeccionReciboGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     private void eliminarRegistro(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) {
@@ -454,8 +446,54 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+   
+    private void manejarCeldaSeleccionada(int filaSeleccionada, int columnaSeleccionada) {
+        String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, 0);
+        int posicion = -1;
 
-    public void filtrarTabla() {
+        for (int i = 0; i < listaInspeccionRecibo.size(); i++) {
+            InspeccionReciboM elemento = listaInspeccionRecibo.get(i);
+            if (elemento.getNoHoja().equals(noHoja)) {
+                posicion = i;
+                break;
+            }
+        }
+
+        Object value = tblInspeccionRecibo.getValueAt(filaSeleccionada, columnaSeleccionada);
+
+        if (value instanceof JButton) {
+            JButton boton = (Button) value;
+            procesarBoton(boton, columnaSeleccionada, posicion, noHoja);
+
+        }
+    }
+
+    private void procesarBoton(JButton boton, int columnaSeleccionada, int posicion, String noHoja) {
+        String textoBoton = boton.getText();
+        switch (textoBoton) {
+            case "Vacío":
+                JOptionPane.showMessageDialog(null, "No hay archivo");
+                break;
+            case "Realizar":
+                cerrarVentana();
+                irs.abrirHojaInstruccionGUI(usuario, listaInspeccionRecibo.get(posicion));
+                break;
+            default:
+                try {
+                    if (columnaSeleccionada == 10 || columnaSeleccionada == 11) {
+                        irs.ejecutarArchivoPDF(noHoja, columnaSeleccionada);
+                    } else if (columnaSeleccionada == 12) {
+                        irs.ejecutarArchivoXLSX(noHoja, columnaSeleccionada);
+                    }
+                } catch (ClassNotFoundException | SQLException ex) {
+                    Utilidades.manejarExcepcion("ERROR al procesar la información de la columna: ", ex);
+                    Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                break;
+        }
+    }
+    
+    private void filtrarTabla() {
         String filtro = txtBuscador.getText();
         try {
             RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter(filtro, 2, 3, 5, 7);
@@ -464,11 +502,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             trs.setRowFilter(null);
         }
     }
-
-    private boolean esCeldaValida(int fila, int columna) {
-        return fila >= 0 && fila < tblInspeccionRecibo.getRowCount()
-                && columna >= 0 && columna < tblInspeccionRecibo.getColumnCount();
-    }
+    
 
     /**
      * @param args the command line arguments

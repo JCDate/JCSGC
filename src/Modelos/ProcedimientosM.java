@@ -88,5 +88,4 @@ public class ProcedimientosM {
     public void setProceso(String proceso) {
         this.proceso = proceso;
     }
-
 }

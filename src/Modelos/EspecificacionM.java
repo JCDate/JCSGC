@@ -14,8 +14,6 @@ public class EspecificacionM {
 
     public EspecificacionM() {
     }
-    
-    
 
     public EspecificacionM(int id, String especificacion, String codigo, String fechaEmision, String fechaRevision, String noRev, int idDatosIR, int fila, int numFila) {
         this.id = id;

@@ -47,23 +47,23 @@ public class EspecificacionesGUI extends JFrame {
     private InspeccionReciboM inspeccionRecibo;
 
     // Servicios y Utilidades
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
-    private AnchoLargoServicio als = new AnchoLargoServicio();
-    private RugosidadDurezaServicio rds = new RugosidadDurezaServicio();
-    private EspecificacionesServicio es = new EspecificacionesServicio();
-    private GeneradorExcel xls = new GeneradorExcel();
+    private InspeccionReciboServicio irs;
+    private AnchoLargoServicio als;
+    private RugosidadDurezaServicio rds;
+    private EspecificacionesServicio es;
+    private GeneradorExcel xls;
 
     // Tablas para controlar la rugosidad y el ancho
     private JTable tblRugosidadDureza;
     private JTable tblAnchoLargo;
 
     // Listas de datos
-    private List<JTable> listaTablas = new ArrayList<>();
-    private List<String> listaMedidasCalibre = new ArrayList<>();
-    private List<String> listaEspecificacion = new ArrayList<>();
-    private List listaAnchoLargo = new ArrayList<>();
-    private List listaRugosidadDureza = new ArrayList<>();
-    private List<JTable> tablas = new ArrayList<>();
+    private List<JTable> listaTablas;
+    private List<String> listaMedidasCalibre;
+    private List<String> listaEspecificacion;
+    private List listaAnchoLargo;
+    private List listaRugosidadDureza;
+    private List<JTable> tablas;
 
     public EspecificacionesGUI() {
         inicializarVentanaYComponentes();
@@ -230,7 +230,7 @@ public class EspecificacionesGUI extends JFrame {
             inspeccionRecibo.setHojaIns(this.irs.leerArchivo(HojaIns));
 
             irs.subirHI(conexion, inspeccionRecibo);
-           cerrarVentana();
+            cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);
         } catch (IOException | SQLException | ClassNotFoundException ex) {
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -242,28 +242,10 @@ public class EspecificacionesGUI extends JFrame {
         try {
             configurarVentana();
             this.conexion = Conexion.getInstance().conectar();
-
-            pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
-
-            listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
-            listaMedidasCalibre.forEach(cbxCalibre::addItem);
-
-            actualizarEspecificacionesTecnicas();
-
-            cbxCalibre.addActionListener(e -> actualizarEspecificacionesTecnicas());
-
-            btnAceptar.addActionListener(e -> {
-                String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
-                String calibre = (String) cbxCalibre.getSelectedItem();
-                try {
-                    crearTabla(espeTecnica, calibre);
-                } catch (SQLException | ClassNotFoundException ex) {
-                    Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                    irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
-                }
-            });
-
-            btnEliminar.addActionListener(ae -> eliminarUltimaTabla());
+            inicializarServicios();
+            inicializarListas();
+            configurarPanelYTablas();
+            configurarListeners();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir EspecificacionesGUI: ", ex);
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -277,6 +259,30 @@ public class EspecificacionesGUI extends JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void configurarPanelYTablas() {
+        pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
+        listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
+        listaMedidasCalibre.forEach(cbxCalibre::addItem);
+        actualizarEspecificacionesTecnicas();
+    }
+
+    private void inicializarServicios() {
+        this.irs = new InspeccionReciboServicio();
+        this.als = new AnchoLargoServicio();
+        this.rds = new RugosidadDurezaServicio();
+        this.es = new EspecificacionesServicio();
+        this.xls = new GeneradorExcel();
+    }
+
+    private void inicializarListas() {
+        this.listaTablas = new ArrayList<>();
+        this.listaMedidasCalibre = new ArrayList<>();
+        this.listaEspecificacion = new ArrayList<>();
+        this.listaAnchoLargo = new ArrayList<>();
+        this.listaRugosidadDureza = new ArrayList<>();
+        this.tablas = new ArrayList<>();
+    }
+
     private void actualizarEspecificacionesTecnicas() {
         cbxEspecificacionTecnica.removeAllItems();
 
@@ -287,6 +293,23 @@ public class EspecificacionesGUI extends JFrame {
             listaEspecificacion = irs.recuperarEspecificaciones(conexion, calibre);
             listaEspecificacion.forEach(cbxEspecificacionTecnica::addItem);
         }
+    }
+
+    private void configurarListeners() {
+        cbxCalibre.addActionListener(e -> actualizarEspecificacionesTecnicas());
+
+        btnAceptar.addActionListener(e -> {
+            String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
+            String calibre = (String) cbxCalibre.getSelectedItem();
+            try {
+                crearTabla(espeTecnica, calibre);
+            } catch (SQLException | ClassNotFoundException ex) {
+                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
+            }
+        });
+
+        btnEliminar.addActionListener(ae -> eliminarUltimaTabla());
     }
 
     private void crearTabla(String especificacionTecnica, String calibres) throws SQLException, ClassNotFoundException {
