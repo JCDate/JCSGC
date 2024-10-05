@@ -27,8 +27,7 @@ public class CheckBoxRenderer extends DefaultTableCellRenderer {
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-            boolean hasFocus, int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         // Verificar si la celda está dentro del rango de celdas que deben tener el checkbox
         boolean mostrarCheckbox = (row < numCeldas);

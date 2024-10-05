@@ -47,6 +47,7 @@ public class GeneradorExcel {
         try {
             this.conexion = Conexion.getInstance().conectar();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
             Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -74,7 +75,7 @@ public class GeneradorExcel {
     int columnaBase = 8; // A partir de esta fila se imprimen las variables y sus respectivos valores en el documento de Retención Dimensional
 
     private static final int[] FILAS_INFO = {2, 40, 78, 116}; // 
-    private static final int[] FILAS_PROCESOS = {4, 42, 80, 118}; // Celdas donde se imprimen las "x" de los procesos 
+//    private static final int[] FILAS_PROCESOS = {4, 42, 80, 118}; // Celdas donde se imprimen las "x" de los procesos 
     private static final int[] COLUMNAS_COMPONENTE = {13, 20, 26}; // Columnas donde se imprime la información del componente
 
     public void generarInspeccionReciboXLS() throws SQLException, ParseException {
@@ -1060,8 +1061,8 @@ public class GeneradorExcel {
     }
 
     private void setValorCeldasHojaInstruccion(Sheet sheet, int pocisionFila, int pocisionCelda, String valor) {
-        Row fila = sheet.getRow(pocisionFila); // Obtén la fila
-        Cell celda = fila.getCell(pocisionCelda); // Obtén la celda en la fila
-        celda.setCellValue(valor); // Modifica el valor de la celda
+        Row fila = sheet.getRow(pocisionFila); 
+        Cell celda = fila.getCell(pocisionCelda);
+        celda.setCellValue(valor); 
     }
 }

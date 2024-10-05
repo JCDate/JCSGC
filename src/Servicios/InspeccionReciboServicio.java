@@ -71,9 +71,6 @@ public class InspeccionReciboServicio {
     private final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE " + this.tabla + " SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id_ir=?";
 
     public String direcciomImg = "img\\jc.png";
-    // Obtener la conexión a la base de datos
-
-    Connection conexion;
 
     public final String DIRECCION_IMG = "img\\jc.png";
     private static final String SQL_INSERCION_CALIBRE_IR = "INSERT INTO calibresir(calibre,medidas,especificacion) VALUES (?,?,?)";

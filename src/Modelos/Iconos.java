@@ -22,9 +22,9 @@ public class Iconos {
 
     public static Image getImage(String ruta) {
         try {
-            ImageIcon imageIcon = new ImageIcon(Iconos.class.getResource(ruta)); //Se crea un objeto de la clase ImageIcon y se obtiene la dirección de la ruta
-            Image mainIcon = imageIcon.getImage(); // Se obtiene la imagen
-            return mainIcon; // Se retorna 
+            ImageIcon imageIcon = new ImageIcon(Iconos.class.getResource(ruta));
+            Image mainIcon = imageIcon.getImage(); 
+            return mainIcon;
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error al cargar el icono: " + e);
         }

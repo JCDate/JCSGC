@@ -41,58 +41,98 @@ import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import java.util.Date;
 import java.util.function.Consumer;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import jnafilechooser.api.JnaFileChooser;
 import swing.Button;
 
 public class ControlDocumentacionServicio {
 
-    Connection conexion = Conexion.getInstance().conectar();
-
-    public boolean esUsuarioAutorizado(Usuarios usuario) {
-        return usuario.getId() == 12 || usuario.getId() == 8 || usuario.getId() == 15 || usuario.getId() == 17;
-    }
-
     public void abrirModificarInfoGUI(Usuarios usr, ProcesosM procesos) {
         ModificarInfoGUI doc = new ModificarInfoGUI(usr, procesos);
-        doc.setVisible(true);
-        doc.setLocationRelativeTo(null);
+        mostrarVentana(doc);
     }
     
     public void abrirModificarInfoGUI(Usuarios usr, ProcedimientosM procedimiento) {
         ModificarInfoGUI doc = new ModificarInfoGUI(usr, procedimiento);
-        doc.setVisible(true);
-        doc.setLocationRelativeTo(null);
+        mostrarVentana(doc);
     }
 
     public void abrirModificarArchivosGUI(Usuarios usr, DocumentosM documento) {
         ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, documento);
-        doc.setVisible(true);
-        doc.setLocationRelativeTo(null);
+        mostrarVentana(doc);
     }
 
     public void abrirModificarArchivosGUI(Usuarios usr, ProcesosM proceso) {
         ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, proceso);
-        doc.setVisible(true);
-        doc.setLocationRelativeTo(null);
+        mostrarVentana(doc);
     }
 
     public void abrirModificarArchivosGUI(Usuarios usr, ProcedimientosM procedimiento) {
         ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, procedimiento);
-        doc.setVisible(true);
-        doc.setLocationRelativeTo(null);
+        mostrarVentana(doc);
     }
 
     public void abrirDocumentacionGUI(Usuarios usr, int idProceso) {
         ProcesosGUI doc = new ProcesosGUI(usr, idProceso);
-        doc.setVisible(true);
-        doc.setLocationRelativeTo(null);
+        mostrarVentana(doc);
     }
 
     public void abrirControlDocumentosGUI(Usuarios usr) {
-        ControlDocumentosGUI doc = new ControlDocumentosGUI(usr); // Se crea la instancia de la clase
+        ControlDocumentosGUI doc = new ControlDocumentosGUI(usr);
+        mostrarVentana(doc);
+    }
+    public void abrirSolicitudCambioGUI(Usuarios usr) {
+        SolicitudesGUI doc = new SolicitudesGUI(usr); // Se crea la instancia de la clase
         doc.setVisible(true); // Se muestra visible al usuario
         doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+
+    public void abrirSolicitudGUI(Usuarios usr, ProcesosM proceso) {
+        try {
+            SolicitudGUI doc = new SolicitudGUI(usr, proceso); // Se crea la instancia de la clase
+            doc.setVisible(true); // Se muestra visible al usuario
+            doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    
+    public void abrirProcedimientosGUI(Usuarios usr, ProcedimientosM procedimiento) {
+        try {
+            ProcedimientosGUI doc = new ProcedimientosGUI(usr, procedimiento); // Se crea la instancia de la clase
+            doc.setVisible(true); // Se muestra visible al usuario
+            doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void abrirFormatosGUI(Usuarios usr, ProcedimientosM procedimiento) {
+        FormatosGUI formatos = new FormatosGUI(usr, procedimiento); // Se crea la instancia de la clase
+        formatos.setVisible(true); // Se muestra visible al usuario
+        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+
+    public void abrirRegistrosGUI(Usuarios usr, ProcedimientosM procedimiento) {
+        RegistrosGUI formatos = new RegistrosGUI(usr, procedimiento); // Se crea la instancia de la clase
+        formatos.setVisible(true); // Se muestra visible al usuario
+        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+    
+    public void abrirAgregarDocumentosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
+        AgregarDocumentosGUI formatos = new AgregarDocumentosGUI(usuario, procedimiento); // Se crea la instancia de la clase
+        formatos.setVisible(true); // Se muestra visible al usuario
+        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
+    }
+    
+    public boolean esUsuarioAutorizado(Usuarios usuario) {
+        return usuario.getId() == 12 || usuario.getId() == 8 || usuario.getId() == 15 || usuario.getId() == 17;
+    }
+    public void mostrarVentana(JFrame frame) {
+        frame.setVisible(true);
+        frame.setLocationRelativeTo(null);
     }
 
     public ProcesosM recuperarProceso(Connection conexion, int id) throws SQLException {
@@ -233,7 +273,7 @@ public class ControlDocumentacionServicio {
         return boton;
     }
 
-    public void ejecutarDiagramaTortuga(ProcesosM proceso) throws ClassNotFoundException, SQLException {
+    public void ejecutarDiagramaTortuga(Connection conexion, ProcesosM proceso) throws ClassNotFoundException, SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
@@ -434,21 +474,7 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public void abrirSolicitudCambioGUI(Usuarios usr) {
-        SolicitudesGUI doc = new SolicitudesGUI(usr); // Se crea la instancia de la clase
-        doc.setVisible(true); // Se muestra visible al usuario
-        doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-    }
-
-    public void abrirSolicitudGUI(Usuarios usr, ProcesosM proceso) {
-        try {
-            SolicitudGUI doc = new SolicitudGUI(usr, proceso); // Se crea la instancia de la clase
-            doc.setVisible(true); // Se muestra visible al usuario
-            doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    
 
     public void agregarSolicitud(SolicitudesM solicitud) {
         String sql = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, archivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -498,27 +524,7 @@ public class ControlDocumentacionServicio {
         return listaSolicitudes;
     }
 
-    public void abrirProcedimientosGUI(Usuarios usr, ProcedimientosM procedimiento) {
-        try {
-            ProcedimientosGUI doc = new ProcedimientosGUI(usr, procedimiento); // Se crea la instancia de la clase
-            doc.setVisible(true); // Se muestra visible al usuario
-            doc.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void abrirFormatosGUI(Usuarios usr, ProcedimientosM procedimiento) {
-        FormatosGUI formatos = new FormatosGUI(usr, procedimiento); // Se crea la instancia de la clase
-        formatos.setVisible(true); // Se muestra visible al usuario
-        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-    }
-
-    public void abrirRegistrosGUI(Usuarios usr, ProcedimientosM procedimiento) {
-        RegistrosGUI formatos = new RegistrosGUI(usr, procedimiento); // Se crea la instancia de la clase
-        formatos.setVisible(true); // Se muestra visible al usuario
-        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-    }
+    
 
     public void ejecutarArchivoSC(String nombre) throws ClassNotFoundException, SQLException {
         PreparedStatement ps = null;
@@ -885,11 +891,7 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public void abrirAgregarDocumentosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
-        AgregarDocumentosGUI formatos = new AgregarDocumentosGUI(usuario, procedimiento); // Se crea la instancia de la clase
-        formatos.setVisible(true); // Se muestra visible al usuario
-        formatos.setLocationRelativeTo(null); // Se muestra al centro de la pantalla
-    }
+    
 
     public void actualizarInfoDocumentos(Connection conexion, DocumentosM documento) {
         Date fechaActual = new Date();
@@ -920,3 +922,4 @@ public class ControlDocumentacionServicio {
         }
     }
 }
+

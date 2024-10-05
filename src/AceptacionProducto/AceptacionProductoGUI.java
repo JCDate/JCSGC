@@ -178,7 +178,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private void tblAceptacionProductoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAceptacionProductoMouseClicked
         int columnaSeleccionada = tblAceptacionProducto.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblAceptacionProducto.rowAtPoint(evt.getPoint());
-        if (aps.esCeldaValida(tblAceptacionProducto, filaSeleccionada, columnaSeleccionada)) {
+        if (Utilidades.esCeldaValida(tblAceptacionProducto, filaSeleccionada, columnaSeleccionada)) {
             manejarCeldaSeleccionada(filaSeleccionada, columnaSeleccionada);
         }
     }//GEN-LAST:event_tblAceptacionProductoMouseClicked

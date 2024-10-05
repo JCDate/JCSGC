@@ -778,15 +778,15 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         if (aps.existeRegistroPc1(conexion, aceptacionPc1)) {
             aps.actualizarNoOps(conexion, aceptacionPc1);
         } else {
-            aps.agregarpc1(conexion, aceptacionPc1);
+            aps.agregarAceptacionPc1(conexion, aceptacionPc1);
         }
 
         if (!aps.existeRegistroPc2(conexion, aceptacionPc2)) {
-            aps.agregarpc2(conexion, aceptacionPc2);
+            aps.agregarAceptacionPc2(conexion, aceptacionPc2);
         }
 
         List<AceptacionPc3> nuevosDatosFiltrados = aps.filtrarNuevosDatos(conexion, listaNuevosDatos);
-        aps.agregarpc3(conexion, nuevosDatosFiltrados);
+        aps.agregarAceptacionPc3(conexion, nuevosDatosFiltrados);
         JOptionPane.showMessageDialog(this, "DATOS GUARDADOS CORRECTAMENTE");
     }
 
@@ -822,7 +822,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
 
     private boolean elminarAceptacion(AceptacionPc3 aceptacionPc3) {
         try {
-            aps.eliminarpc3(conexion, aceptacionPc3);
+            aps.eliminarAceptacionPc3(conexion, aceptacionPc3);
             cerrarVentana();
             return true;
         } catch (Exception e) {
