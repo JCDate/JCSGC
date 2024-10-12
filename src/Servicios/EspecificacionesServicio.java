@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Servicios;
 
 import Modelos.ComposicionQuimicaM;
@@ -16,20 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author JC
- */
 public class EspecificacionesServicio {
 
-    private final String tabla = "datosir";
-    public String direcciomImg = "img\\jc.png";
-    final String SQL_INSERCION_DATOS_IR = "INSERT INTO " + tabla + "(fechaInspeccion,idAnchoLargo,observaciones,obsMP,noHoja,idIR) VALUES (?,?,?,?,?,?)";
-    final String SQL_CONSULTA_PROPIEDADES_MC = "SELECT pm,valor FROM propiedadesmc WHERE especificacionTecnica=?";
-    final String SQL_CONSULTA_COMPOSICION_QM = "SELECT cq,valor FROM composicionquimica WHERE especificacionTecnica=?";
+    final String SQL_INSERCION_DATOS_IR = "INSERT INTO datosir(fechaInspeccion, idAnchoLargo, observaciones, obsMP, noHoja, idIR) VALUES (?, ?, ?, ?, ?, ?)";
+    final String SQL_CONSULTA_PROPIEDADES_MC = "SELECT pm, valor FROM propiedadesmc WHERE especificacionTecnica = ?";
+    final String SQL_CONSULTA_COMPOSICION_QM = "SELECT cq, valor FROM composicionquimica WHERE especificacionTecnica = ?";
 
     public void agregarDatosIR(Connection conexion, DatosIRM dirm, int id) throws SQLException {
-        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_DATOS_IR)) { // Se realiza la consulta
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_DATOS_IR)) {
             sqlInsert.setString(1, dirm.getFechaInspeccion());
             sqlInsert.setInt(2, dirm.getAnchoLargo());
             sqlInsert.setString(3, dirm.getObsMP());
@@ -42,40 +31,36 @@ public class EspecificacionesServicio {
         }
     }
 
-    public List<PropiedadMecanicaM> obtenerPropiedadesMecanicas(Connection con, String espeTecnica) throws SQLException {
+    public List<PropiedadMecanicaM> obtenerPropiedadesMecanicas(Connection conexion, String espeTecnica) throws SQLException {
         List<PropiedadMecanicaM> listaIr = new ArrayList<>(); // Se crea una nueva lista 
-        PreparedStatement consulta = con.conectar().prepareStatement(SQL_CONSULTA_PROPIEDADES_MC);
+        PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_PROPIEDADES_MC);
         consulta.setString(1, espeTecnica);
         ResultSet resultado = consulta.executeQuery();
-        while (resultado.next()) { // Se almacena la información encontrada
+        while (resultado.next()) {
             String pm = resultado.getString("pm");
             String valor = resultado.getString("valor");
-            // Se crea una instancia de la clase propiedadMecanica
             PropiedadMecanicaM propiedadMecanica = new PropiedadMecanicaM(espeTecnica, pm, valor);
-            listaIr.add(propiedadMecanica); // Se agrega a la lista
+            listaIr.add(propiedadMecanica); 
         }
         return listaIr;
     }
 
-    public List<ComposicionQuimicaM> obtenerCM(Connection con, String espeTecnica) throws SQLException {
+    public List<ComposicionQuimicaM> obtenerCM(Connection conexion, String espeTecnica) throws SQLException {
         List<ComposicionQuimicaM> listaIr = new ArrayList<>(); // Se crea una nueva lista 
-        PreparedStatement consulta = con.conectar().prepareStatement(SQL_CONSULTA_COMPOSICION_QM);
+        PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_COMPOSICION_QM);
         consulta.setString(1, espeTecnica);
         ResultSet resultado = consulta.executeQuery();
         while (resultado.next()) { // Se almacena la información encontrada
             String cq = resultado.getString("cq");
             String valor = resultado.getString("valor");
-            // Se crea una instancia de la clase composición química
             ComposicionQuimicaM composicionQuimica = new ComposicionQuimicaM(espeTecnica, cq, valor);
-            listaIr.add(composicionQuimica); // Se agrega a la lista
+            listaIr.add(composicionQuimica); 
         }
         return listaIr;
     }
 
     public void agregarFilasTabla(DefaultTableModel tableModel, int size) {
-        // Determinar el número de celdas a mostrar en la columna específica
         int numCeldas = size;
-        // Verificar si es necesario agregar filas adicionales a la tabla
         int numFilas = tableModel.getRowCount();
         if (numFilas < numCeldas) {
             for (int i = numFilas; i < numCeldas; i++) {

@@ -1,5 +1,6 @@
 package InspeccionRecibo;
 
+import Modelos.AnchoLargoM;
 import Modelos.ComposicionQuimicaM;
 import Modelos.CustomTableCellRenderer;
 import Servicios.CheckBoxEditor;
@@ -9,6 +10,7 @@ import Modelos.DatosIRM;
 import Modelos.EspecificacionM;
 import Modelos.InspeccionReciboM;
 import Modelos.PropiedadMecanicaM;
+import Modelos.RugosidadDurezaM;
 import Modelos.Usuarios;
 import Servicios.AnchoLargoServicio;
 import Servicios.Conexion;
@@ -61,9 +63,10 @@ public class EspecificacionesGUI extends JFrame {
     private List<JTable> listaTablas;
     private List<String> listaMedidasCalibre;
     private List<String> listaEspecificacion;
-    private List listaAnchoLargo;
-    private List listaRugosidadDureza;
+    private List<AnchoLargoM> listaAnchoLargo;
+    private List<RugosidadDurezaM> listaRugosidadDureza;
     private List<JTable> tablas;
+    private boolean tablaCreada = false;
 
     public EspecificacionesGUI() {
         inicializarVentanaYComponentes();
@@ -81,15 +84,15 @@ public class EspecificacionesGUI extends JFrame {
         inicializarVentanaYComponentes();
     }
 
-    public EspecificacionesGUI(Usuarios usuario, DatosIRM datosIR, InspeccionReciboM inspeccionRecibo, JTable tblRugosidadDureza, JTable tblAnchoLargo) {
+    public EspecificacionesGUI(Usuarios usuario, DatosIRM datosIR, InspeccionReciboM inspeccionRecibo, JTable tblAnchoLargo, JTable tblRugosidadDureza) {
         this.usuario = usuario;
         this.datosIR = datosIR;
         this.inspeccionRecibo = inspeccionRecibo;
         this.tblRugosidadDureza = tblRugosidadDureza;
         this.tblAnchoLargo = tblAnchoLargo;
-        als.setTbl(tblRugosidadDureza);
-        rds.setTbl(tblAnchoLargo);
         inicializarVentanaYComponentes();
+        als.setTbl(tblAnchoLargo);
+        rds.setTbl(tblRugosidadDureza);
     }
 
     @Override
@@ -151,7 +154,7 @@ public class EspecificacionesGUI extends JFrame {
         pnlTablas.setLayout(new javax.swing.BoxLayout(pnlTablas, javax.swing.BoxLayout.LINE_AXIS));
         jScrollPane1.setViewportView(pnlTablas);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1170, 390));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1170, 230));
 
         btnRegresar.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         btnRegresar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/boton_regresar.png"))); // NOI18N
@@ -162,7 +165,7 @@ public class EspecificacionesGUI extends JFrame {
                 btnRegresarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 540, 150, 50));
+        jPanel1.add(btnRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 380, 150, 50));
 
         jPanel1.add(cbxCalibre, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 100, 230, 30));
 
@@ -196,7 +199,7 @@ public class EspecificacionesGUI extends JFrame {
                 btnGuardarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1040, 540, 140, 50));
+        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1040, 380, 140, 50));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 600));
 
@@ -211,11 +214,12 @@ public class EspecificacionesGUI extends JFrame {
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        cerrarVentana();
         int idIR = obtenerIdHojaInstruccion();
         listaAnchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
         listaRugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
+
         irs.abrirHojaInstruccionGUI(usuario, inspeccionRecibo, datosIR, listaAnchoLargo, listaRugosidadDureza);
+        cerrarVentana();
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
@@ -297,15 +301,19 @@ public class EspecificacionesGUI extends JFrame {
 
     private void configurarListeners() {
         cbxCalibre.addActionListener(e -> actualizarEspecificacionesTecnicas());
-
         btnAceptar.addActionListener(e -> {
             String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
             String calibre = (String) cbxCalibre.getSelectedItem();
-            try {
-                crearTabla(espeTecnica, calibre);
-            } catch (SQLException | ClassNotFoundException ex) {
-                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
+            if (tablaCreada) {
+                JOptionPane.showMessageDialog(this, "Solo puedes elegir una especificación");
+            } else {
+                try {
+                    crearTabla(espeTecnica, calibre);
+                    tablaCreada = true;
+                } catch (SQLException | ClassNotFoundException ex) {
+                    Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                    irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
+                }
             }
         });
 

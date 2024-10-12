@@ -49,6 +49,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
 
     public AgregarIrGUI(Usuarios usuario) {
         this.usuario = usuario;
+        this.inspeccionRecibo = new InspeccionReciboM();
         inicializarVentanaYComponentes();
     }
 
@@ -99,7 +100,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         cbxPresentacionLamina = new swing.ComboBoxSuggestion();
         cbxProveedor = new swing.ComboBoxSuggestion();
         cbxEstatus = new swing.ComboBoxSuggestion();
-        chkHoy = new swing.JCheckBoxCustom(new Color(20, 134, 255));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -248,16 +248,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         cbxEstatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "LIBERADA", "POR LIBERAR", "RECHAZADA", "CERTIFICADO INCOMPLETO", " " }));
         jPanel1.add(cbxEstatus, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 330, 280, -1));
 
-        chkHoy.setFont(new java.awt.Font("Tahoma", 1, 10)); // NOI18N
-        chkHoy.setForeground(new java.awt.Color(76, 109, 255));
-        chkHoy.setText("HOY");
-        chkHoy.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkHoyActionPerformed(evt);
-            }
-        });
-        jPanel1.add(chkHoy, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 130, -1, 29));
-
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 830, 630));
 
         pack();
@@ -287,14 +277,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         seleccionarHojaInstruccion();
     }//GEN-LAST:event_btnAgregarHojaInstruccionActionPerformed
 
-    private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
-        if (chkHoy.isSelected()) {
-            dchFechaFactura.setDate(new java.util.Date());
-        } else {
-            dchFechaFactura.setDate(null);
-        }
-    }//GEN-LAST:event_chkHoyActionPerformed
-
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
@@ -302,6 +284,8 @@ public class AgregarIrGUI extends javax.swing.JFrame {
             this.excel = new GeneradorExcel();
             this.irs = new InspeccionReciboServicio();
             this.listaProveedores = new ArrayList<>();
+            Date fechaActual = Calendar.getInstance().getTime(); // Obtener la fecha actual
+            dchFechaFactura.setDate(fechaActual);
             cargarProveedores();
             generarCodigoHoja();
         } catch (SQLException ex) {
@@ -323,21 +307,13 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     }
 
     private void generarCodigoHoja() throws SQLException {
-        SQL sql = new SQL();
-        int year = obtenerAnioActual();
-        String codigoHoja = sql.getCodigoHoja(irs.SELECT_NO_HOJA_INSTRUCCION_SQL, year);
-        String nuevoCodigo = sql.obtenerSiguiente(codigoHoja, String.valueOf(year));
-        txtNoHoja.setText(nuevoCodigo);
+        txtNoHoja.setText(irs.generarCodigoDeHoja());
     }
 
-    private int obtenerAnioActual() {
-        return Calendar.getInstance().get(Calendar.YEAR);
-    }
-    
     private void seleccionarFactura() {
         rutaArchivoFactura = seleccionarArchivo(txtNombreFactura, rutaArchivoFactura);
     }
-    
+
     private String seleccionarArchivo(JTextField textField, String rutaArchivo) {
         File archivoSeleccionado = irs.seleccionarArchivo(this);
         if (archivoSeleccionado != null) {
@@ -347,30 +323,23 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         }
         return rutaArchivo;
     }
-    
+
     private void cerrarVentana() {
         AgregarIrGUI.this.dispose();
         Conexion.getInstance().desconectar(conexion);
     }
-    
+
     private void procesarArchivoXLS() {
         Date fechaSeleccionada = dchFechaFactura.getDate();
 
-        String noHoja = obtenerNoHoja();
+        String noHoja = txtNoHoja.getText().trim();
         capturarDatosInspeccionRecibo(noHoja);
 
         if (fechaSeleccionada == null) {
             procesarArchivoExcel(noHoja);
         } else {
-           procesarDatosCapturados(fechaSeleccionada, noHoja);
+            procesarDatosCapturados(fechaSeleccionada, noHoja);
         }
-    }
-    
-    private String obtenerNoHoja() {
-        String noHoja = txtNoHoja.getText().trim();
-        String[] partes = noHoja.split("/");
-        String numeroStr = partes[1];
-        return numeroStr.trim();
     }
 
     private void capturarDatosInspeccionRecibo(String noHoja) {
@@ -378,13 +347,14 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         inspeccionRecibo.setCalibre(txtCalibre.getText().trim());
         inspeccionRecibo.setpLamina(cbxPresentacionLamina.getSelectedItem().toString());
         inspeccionRecibo.setEstatus(cbxEstatus.getSelectedItem().toString());
+        inspeccionRecibo.setNombreHJ(txtNombreHojaInstruccion.getText().toString());
     }
-    
+
     private void procesarArchivoExcel(String noHoja) {
         try {
             File archivoSeleccionado = new File(rutaArchivoHojaInstruccion);
             XSSFWorkbook workbook;
-            
+
             try (FileInputStream fis = new FileInputStream(archivoSeleccionado)) {
                 workbook = new XSSFWorkbook(fis);
                 Sheet hoja1 = workbook.getSheetAt(0);
@@ -397,10 +367,10 @@ public class AgregarIrGUI extends javax.swing.JFrame {
             }
 
             irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
-            if (irs.existeNoRollo(txtNoRollo.getText())) {
+            if (irs.existeNoRollo(conexion, txtNoRollo.getText())) {
                 JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
             }
-            
+
             guardarDatos();
 
         } catch (IOException e) {
@@ -410,7 +380,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "El documento esta abierto o esta siendo utilizado por otro proceso");
         }
     }
-    
+
     private void cargarDatosDesdeExcel(Sheet hoja1) {
         DataFormatter formatter = new DataFormatter();
         Cell celdaFechaFactura = hoja1.getRow(9).getCell(8);
@@ -423,7 +393,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         inspeccionRecibo.setNoRollo(excel.getDatosCeldas(hoja1, 13, 5));
         inspeccionRecibo.setPzKg(excel.getDatosCeldas(hoja1, 13, 7));
     }
-    
+
     private void guardarDatos() {
         try {
             irs.agregar(conexion, inspeccionRecibo);
@@ -511,7 +481,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxEstatus;
     private javax.swing.JComboBox<String> cbxPresentacionLamina;
     private javax.swing.JComboBox<String> cbxProveedor;
-    private javax.swing.JCheckBox chkHoy;
     private com.toedter.calendar.JDateChooser dchFechaFactura;
     private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JPanel jPanel1;

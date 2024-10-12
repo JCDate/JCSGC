@@ -1,8 +1,3 @@
-/*
- To change this license header, choose License Headers in Project Properties.
- To change this template file, choose Tools | Templates
-    and open the template in the editor.
- */
 package Servicios;
 
 import java.awt.Color;
@@ -21,10 +16,6 @@ import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-/**
- *
- * @author JC
- */
 public class ExcelFormato {
 
     public XSSFFont crearFuente(XSSFWorkbook workbook, String nombreFuente, short tamañoFuente, boolean negrita) {
@@ -168,38 +159,28 @@ public class ExcelFormato {
     }
 
     public XSSFCellStyle estiloCeldasRD(XSSFWorkbook workbook) {
-      
         XSSFCellStyle estilo = (XSSFCellStyle) workbook.createCellStyle();
-        estilo.setWrapText(true); // Esto permite que el texto se ajuste automáticamente
+        estilo.setWrapText(true);
         Font font = workbook.createFont();
-        font.setFontHeightInPoints((short) 6); // Cambia el tamaño del texto aquí (14 puntos en este caso)
+        font.setFontHeightInPoints((short) 6);
         estilo.setFont(font);
 
-        // Aplica el estilo a la celda
         estilo.setBorderTop(HSSFCellStyle.BORDER_THIN);
         estilo.setBorderBottom(HSSFCellStyle.BORDER_THIN);
         estilo.setBorderLeft(HSSFCellStyle.BORDER_THIN);
         estilo.setBorderRight(HSSFCellStyle.BORDER_THIN);
         estilo.setAlignment(HSSFCellStyle.ALIGN_CENTER);
         estilo.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
-        
+
         return estilo;
     }
-    
-    
-    
+
     public XSSFCellStyle formatoMeses(XSSFWorkbook workbook) {
         XSSFCellStyle estilo = workbook.createCellStyle();
         estilo.setVerticalAlignment(VerticalAlignment.CENTER);
         estilo.setAlignment(HorizontalAlignment.CENTER);
         estilo.setRotation((short) 180);
-        
+
         return estilo;
     }
-    
-    
-    
-    
-    
-
 }

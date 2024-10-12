@@ -118,7 +118,7 @@ public class GeneradorExcel {
 
         int indexFila = 2;
 
-        List<InspeccionReciboM> registrosIR = irs.recuperarTodas(conexion);
+        List<InspeccionReciboM> registrosIR = irs.obtenerTodasInspecciones(conexion);
         List<String> fechas = new ArrayList<>();
 
         for (InspeccionReciboM registro : registrosIR) {
@@ -252,7 +252,7 @@ public class GeneradorExcel {
                 workbook.write(fos);
 
             } catch (IOException e) {
-                aps.manejarExcepcion("Error al procesar el archivo Excel: ", e);
+                Utilidades.manejarExcepcion("Error al procesar el archivo Excel: ", e);
             } finally {
                 try {
                     inputStream.close();
@@ -450,7 +450,7 @@ public class GeneradorExcel {
                 workbook = new XSSFWorkbook(inputStream);  // Crear el workbook usando el inputStream
 
                 // Recuperar la información relacionada
-                List<AceptacionPc1> ap1m = aps.recuperarAP1(conexion, ap3m.get(0).getComponente());
+                List<AceptacionPc1> ap1m = aps.obtenerAceptacionPc1(conexion, ap3m.get(0).getComponente());
 
                 if (ap1m == null || ap1m.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "No se encontró información sobre los componentes");
@@ -468,7 +468,7 @@ public class GeneradorExcel {
                 }
 
             } catch (IOException e) {
-                aps.manejarExcepcion("Error al procesar el archivo Excel: ", e);
+                Utilidades.manejarExcepcion("Error al procesar el archivo Excel: ", e);
             } finally {
                 try {
                     inputStream.close();

@@ -49,6 +49,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         try {
             this.usuario = usuario;
             this.cds = new ControlDocumentacionServicio();
+            this.conexion = Conexion.getInstance().conectar();
             this.proceso = cds.recuperarProceso(conexion, idProceso);
             inicializarVentanaYComponentes();
         } catch (SQLException ex) {
@@ -187,7 +188,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         int columnaSeleccionada = tblProcedimientos.getColumnModel().getColumnIndexAtX(evt.getX());
         int filaSeleccionada = tblProcedimientos.rowAtPoint(evt.getPoint());
         
-        if (!Utilidades.esCeldaValida(tblProcedimientos, columnaSeleccionada, filaSeleccionada)) {
+        if (!Utilidades.esCeldaValida(tblProcedimientos, filaSeleccionada, columnaSeleccionada)) {
             return;
         }
         
@@ -207,7 +208,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
     private void btnDiagramaTortugaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDiagramaTortugaActionPerformed
         try {
-            cds.ejecutarDiagramaTortuga(proceso);
+            cds.ejecutarDiagramaTortuga(conexion, proceso);
             Desktop.getDesktop().open(new File(proceso.getNombreDT()));
         } catch (ClassNotFoundException | SQLException | IOException ex) {
             Utilidades.manejarExcepcion("Error al abrir Diagrama de Tortuga: ", ex);

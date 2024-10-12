@@ -263,7 +263,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         switch (columnaSeleccionada) {
             case 9: {
                 try {
-                    cds.ejecutarArchivoSC(id);
+                    cds.ejecutarArchivoSC(conexion, id);
                 } catch (ClassNotFoundException | SQLException ex) {
                     Utilidades.manejarExcepcion("ERROR al ejecutar el archivo: ", ex);
                     Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -297,7 +297,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
                 "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
 
         if (respuestaA == JOptionPane.YES_OPTION) {
-            cds.aceptarSolicitud(listaSolicitudes.get(filaSeleccionada));
+            cds.aceptarSolicitud(conexion, listaSolicitudes.get(filaSeleccionada));
             JOptionPane.showMessageDialog(null, "LA SOLICITUD DE CAMBIO FUE APROBADA");
             cerrarVentana();
             cds.abrirSolicitudCambioGUI(usuario);
@@ -311,7 +311,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
         if (respuestaE == JOptionPane.YES_OPTION) {
             try {
-                cds.eliminarSolicitud(id);
+                cds.eliminarSolicitud(conexion, id);
                 cerrarVentana();
                 JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
                 cds.abrirSolicitudCambioGUI(usuario);

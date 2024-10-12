@@ -438,7 +438,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void eliminarRegistro(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) {
         try {
-            this.irs.eliminar(noHoja, fechaFactura, noFactura, noPedido, pzKg); // Se llama el método de eliminar
+            this.irs.eliminar(conexion, noHoja, fechaFactura, noFactura, noPedido, pzKg); // Se llama el método de eliminar
             InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana
             JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS"); // Se muestra el mensaje de confirmación de la eliminación
             this.irs.abrirInspeccionReciboGUI(usuario);
@@ -481,9 +481,9 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             default:
                 try {
                     if (columnaSeleccionada == 10 || columnaSeleccionada == 11) {
-                        irs.ejecutarArchivoPDF(noHoja, columnaSeleccionada);
+                        irs.ejecutarArchivoPDF(conexion, noHoja, columnaSeleccionada);
                     } else if (columnaSeleccionada == 12) {
-                        irs.ejecutarArchivoXLSX(noHoja, columnaSeleccionada);
+                        irs.ejecutarArchivoXLSX(conexion, noHoja, columnaSeleccionada);
                     }
                 } catch (ClassNotFoundException | SQLException ex) {
                     Utilidades.manejarExcepcion("ERROR al procesar la información de la columna: ", ex);

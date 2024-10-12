@@ -33,7 +33,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     private String rutaArchivoFactura;
     private String rutaArchivoCertificado;
     private String rutaArchivoHojaInstruccion;
-
+    
     // Servicios y Utilidades
     private InspeccionReciboServicio irs;
 

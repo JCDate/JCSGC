@@ -163,7 +163,15 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
-        Integer idProceso = procedimiento == null ? proceso.getId() : procedimiento.getIdp();
+        int idProceso;
+        if (procedimiento != null) {
+            idProceso = procedimiento.getIdp();
+        } else if (proceso != null) {
+            idProceso = proceso.getId();
+        } else {
+            idProceso = documento.getIdProceso();
+        }
+
         cerrarVentana();
         cds.abrirDocumentacionGUI(usuario, idProceso);
     }//GEN-LAST:event_btnCerrarActionPerformed

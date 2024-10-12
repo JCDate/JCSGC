@@ -216,7 +216,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "SE HA REALIZADO LA SOLICITUD DE CAMBIO");
         SolicitudesM solicitudCambio = crearSolicitudCambio();
         cds.cargarArchivo(rutaArchivo, solicitudCambio::setArchivo);
-        cds.agregarSolicitud(solicitudCambio);
+        cds.agregarSolicitud(conexion, solicitudCambio);
         cerrarVentana();
         cds.abrirControlDocumentosGUI(usuario);
     }//GEN-LAST:event_btnSolicitudActionPerformed

@@ -42,8 +42,10 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private Usuarios usuario;
     private Connection conexion;
 
-    // Lista de proveedores
-    List<String> listaInspectores;
+    // Listas
+    private List<String> listaInspectores;
+    private List<AnchoLargoM> listaAnchoLargo;
+    private List<RugosidadDurezaM> listaRugosidadDureza;
 
     // Servicios y Utilidades
     private InspeccionReciboServicio irs;
@@ -117,7 +119,6 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         btnGuardar = new swing.Button(new Color(121, 190, 255),new Color(10, 110, 255));
         txtDescripcionMP = new swing.TextField();
         txtToleranciaLamina = new swing.TextField();
-        chkHoy = new swing.JCheckBoxCustom(new Color(20, 134, 255));
         jScrollPane1 = new javax.swing.JScrollPane();
         tblRugosidadDureza = new javax.swing.JTable();
 
@@ -266,19 +267,9 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
                 btnGuardarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(840, 580, 150, 50));
+        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(840, 590, 150, 50));
         jPanel1.add(txtDescripcionMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, 350, 40));
         jPanel1.add(txtToleranciaLamina, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 290, 350, 40));
-
-        chkHoy.setFont(new java.awt.Font("Tahoma", 1, 10)); // NOI18N
-        chkHoy.setForeground(new java.awt.Color(76, 109, 255));
-        chkHoy.setText("HOY");
-        chkHoy.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkHoyActionPerformed(evt);
-            }
-        });
-        jPanel1.add(chkHoy, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 110, -1, 30));
 
         tblRugosidadDureza.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -316,23 +307,16 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         try {
+            String nuevaRutaArchivo = guardarCambios(rutaArchivo);
             cerrarVentana();
-            irs.abrirModificarIrGUI(inspeccionRecibo, usuario, guardarCambios(rutaArchivo));
+            irs.abrirModificarIrGUI(inspeccionRecibo, usuario, nuevaRutaArchivo);
         } catch (IOException | ParseException ex) {
             Utilidades.manejarExcepcion("Error al guardar la información: ", ex);
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
-    private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
-        if (chkHoy.isSelected()) {
-            dchFechaInspeccion.setDate(new java.util.Date());
-        } else {
-            dchFechaInspeccion.setDate(null);
-        }
-    }//GEN-LAST:event_chkHoyActionPerformed
-
-    public final void inicializarVentanaYComponentes() {
+    private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
             inicializarServicios();
@@ -533,6 +517,10 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         Conexion.getInstance().desconectar(conexion);
     }
 
+    public String getRutaArchivo() {
+        return rutaArchivo;
+    }
+
     /**
      * @param args the command line arguments
      */
@@ -566,7 +554,6 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxNombreInspector;
     private javax.swing.JComboBox<String> cbxObservacionesMP;
     private javax.swing.JCheckBox chkAceptacion;
-    private javax.swing.JCheckBox chkHoy;
     private javax.swing.JCheckBox chkRechazo;
     private com.toedter.calendar.JDateChooser dchFechaInspeccion;
     private javax.swing.JLabel jLabel1;

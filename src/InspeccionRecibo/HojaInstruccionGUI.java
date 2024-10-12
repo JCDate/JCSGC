@@ -13,7 +13,6 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -49,6 +48,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     public HojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) {
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
+        this.dirm = new DatosIRM();
         inicializarVentanaYComponentes();
         definirDescripcionesYMedidas();
     }
@@ -106,7 +106,6 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         txtObservacionesRD = new swing.TextField();
         cbxLamina = new swing.ComboBoxSuggestion();
         cbxDescripcionMP = new swing.ComboBoxSuggestion();
-        chkHoy = new swing.JCheckBoxCustom(new Color(20, 134, 255));
         jScrollPane1 = new javax.swing.JScrollPane();
         tblRugosidadDureza = new javax.swing.JTable();
 
@@ -261,16 +260,6 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
 
         jPanel1.add(cbxDescripcionMP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, 360, -1));
 
-        chkHoy.setFont(new java.awt.Font("Tahoma", 1, 10)); // NOI18N
-        chkHoy.setForeground(new java.awt.Color(76, 109, 255));
-        chkHoy.setText("HOY");
-        chkHoy.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkHoyActionPerformed(evt);
-            }
-        });
-        jPanel1.add(chkHoy, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 110, -1, 30));
-
         tblRugosidadDureza.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null},
@@ -311,18 +300,9 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         chkAceptacion.setSelected(false);
     }//GEN-LAST:event_chkRechazoActionPerformed
 
-    private void chkHoyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkHoyActionPerformed
-        if (chkHoy.isSelected()) {
-            dchFechaInspeccion.setDate(new java.util.Date());
-        } else {
-            dchFechaInspeccion.setDate(null);
-        }
-    }//GEN-LAST:event_chkHoyActionPerformed
-
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            inicializarListas();
             this.conexion = Conexion.getInstance().conectar();
             this.irs = new InspeccionReciboServicio();
             obtenerDatosDeArchivoXLSX();
@@ -337,14 +317,6 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-    }
-
-    private void inicializarListas() {
-        listaAnchoLargo = new ArrayList<>();
-        listaInspectores = new ArrayList<>();
-        listaDescripcionesMP = new ArrayList<>();
-        listaMedidas = new ArrayList<>();
-        listaRugosidadDureza = new ArrayList<>();
     }
 
     private void obtenerDatosDeArchivoXLSX() {
@@ -372,6 +344,9 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         cbxDescripcionMP.setSelectedItem(dirm.getDescripcionMP());
         cbxLamina.setSelectedItem(dirm.getCalibreLamina());
         dchFechaInspeccion.setDate(irs.formatearFecha(dirm.getFechaInspeccion()));
+        txtObservacionesRD.setText(dirm.getObservacionesRD());
+        cbxObservacionesMP.setSelectedItem(dirm.getObsMP());
+        cbxNombreInspector.setSelectedItem(dirm.getInspector());
         actualizarTablas();
         actualizarCheckBoxes();
     }
@@ -380,14 +355,21 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         DefaultTableModel modeloTblAnchoLargo = (DefaultTableModel) tblAnchoLargo.getModel();
         DefaultTableModel modeloTblRugosidadDureza = (DefaultTableModel) tblRugosidadDureza.getModel();
 
+        // Limpiar el modelo de tabla
         modeloTblAnchoLargo.setRowCount(0);
         modeloTblRugosidadDureza.setRowCount(0);
 
-        listaAnchoLargo.forEach(medida -> modeloTblAnchoLargo.addRow(new Object[]{medida.getAncho(), medida.getLargo()}));
-        listaRugosidadDureza.forEach(rd -> modeloTblRugosidadDureza.addRow(new Object[]{rd.getRugosidad(), rd.getDureza()}));
+        // Agregar filas desde las listas
+        listaAnchoLargo.forEach(medida -> {
+            modeloTblAnchoLargo.addRow(new Object[]{medida.getAncho(), medida.getLargo()});
+        });
+        listaRugosidadDureza.forEach(rd -> {
+            modeloTblRugosidadDureza.addRow(new Object[]{rd.getRugosidad(), rd.getDureza()});
+        });
 
-        tblAnchoLargo.setModel(modeloTblAnchoLargo);
-        tblRugosidadDureza.setModel(modeloTblRugosidadDureza);
+        // Asegurarse de que las tablas se actualicen visualmente
+        modeloTblAnchoLargo.fireTableDataChanged();
+        modeloTblRugosidadDureza.fireTableDataChanged();
     }
 
     private void actualizarCheckBoxes() {
@@ -451,7 +433,6 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxNombreInspector;
     private javax.swing.JComboBox<String> cbxObservacionesMP;
     private javax.swing.JCheckBox chkAceptacion;
-    private javax.swing.JCheckBox chkHoy;
     private javax.swing.JCheckBox chkRechazo;
     private com.toedter.calendar.JDateChooser dchFechaInspeccion;
     private javax.swing.JLabel jLabel1;

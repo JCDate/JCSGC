@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
@@ -51,24 +52,20 @@ import swing.Button;
 
 public class InspeccionReciboServicio {
 
-    private final String tabla = "inspeccionrecibo";
-    private String numeroStr;
-
     final String SQL_CONSULTA_REF_ESPECIFICACION = "SELECT Especificacion, codigoET, fechaEmision, fechaRevision, noRev FROM especificacionesir WHERE Especificacion=?";
-
-    private final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";
-    private final String SQL_CONSULTA_MEDIDAS_CALIBRE = "SELECT DISTINCT calibre, medidas FROM calibresir WHERE calibre LIKE ? ORDER BY calibre";
-    private final String SQL_CONSULTA_CALIBRE = "SELECT DISTINCT medidas FROM calibresir WHERE calibre LIKE ?";
-    private final String SQL_CONSULTA_INSPECTORES = "SELECT nombre FROM usuarios WHERE id_tipo=?";
-    private final String SELECT_NOMBRE_PROVEEDORES_SQL = "SELECT DISTINCT nombre FROM proveedores";
-    public final String SELECT_NO_HOJA_INSTRUCCION_SQL = "SELECT noHoja FROM inspeccionrecibo WHERE noHoja LIKE ? ORDER BY noHoja DESC LIMIT 1";
-    private final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id_ir FROM " + this.tabla + " WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
-    private final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM " + this.tabla + " WHERE noHoja = ?";
-    private final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM " + this.tabla + " WHERE noHoja = ?";
-    private final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM " + this.tabla;
-    private final String INSERT_INSPECCION_RECIBO_SQL = "INSERT INTO " + this.tabla + "(fechaFactura,Proveedor,noFactura,noPedido,calibre,pLamina,noRollo,pzKg,estatus,noHoja,pdfFactura,pdfCertificado,hojaInstruccion,nombreHJ,nombreFact,nombreCert) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    private final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM " + this.tabla + " WHERE noHoja=? AND fechaFactura=? AND noFactura=? AND noPedido=? AND pzKg=?";
-    private final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE " + this.tabla + " SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id_ir=?";
+    final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";
+    final String SQL_CONSULTA_MEDIDAS_CALIBRE = "SELECT DISTINCT calibre, medidas FROM calibresir WHERE calibre LIKE ? ORDER BY calibre";
+    final String SQL_CONSULTA_CALIBRE = "SELECT DISTINCT medidas FROM calibresir WHERE calibre LIKE ?";
+    final String SQL_CONSULTA_INSPECTORES = "SELECT nombre FROM usuarios WHERE id_tipo=?";
+    final String SELECT_NOMBRE_PROVEEDORES_SQL = "SELECT DISTINCT nombre FROM proveedores";
+    final String SELECT_NO_HOJA_INSTRUCCION_SQL = "SELECT noHoja FROM inspeccionrecibo WHERE noHoja LIKE ? ORDER BY noHoja DESC LIMIT 1";
+    final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id_ir FROM inspeccionrecibo WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
+    final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM inspeccionrecibo WHERE noHoja = ?";
+    final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM inspeccionrecibo WHERE noHoja = ?";
+    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo";
+    final String INSERT_INSPECCION_RECIBO_SQL = "INSERT INTO inspeccionrecibo(fechaFactura,Proveedor,noFactura,noPedido,calibre,pLamina,noRollo,pzKg,estatus,noHoja,pdfFactura,pdfCertificado,hojaInstruccion,nombreHJ,nombreFact,nombreCert) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM inspeccionrecibo WHERE noHoja=? AND fechaFactura=? AND noFactura=? AND noPedido=? AND pzKg=?";
+    final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE inspeccionrecibo SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id_ir=?";
 
     public String direcciomImg = "img\\jc.png";
 
@@ -77,14 +74,6 @@ public class InspeccionReciboServicio {
     private static final String SQL_INSERCION_DMP = "INSERT INTO materiaprimasc(calibre,descripcionMP,calibreLamina) VALUES (?,?,?)";
     private static final String SQL_CONSULTA_INSPECCION_RECIBO = "SELECT * FROM inspeccionrecibo";
     private final String SQL_CONSULTA_ESPECIFICACIONES_IR = "SELECT Especificacion FROM especificacionesir";
-
-    public InspeccionReciboServicio() {
-        try {
-            this.conexion = Conexion.getInstance().conectar();
-        } catch (SQLException ex) {
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
 
     public void agregar(Connection conexion, CalibreIRM cirm) throws SQLException {
         try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_CALIBRE_IR)) {
@@ -139,10 +128,6 @@ public class InspeccionReciboServicio {
 
     public void agregar(Connection conexion, InspeccionReciboM irm) throws SQLException {
         try {
-            // Inicia la transacción
-//            conexion.setAutoCommit(false);
-
-            // Consulta para verificar si el noRollo ya está registrado
             String sql = "SELECT hojaInstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
             try (PreparedStatement pstmtSelect = conexion.prepareStatement(sql)) {
                 pstmtSelect.setString(1, irm.getNoRollo());
@@ -228,11 +213,8 @@ public class InspeccionReciboServicio {
             // Confirma la transacción
 //            conexion.commit();
         } catch (SQLException ex) {
-            // Si hay algún error, realiza un rollback para deshacer los cambios
-//            conexion.rollback();
             throw new SQLException("Error al ejecutar la transacción SQL: " + ex.getMessage(), ex);
         } finally {
-            // Restaura el modo de autocommit a true
             conexion.setAutoCommit(true);
         }
     }
@@ -395,7 +377,7 @@ public class InspeccionReciboServicio {
         return proveedores;
     }
 
-    public void eliminar(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) throws SQLException, ClassNotFoundException {
+    public void eliminar(Connection conexion, String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) throws SQLException, ClassNotFoundException {
         PreparedStatement ps = conexion.prepareStatement(DELETE_INSPECCION_RECIBO_SQL);
         ps.setString(1, noHoja);
         ps.setString(2, fechaFactura);
@@ -462,7 +444,7 @@ public class InspeccionReciboServicio {
     }
 
     public void subirHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
-        String sqlInsertIr = "UPDATE " + this.tabla + " SET hojaInstruccion=? WHERE id_ir=?";
+        String sqlInsertIr = "UPDATE inspeccionrecibo SET hojaInstruccion=? WHERE id_ir=?";
         try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setBytes(1, irm.getHojaIns());
             sqlInsert.setInt(2, irm.getId());
@@ -474,7 +456,7 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public void ejecutarArchivoPDF(String id, int columna) throws ClassNotFoundException, SQLException {
+    public void ejecutarArchivoPDF(Connection conexion, String id, int columna) throws ClassNotFoundException, SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
 
@@ -559,7 +541,7 @@ public class InspeccionReciboServicio {
         return null;
     }
 
-    public void ejecutarArchivoXLSX(String id, int column) throws ClassNotFoundException, SQLException {
+    public void ejecutarArchivoXLSX(Connection conexion, String id, int column) throws ClassNotFoundException, SQLException {
         final String SELECT_HOJA_INSTRUCCION_SQL = "SELECT hojaInstruccion FROM inspeccionRecibo WHERE noHoja = ?";
         //PreparedStatement ps = null;
         ResultSet rs;
@@ -627,9 +609,9 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public boolean existeNoRollo(String noRollo) throws ClassNotFoundException {
+    public boolean existeNoRollo(Connection conexion, String noRollo) throws ClassNotFoundException {
         try {
-            String sql = "SELECT COUNT(noRollo) FROM " + this.tabla + " WHERE noRollo = ?";
+            String sql = "SELECT COUNT(noRollo) FROM inspeccionrecibo WHERE noRollo = ?";
             PreparedStatement ps = conexion.prepareStatement(sql);
             ps.setString(1, noRollo);
             ResultSet rs = ps.executeQuery();
@@ -651,14 +633,10 @@ public class InspeccionReciboServicio {
     }
 
     public void abrirAgregarIrGUI(Usuarios usuario) {
-        try {
-            AgregarIrGUI agregarGUI = new AgregarIrGUI(usuario);
-            agregarGUI.setVisible(true);
-            agregarGUI.setLocationRelativeTo(null);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-            manejarExcepcion("Surgio un error al abrir AgregarIrGUI: ", ex);
-        }
+        AgregarIrGUI agregarGUI = new AgregarIrGUI(usuario);
+        agregarGUI.setVisible(true);
+        agregarGUI.setLocationRelativeTo(null);
+
     }
 
     public void agregarEspecificacion(Connection conexion, String especificacion) {
@@ -671,12 +649,9 @@ public class InspeccionReciboServicio {
     }
 
     public void abrirHojaInstruccionGUI(Usuarios usr, InspeccionReciboM irm) {
-        try {
-            HojaInstruccionGUI hjGUI = new HojaInstruccionGUI(usr, irm);
-            mostrarVentana(hjGUI);
-        } catch (SQLException | ClassNotFoundException ex) {
-            manejarExcepcion("Surgio un error al abrir HojaInstruccionGUI", ex);
-        }
+        HojaInstruccionGUI hjGUI = new HojaInstruccionGUI(usr, irm);
+        mostrarVentana(hjGUI);
+
     }
 
     public void abrirHojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo, DatosIRM datosIR, List listaAnchoLargo, List listaRugosidadDureza) {
@@ -690,15 +665,10 @@ public class InspeccionReciboServicio {
 
     public String abrirHojaInstruccionGUI2(Usuarios usr, String rutaArchivo, InspeccionReciboM irm) {
         String rutaArchivo2 = null;
-        try {
 
-            HojaInstruccionGUI2 hjGUI = new HojaInstruccionGUI2(usr, rutaArchivo, irm);
-            mostrarVentana(hjGUI);
-            rutaArchivo2 = hjGUI.getRutaArchivo();
-        } catch (SQLException | ClassNotFoundException | IOException ex) {
-            manejarExcepcion("Surgio un error al abrir ACEPTACION PRODUCTO", ex);
-        }
-
+        HojaInstruccionGUI2 hjGUI = new HojaInstruccionGUI2(usr, rutaArchivo, irm);
+        mostrarVentana(hjGUI);
+        rutaArchivo2 = hjGUI.getRutaArchivo();
         return rutaArchivo2;
     }
 
@@ -714,6 +684,7 @@ public class InspeccionReciboServicio {
     private byte[] editarHojaInstruccion(byte[] hojaInstruccion, InspeccionReciboM irm) {
         ByteArrayInputStream bis = new ByteArrayInputStream(hojaInstruccion);
         XSSFWorkbook workbook;
+        String numeroStr;
         byte[] hojaNueva = null;
         try {
             workbook = new XSSFWorkbook(bis);
@@ -779,14 +750,10 @@ public class InspeccionReciboServicio {
     }
 
     public void abrirModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario) {
-        try {
-            ModificarIrGUI modificar = new ModificarIrGUI(inspeccionRecibo, usuario);
-            modificar.setVisible(true);
-            modificar.setLocationRelativeTo(null);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-            manejarExcepcion("Error al Abrir ModificarIrGUI", ex);
-        }
+        ModificarIrGUI modificar = new ModificarIrGUI(inspeccionRecibo, usuario);
+        modificar.setVisible(true);
+        modificar.setLocationRelativeTo(null);
+
     }
 
     public int getIdHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
@@ -834,13 +801,9 @@ public class InspeccionReciboServicio {
     }
 
     public void abrirEspecificacionesGUI(Usuarios usuario, DatosIRM dirm, InspeccionReciboM inspeccionRecibo, JTable tblAnchoLargo, JTable tblRugosidadDureza) {
-        try {
-            EspecificacionesGUI ir = new EspecificacionesGUI(usuario, dirm, inspeccionRecibo, tblAnchoLargo, tblRugosidadDureza);
-            ir.setVisible(true);
-            ir.setLocationRelativeTo(null);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(HojaInstruccionGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        EspecificacionesGUI ir = new EspecificacionesGUI(usuario, dirm, inspeccionRecibo, tblAnchoLargo, tblRugosidadDureza);
+        ir.setVisible(true);
+        ir.setLocationRelativeTo(null);
     }
 
     public List<String> recuperarDescripciones(Connection conexion, InspeccionReciboM inspeccionRecibo) {
@@ -954,4 +917,15 @@ public class InspeccionReciboServicio {
         irGUI.setLocationRelativeTo(null);
     }
 
+    public String generarCodigoDeHoja() {
+        SQL sql = new SQL();
+        int year = obtenerAnioActual();
+        String codigoHoja = sql.getCodigoHoja(SELECT_NO_HOJA_INSTRUCCION_SQL, year);
+        String nuevoCodigo = sql.obtenerSiguiente(codigoHoja, String.valueOf(year));
+        return nuevoCodigo;
+    }
+
+    public int obtenerAnioActual() {
+        return Calendar.getInstance().get(Calendar.YEAR);
+    }
 }

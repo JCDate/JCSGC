@@ -295,7 +295,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private void manejarAccionDefault(String textoPrimeraCelda, int columnaSeleccionada, DocumentosM documento) {
         try {
             if (columnaSeleccionada == 3) {
-                cds.ejecutarManual(procedimiento, textoPrimeraCelda);
+                cds.ejecutarManual(conexion, procedimiento, textoPrimeraCelda);
             }
 
             if (columnaSeleccionada == 4) {

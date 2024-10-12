@@ -315,7 +315,7 @@ public class FormatosGUI extends javax.swing.JFrame {
             default:
                 if (columnaSeleccionada == 1) {
                     try {
-                        cds.ejecutarFormato(id);
+                        cds.ejecutarFormato(conexion, id);
                     } catch (ClassNotFoundException | SQLException ex) {
                         Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, "Error al ejecutar formato", ex);
                         JOptionPane.showMessageDialog(null, "Error al ejecutar formato: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
