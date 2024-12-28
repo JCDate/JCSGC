@@ -26,7 +26,7 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public AgregarVariableGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public AgregarVariableGUI(Usuarios usuario, AceptacionPc1 aceptacionPc1, AceptacionPc2 aceptacionPc2) {
@@ -130,8 +130,7 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.aps = new AceptacionProductoServicio();
+            inicializarAtributos();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir AgregarVariableGUI: ", ex);
             Logger.getLogger(AgregarVariableGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -143,6 +142,11 @@ public class AgregarVariableGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.aps = new AceptacionProductoServicio();
     }
 
     private void agregarVariable(String nuevaVariable) throws SQLException {

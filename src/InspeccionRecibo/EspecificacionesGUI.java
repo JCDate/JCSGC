@@ -69,13 +69,12 @@ public class EspecificacionesGUI extends JFrame {
     private boolean tablaCreada = false;
 
     public EspecificacionesGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public EspecificacionesGUI(Usuarios usuario) {
         this.usuario = usuario;
         inicializarVentanaYComponentes();
-
     }
 
     public EspecificacionesGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) {
@@ -201,7 +200,7 @@ public class EspecificacionesGUI extends JFrame {
         });
         jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1040, 380, 140, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 600));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 440));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -217,7 +216,6 @@ public class EspecificacionesGUI extends JFrame {
         int idIR = obtenerIdHojaInstruccion();
         listaAnchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
         listaRugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
-
         irs.abrirHojaInstruccionGUI(usuario, inspeccionRecibo, datosIR, listaAnchoLargo, listaRugosidadDureza);
         cerrarVentana();
     }//GEN-LAST:event_btnRegresarActionPerformed
@@ -245,7 +243,7 @@ public class EspecificacionesGUI extends JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
+            inicializarAtributos();
             inicializarServicios();
             inicializarListas();
             configurarPanelYTablas();
@@ -263,11 +261,8 @@ public class EspecificacionesGUI extends JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void configurarPanelYTablas() {
-        pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
-        listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
-        listaMedidasCalibre.forEach(cbxCalibre::addItem);
-        actualizarEspecificacionesTecnicas();
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
     }
 
     private void inicializarServicios() {
@@ -287,6 +282,13 @@ public class EspecificacionesGUI extends JFrame {
         this.tablas = new ArrayList<>();
     }
 
+    private void configurarPanelYTablas() {
+        pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
+        listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
+        listaMedidasCalibre.forEach(cbxCalibre::addItem);
+        actualizarEspecificacionesTecnicas();
+    }
+
     private void actualizarEspecificacionesTecnicas() {
         cbxEspecificacionTecnica.removeAllItems();
 
@@ -301,22 +303,7 @@ public class EspecificacionesGUI extends JFrame {
 
     private void configurarListeners() {
         cbxCalibre.addActionListener(e -> actualizarEspecificacionesTecnicas());
-        btnAceptar.addActionListener(e -> {
-            String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
-            String calibre = (String) cbxCalibre.getSelectedItem();
-            if (tablaCreada) {
-                JOptionPane.showMessageDialog(this, "Solo puedes elegir una especificación");
-            } else {
-                try {
-                    crearTabla(espeTecnica, calibre);
-                    tablaCreada = true;
-                } catch (SQLException | ClassNotFoundException ex) {
-                    Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                    irs.manejarExcepcion("Error al crear la tabla especificada: ", ex);
-                }
-            }
-        });
-
+        btnAceptar.addActionListener(e -> agregarTabla());
         btnEliminar.addActionListener(ae -> eliminarUltimaTabla());
     }
 
@@ -343,6 +330,22 @@ public class EspecificacionesGUI extends JFrame {
         // Actualizar la ventana
         pnlTablas.revalidate();
         pnlTablas.repaint();
+    }
+
+    private void agregarTabla() {
+        String espeTecnica = (String) cbxEspecificacionTecnica.getSelectedItem();
+        String calibre = (String) cbxCalibre.getSelectedItem();
+        if (tablaCreada) {
+            JOptionPane.showMessageDialog(this, "Solo puedes elegir una especificación");
+        } else {
+            try {
+                crearTabla(espeTecnica, calibre);
+                tablaCreada = true;
+            } catch (SQLException | ClassNotFoundException ex) {
+                Utilidades.manejarExcepcion("ERROR al crear la tabla especificada: ", ex);
+                Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
     private DefaultTableModel crearModeloTabla(EspecificacionM especificacion, String calibres) {
@@ -391,6 +394,7 @@ public class EspecificacionesGUI extends JFrame {
             String valorPropiedad = propiedadesMecanicas.get(i).getPm() + "   " + propiedadesMecanicas.get(i).getValor();
             modeloTabla.setValueAt(valorPropiedad, i, columnaPropiedades);
         }
+
         for (int i = 0; i < composicionQuimica.size(); i++) {
             String valorPropiedadCM = composicionQuimica.get(i).getCq() + "   " + composicionQuimica.get(i).getValor();
             modeloTabla.setValueAt(valorPropiedadCM, i, columnaPropiedadesCM);

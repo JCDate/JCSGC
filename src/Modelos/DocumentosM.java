@@ -8,12 +8,12 @@ public class DocumentosM {
     private String fechaActualizacion;
     private String tipo;
     private String nombre;
-    private byte[] contenido;
+    private String rutaArchivo;
 
     public DocumentosM() {
     }
-    
-    public DocumentosM(int id, int idProceso, int idProcedimiento, String revision, String fechaActualizacion, String tipo, String nombre, byte[] contenido) {
+
+    public DocumentosM(int id, int idProceso, int idProcedimiento, String revision, String fechaActualizacion, String tipo, String nombre, String rutaArchivo) {
         this.id = id;
         this.idProceso = idProceso;
         this.idProcedimiento = idProcedimiento;
@@ -21,7 +21,7 @@ public class DocumentosM {
         this.fechaActualizacion = fechaActualizacion;
         this.tipo = tipo;
         this.nombre = nombre;
-        this.contenido = contenido;
+        this.rutaArchivo = rutaArchivo;
     }
 
     public int getId() {
@@ -80,11 +80,11 @@ public class DocumentosM {
         this.nombre = nombre;
     }
 
-    public byte[] getContenido() {
-        return contenido;
+    public String getRutaArchivo() {
+        return rutaArchivo;
     }
 
-    public void setContenido(byte[] contenido) {
-        this.contenido = contenido;
+    public void setRutaArchivo(String rutaArchivo) {
+        this.rutaArchivo = rutaArchivo;
     }
 }

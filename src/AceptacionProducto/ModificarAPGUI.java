@@ -1,6 +1,8 @@
 package AceptacionProducto;
 
 import Modelos.AceptacionPc1;
+import Modelos.AceptacionPc2;
+import Modelos.AceptacionProductoM;
 import Modelos.DatosFilaRD;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
@@ -9,35 +11,43 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.DefaultTableModel;
 
 public class ModificarAPGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
-    private DatosFilaRD datosFila; // Objeto para el manejo de la información de los registros de retención Dimensional del componente
+    private List<String> listaFechas; // Almacena las fechas de registros de los componentes
     private String componenteAnterior; // Valida que el componente no haya cambiado
+    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de información del componente
+    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de información del componente
+    private DefaultTableModel modeloTabla; // Define de la estructura de la tabla
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
+    private List<DatosFilaRD> listaDatosRD; // Objeto para el manejo de la información de los registros de retención Dimensional del componente
+    private AceptacionProductoM aceptacionProducto; // Instacia de los datos del componente seleccionado
+    private Set<Integer> filasModificadas = new HashSet<>(); // Almacena información evitando duplicidad
 
     public ModificarAPGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
-    public ModificarAPGUI(Usuarios usuario) {
+    public ModificarAPGUI(Usuarios usuario, AceptacionProductoM aceptacionProducto) {
         this.usuario = usuario;
-        this.datosFila = new DatosFilaRD();
+        this.aceptacionProducto = aceptacionProducto;
+        this.aceptacionPc1 = new AceptacionPc1();
+        this.aceptacionPc2 = new AceptacionPc2();
         inicializarVentanaYComponentes();
     }
 
@@ -59,30 +69,14 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         lblTitulo = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
-        txtNoRollo = new swing.TextField();
-        txtInspVisual = new swing.TextField();
-        txtObservaciones = new swing.TextField();
-        txtNoOrden = new swing.TextField();
-        txtTamLote = new swing.TextField();
-        txtTamMta = new swing.TextField();
-        txtInsp = new swing.TextField();
-        txtTurno = new swing.TextField();
-        txtDisp = new swing.TextField();
         btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
-        cbxComponente = new swing.ComboBoxSuggestion();
         cbxFecha = new swing.ComboBoxSuggestion();
         lblComponente = new javax.swing.JLabel();
         lblFecha = new javax.swing.JLabel();
-        lblNoRollo = new javax.swing.JLabel();
-        lblInspVisual = new javax.swing.JLabel();
-        lblObservaciones = new javax.swing.JLabel();
-        lblNoOrden = new javax.swing.JLabel();
-        lblTamLote = new javax.swing.JLabel();
-        lblTamMta = new javax.swing.JLabel();
-        lblInsp = new javax.swing.JLabel();
-        lblTurno = new javax.swing.JLabel();
-        lblDisp = new javax.swing.JLabel();
         btnGuardar = new swing.Button(new Color(121, 190, 255),new Color(10, 110, 255));
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblAceptacionPc2 = new javax.swing.JTable();
+        txtComponente = new swing.TextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -94,19 +88,10 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         lblTitulo.setFont(new java.awt.Font("Wide Latin", 1, 18)); // NOI18N
         lblTitulo.setForeground(new java.awt.Color(10, 110, 255));
         lblTitulo.setText("MODIFICAR DATOS");
-        jPanel1.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 10, -1, 72));
+        jPanel1.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 10, -1, 72));
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
-        jPanel1.add(txtNoRollo, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 180, 210, -1));
-        jPanel1.add(txtInspVisual, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 270, 190, -1));
-        jPanel1.add(txtObservaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 370, 160, -1));
-        jPanel1.add(txtNoOrden, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 180, 150, -1));
-        jPanel1.add(txtTamLote, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 270, 150, -1));
-        jPanel1.add(txtTamMta, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 370, 150, -1));
-        jPanel1.add(txtInsp, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 180, 180, -1));
-        jPanel1.add(txtTurno, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 270, 180, -1));
-        jPanel1.add(txtDisp, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 370, 180, -1));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -117,11 +102,9 @@ public class ModificarAPGUI extends javax.swing.JFrame {
                 btnCerrarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 450, 140, 40));
+        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 480, 140, 50));
 
-        jPanel1.add(cbxComponente, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 100, 220, 30));
-
-        jPanel1.add(cbxFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 100, 220, 30));
+        jPanel1.add(cbxFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(780, 100, 220, 30));
 
         lblComponente.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblComponente.setForeground(new java.awt.Color(10, 110, 255));
@@ -131,53 +114,7 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         lblFecha.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblFecha.setForeground(new java.awt.Color(10, 110, 255));
         lblFecha.setText("FECHA:");
-        jPanel1.add(lblFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 110, -1, -1));
-
-        lblNoRollo.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblNoRollo.setForeground(new java.awt.Color(10, 110, 255));
-        lblNoRollo.setText("NO. ROLLO:");
-        jPanel1.add(lblNoRollo, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 190, -1, -1));
-
-        lblInspVisual.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblInspVisual.setForeground(new java.awt.Color(10, 110, 255));
-        lblInspVisual.setText("INSP. VISUAL:");
-        jPanel1.add(lblInspVisual, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, -1, -1));
-
-        lblObservaciones.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblObservaciones.setForeground(new java.awt.Color(10, 110, 255));
-        lblObservaciones.setText("OBSERVACIONES:");
-        lblObservaciones.setToolTipText("");
-        jPanel1.add(lblObservaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, -1, -1));
-
-        lblNoOrden.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblNoOrden.setForeground(new java.awt.Color(10, 110, 255));
-        lblNoOrden.setText("NO. ORDEN:");
-        jPanel1.add(lblNoOrden, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 190, -1, -1));
-
-        lblTamLote.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblTamLote.setForeground(new java.awt.Color(10, 110, 255));
-        lblTamLote.setText("TAM. LOTE:");
-        jPanel1.add(lblTamLote, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 280, -1, -1));
-
-        lblTamMta.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblTamMta.setForeground(new java.awt.Color(10, 110, 255));
-        lblTamMta.setText("TAM. MTA:");
-        jPanel1.add(lblTamMta, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 380, -1, -1));
-
-        lblInsp.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblInsp.setForeground(new java.awt.Color(10, 110, 255));
-        lblInsp.setText("INSP:");
-        jPanel1.add(lblInsp, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 190, -1, -1));
-
-        lblTurno.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblTurno.setForeground(new java.awt.Color(10, 110, 255));
-        lblTurno.setText("TURNO:");
-        jPanel1.add(lblTurno, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 280, -1, -1));
-
-        lblDisp.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        lblDisp.setForeground(new java.awt.Color(10, 110, 255));
-        lblDisp.setText("DISP:");
-        jPanel1.add(lblDisp, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 380, -1, -1));
+        jPanel1.add(lblFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 110, -1, -1));
 
         btnGuardar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnGuardar.setForeground(new java.awt.Color(255, 255, 255));
@@ -188,25 +125,53 @@ public class ModificarAPGUI extends javax.swing.JFrame {
                 btnGuardarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 450, 140, 40));
+        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(980, 480, 160, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 890, 510));
+        tblAceptacionPc2.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null}
+            },
+            new String [] {
+                "INSP. VISUAL", "NO. ROLLO", "OBSERVACIONES", "NUMERO DE ORDEN", "TAMAÑO DE LOTE", "TAMAÑO DE MUESTRA", "INSPECTOR", "TURNO", "DISP"
+            }
+        ));
+        tblAceptacionPc2.setRowHeight(30);
+        jScrollPane1.setViewportView(tblAceptacionPc2);
+
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1130, 330));
+
+        txtComponente.setEditable(false);
+        txtComponente.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        txtComponente.setToolTipText("");
+        jPanel1.add(txtComponente, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 100, 230, -1));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1150, 540));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        try {
-            AceptacionPc1 aceptacionPc1 = crearAceptacionPc1();
-            configurarFocusListener();
-            aps.modificarInfoRetencionDimensional(conexion, aceptacionPc1, datosFila);
-            JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
-            cerrarVentana();
-            aps.abrirAceptacionProductoGUI(usuario);
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al guardar la información: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        if (filasModificadas.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay cambios para guardar.");
+            return;
         }
+
+        filasModificadas.forEach((fila) -> {
+            try {
+                capturarInformacion(fila);
+                aps.modificarInfoRetencionDimensional(conexion, listaDatosRD.get(fila));
+            } catch (SQLException ex) {
+                Utilidades.manejarExcepcion("ERROR al guardar la información: ", ex);
+                Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        filasModificadas.clear();
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS CORRECTAMENTE");
+        aps.abrirModificarAPGUI(usuario, aceptacionProducto);
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
@@ -217,11 +182,11 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.aps = new AceptacionProductoServicio();
-            configurarComboBoxComponentes();
-            configurarComboBoxFecha();
-        } catch (SQLException ex) {
+            inicializarAtributos();
+            definirValoresComponentes();
+            actualizarDatosTabla();
+            mostrarDatosTabla();
+        } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al Abrir ModificarAPGUI: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -234,119 +199,95 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void configurarComboBoxComponentes() {
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.aps = new AceptacionProductoServicio();
+        this.modeloTabla = (DefaultTableModel) tblAceptacionPc2.getModel();
+        this.listaDatosRD = new ArrayList<>();
+        this.listaFechas = aps.obtenerFechasRetencionDimensional(conexion, aceptacionProducto.getComponente());
+    }
+
+    private void definirValoresComponentes() {
+        txtComponente.setText(aceptacionProducto.getComponente());
+        listaFechas.forEach(cbxFecha::addItem);
+    }
+
+    private void actualizarDatosTabla() {
         try {
-            aps.obtenerListaComponentes(conexion).forEach(cbxComponente::addItem);
-            manejarComponenteSeleccionado();
-            manejarFechaSeleccionada();
-            cbxComponente.addActionListener(this::manejarComponenteSeleccionado);
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al configurar el comboBox de de los Componentes: ", ex);
-            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private void manejarComponenteSeleccionado(ActionEvent evt) {
-        actualizarComponenteSolicitado();
-    }
-
-    private void manejarComponenteSeleccionado() {
-        actualizarComponenteSolicitado();
-    }
-
-    private void actualizarComponenteSolicitado() {
-        String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-        if (!componenteSeleccionado.equals(componenteAnterior)) {
-            try {
-                componenteAnterior = componenteSeleccionado;
-                cbxFecha.removeAllItems();
-                List<String> fechasRD = aps.obtenerFechasRetencionDimensional(conexion, componenteSeleccionado);
-                if (!fechasRD.isEmpty()) {
-                    fechasRD.forEach(cbxFecha::addItem);
-                } else {
-                    limpiarCampos();
-                }
-            } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("ERROR con el componente seleccionado: ", ex);
-                Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+            limpiarTabla();
+            String componenteSeleccionado = txtComponente.getText();
+            if (!esFechaSeleccionadaValida()) {
+                JOptionPane.showMessageDialog(this, "Por favor, seleccione una fecha válida.");
+                return;
             }
-        }
-    }
 
-    private void limpiarCampos() {
-        txtNoRollo.setText("");
-        txtInspVisual.setText("");
-        txtObservaciones.setText("");
-        txtNoOrden.setText("");
-        txtTamLote.setText("");
-        txtTamMta.setText("");
-        txtInsp.setText("");
-        txtTurno.setText("");
-        txtDisp.setText("");
-    }
-
-    private void manejarFechaSeleccionada(ActionEvent evt) {
-        actualizarFechaSeleccionada();
-    }
-
-    private void manejarFechaSeleccionada() {
-        actualizarFechaSeleccionada();
-    }
-
-    private void actualizarFechaSeleccionada() {
-        try {
-            String componenteSeleccionado = cbxComponente.getSelectedItem().toString();
-            if (cbxFecha.getSelectedItem() != null && !cbxFecha.getSelectedItem().toString().isEmpty()) {
-                datosFila = aps.obtenerInfoRetencionDimensional(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
-            } else {
-                limpiarCampos();
-            }
-            validarDatosFila();
-        } catch (SQLException ex) {
+            listaDatosRD = aps.obtenerInfoRetencionDimensional(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
+            mostrarDatosTabla();
+            inicializarListener();
+        } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void validarDatosFila() {
-        if (datosFila != null) {
-            txtNoRollo.setText(datosFila.getNoRollo());
-            txtInspVisual.setText(datosFila.getInspVisual());
-            txtObservaciones.setText(datosFila.getObservaciones());
-            txtNoOrden.setText(String.join(", ", datosFila.getNoOrden()));
-            txtTamLote.setText(datosFila.getTamLote());
-            txtTamMta.setText(datosFila.getTamMta());
-            txtInsp.setText(datosFila.getInsp());
-            txtTurno.setText(datosFila.getTurno());
-            txtDisp.setText(datosFila.getDisp());
+    private boolean esFechaSeleccionadaValida() {
+        Object seleccionado = cbxFecha.getSelectedItem();
+        return seleccionado != null && !seleccionado.toString().isEmpty();
+    }
+
+    private void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
+        limpiarTabla();
+        llenarTabla();
+    }
+
+    private void limpiarTabla() {
+        modeloTabla.setRowCount(0);
+    }
+
+    private void llenarTabla() {
+        if (listaDatosRD != null && !listaDatosRD.isEmpty()) {
+            listaDatosRD.forEach(datoRD -> {
+                Object[] fila = crearFila(datoRD);
+                modeloTabla.addRow(fila);
+            });
         } else {
-            limpiarCampos();
+            JOptionPane.showMessageDialog(this, "La Lista AceptacionPc2 esta vacía");
         }
     }
 
-    private void configurarComboBoxFecha() {
-        cbxFecha.addActionListener(this::manejarFechaSeleccionada);
+    private Object[] crearFila(DatosFilaRD datoRD) {
+        Object fila[] = new Object[9];
+        fila[0] = datoRD.getInspVisual();
+        fila[1] = datoRD.getNoRollo();
+        fila[2] = datoRD.getObservaciones();
+        fila[3] = datoRD.getNoOrden();
+        fila[4] = datoRD.getTamLote();
+        fila[5] = datoRD.getTamMta();
+        fila[6] = datoRD.getInsp();
+        fila[7] = datoRD.getTurno();
+        fila[8] = datoRD.getDisp();
+        return fila;
     }
 
-    private AceptacionPc1 crearAceptacionPc1() {
-        AceptacionPc1 aceptacionPc1 = new AceptacionPc1();
-        aceptacionPc1.setComponente(cbxComponente.getSelectedItem().toString());
-        aceptacionPc1.setFecha(cbxFecha.getSelectedItem().toString());
-        aceptacionPc1.setNoRollo(txtNoRollo.getText());
-        aceptacionPc1.setInspVisual(txtInspVisual.getText());
-        aceptacionPc1.setObservacion(txtObservaciones.getText());
-        return aceptacionPc1;
-    }
-
-    private void configurarFocusListener() {
-        txtNoOrden.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                String newText = txtNoOrden.getText();
-                List<String> nuevaListaNoOrden = Arrays.asList(newText.split("\\s*,\\s*"));
-                datosFila.setNoOrden(new ArrayList<>(nuevaListaNoOrden));
+    private void inicializarListener() {
+        modeloTabla.addTableModelListener(e -> {
+            if (e.getType() == TableModelEvent.UPDATE) {
+                int fila = e.getFirstRow();
+                filasModificadas.add(fila);  // Marcar la fila como modificada
             }
         });
+    }
+
+    private void capturarInformacion(int fila) {
+        listaDatosRD.get(fila).setInspVisual((String) modeloTabla.getValueAt(fila, 0));
+        listaDatosRD.get(fila).setNoRollo((String) modeloTabla.getValueAt(fila, 1));
+        listaDatosRD.get(fila).setObservaciones((String) modeloTabla.getValueAt(fila, 2));
+        listaDatosRD.get(fila).setNoOrden((String) modeloTabla.getValueAt(fila, 3));
+        listaDatosRD.get(fila).setTamLote((String) modeloTabla.getValueAt(fila, 4));
+        listaDatosRD.get(fila).setTamMta((String) modeloTabla.getValueAt(fila, 5));
+        listaDatosRD.get(fila).setInsp((String) modeloTabla.getValueAt(fila, 6));
+        listaDatosRD.get(fila).setTurno((String) modeloTabla.getValueAt(fila, 7));
+        listaDatosRD.get(fila).setDisp((String) modeloTabla.getValueAt(fila, 8));
     }
 
     private void cerrarVentana() {
@@ -384,30 +325,14 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnGuardar;
-    private javax.swing.JComboBox<String> cbxComponente;
     private javax.swing.JComboBox<String> cbxFecha;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblComponente;
-    private javax.swing.JLabel lblDisp;
     private javax.swing.JLabel lblFecha;
-    private javax.swing.JLabel lblInsp;
-    private javax.swing.JLabel lblInspVisual;
-    private javax.swing.JLabel lblNoOrden;
-    private javax.swing.JLabel lblNoRollo;
-    private javax.swing.JLabel lblObservaciones;
-    private javax.swing.JLabel lblTamLote;
-    private javax.swing.JLabel lblTamMta;
     private javax.swing.JLabel lblTitulo;
-    private javax.swing.JLabel lblTurno;
-    private javax.swing.JTextField txtDisp;
-    private javax.swing.JTextField txtInsp;
-    private javax.swing.JTextField txtInspVisual;
-    private javax.swing.JTextField txtNoOrden;
-    private javax.swing.JTextField txtNoRollo;
-    private javax.swing.JTextField txtObservaciones;
-    private javax.swing.JTextField txtTamLote;
-    private javax.swing.JTextField txtTamMta;
-    private javax.swing.JTextField txtTurno;
+    private javax.swing.JTable tblAceptacionPc2;
+    private javax.swing.JTextField txtComponente;
     // End of variables declaration//GEN-END:variables
 }

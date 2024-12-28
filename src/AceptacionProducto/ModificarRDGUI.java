@@ -30,7 +30,7 @@ public class ModificarRDGUI extends javax.swing.JFrame {
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public ModificarRDGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public ModificarRDGUI(AceptacionPc3 aceptacionPc3, Usuarios usuario, AceptacionPc1 aceptacionPc1, AceptacionPc2 aceptacionPc2) {
@@ -168,8 +168,7 @@ public class ModificarRDGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.aps = new AceptacionProductoServicio();
+            inicializarAtributos();
             definirValoresPredeterminados();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Surgio un error al abrir ModificarRDGUI: ", ex);
@@ -182,6 +181,11 @@ public class ModificarRDGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.aps = new AceptacionProductoServicio();
     }
 
     private void definirValoresPredeterminados() {

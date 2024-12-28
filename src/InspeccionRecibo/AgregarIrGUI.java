@@ -5,7 +5,6 @@ import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.GeneradorExcel;
 import Servicios.InspeccionReciboServicio;
-import Servicios.SQL;
 import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -44,7 +42,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     private List<String> listaProveedores; // Obtiene la lista de proveedores
 
     public AgregarIrGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public AgregarIrGUI(Usuarios usuario) {
@@ -259,6 +257,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
+        irs.abrirAgregarIrGUI(usuario);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
@@ -280,12 +279,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.excel = new GeneradorExcel();
-            this.irs = new InspeccionReciboServicio();
-            this.listaProveedores = new ArrayList<>();
-            Date fechaActual = Calendar.getInstance().getTime(); // Obtener la fecha actual
-            dchFechaFactura.setDate(fechaActual);
+            inicializarAtributos();
             cargarProveedores();
             generarCodigoHoja();
         } catch (SQLException ex) {
@@ -299,6 +293,13 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.excel = new GeneradorExcel();
+        this.irs = new InspeccionReciboServicio();
+        this.listaProveedores = new ArrayList<>();
     }
 
     private void cargarProveedores() throws SQLException {
@@ -347,7 +348,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         inspeccionRecibo.setCalibre(txtCalibre.getText().trim());
         inspeccionRecibo.setpLamina(cbxPresentacionLamina.getSelectedItem().toString());
         inspeccionRecibo.setEstatus(cbxEstatus.getSelectedItem().toString());
-        inspeccionRecibo.setNombreHJ(txtNombreHojaInstruccion.getText().toString());
+        inspeccionRecibo.setNombreHJ(txtNombreHojaInstruccion.getText().trim());
     }
 
     private void procesarArchivoExcel(String noHoja) {

@@ -1,5 +1,6 @@
 package Documentos;
 
+import APQP.AgregarDoctoApqpGUI;
 import Modelos.DocumentosM;
 import Modelos.FormatosM;
 import Modelos.ProcedimientosM;
@@ -12,6 +13,10 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -24,57 +29,39 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
-    private DocumentosM documento; // Manejar la informacion del archivo
     private ProcesosM proceso; // Manejar la informacion del archivo
-    private String rutaArchivo; // Almacena la dirección del archivo
+    private String carpeta; // Define el nombre de la carpeta donde se guardaran los archivos
     private String tipoOperacion; // Define si la operación corresponde a un documento, proceso o procedimiento
+    private DocumentosM documento; // Manejar la informacion del archivo
     private ProcedimientosM procedimiento; // Manejar la informacion del formato
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
     public ModificarArchivosGUI() {
+        initComponents();
+    }
+
+    public ModificarArchivosGUI(Usuarios usuario, DocumentosM documento, String carpeta) {
+        this.usuario = usuario;
+        this.documento = documento;
+        this.carpeta = carpeta;
+        this.tipoOperacion = "documento";
         inicializarVentanaYComponentes();
     }
 
-    public ModificarArchivosGUI(Usuarios usuario, DocumentosM documento) {
-        try {
-            this.usuario = usuario;
-            this.documento = documento;
-            this.tipoOperacion = "documento";
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
-            inicializarVentanaYComponentes();
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Abrir ModificarArchivosGUI: ", ex);
-            Logger.getLogger(ModificarArchivosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public ModificarArchivosGUI(Usuarios usuario, ProcesosM proceso, String carpeta) {
+        this.usuario = usuario;
+        this.proceso = proceso;
+        this.carpeta = carpeta;
+        this.tipoOperacion = "proceso";
+        inicializarVentanaYComponentes();
     }
 
-    public ModificarArchivosGUI(Usuarios usuario, ProcesosM proceso) {
-        try {
-            this.usuario = usuario;
-            this.proceso = proceso;
-            this.tipoOperacion = "proceso";
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
-            inicializarVentanaYComponentes();
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Abrir ModificarArchivosGUI: ", ex);
-            Logger.getLogger(ModificarArchivosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public ModificarArchivosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
-        try {
-            this.usuario = usuario;
-            this.procedimiento = procedimiento;
-            this.tipoOperacion = "procedimiento";
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
-            inicializarVentanaYComponentes();
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Abrir ModificarArchivosGUI: ", ex);
-            Logger.getLogger(ModificarArchivosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public ModificarArchivosGUI(Usuarios usuario, ProcedimientosM procedimiento, String carpeta) {
+        this.usuario = usuario;
+        this.procedimiento = procedimiento;
+        this.carpeta = carpeta;
+        this.tipoOperacion = "procedimiento";
+        inicializarVentanaYComponentes();
     }
 
     @Override
@@ -177,7 +164,17 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnNuevoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoArchivoActionPerformed
-        seleccionarArchivo();
+        File archivoSeleccionado = cds.seleccionarArchivo(this);
+        if (archivoSeleccionado != null) {
+            try {
+                String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\ControlDocumentos\\" + this.carpeta + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                txtNombreArchivo.setText(nombreArchivo);
+            } catch (IOException ex) {
+                Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
+                Logger.getLogger(AgregarDoctoApqpGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_btnNuevoArchivoActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
@@ -186,7 +183,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
                 actualizarDocumento();
                 break;
             case "procedimiento":
-                actualizarFormato();
+                agregarFormato();
                 break;
             default:
                 actualizarDiagrama();
@@ -196,6 +193,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
 
     private void inicializarVentanaYComponentes() {
         configurarVentana();
+        inicializarAtributos();
         definirTitulo();
     }
 
@@ -204,6 +202,16 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() {
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+            this.cds = new ControlDocumentacionServicio();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al inicializar los atributos: ", ex);
+            Logger.getLogger(ModificarArchivosGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void definirTitulo() {
@@ -227,48 +235,38 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         Conexion.getInstance().desconectar(conexion);
     }
 
-    private void seleccionarArchivo() {
-        File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
-            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
-            txtNombreArchivo.setText(nombreArchivo);
-        }
-    }
-
     private void actualizarDocumento() {
         documento.setNombre(txtNombreArchivo.getText());
-        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
-            cds.cargarArchivo(rutaArchivo, documento::setContenido);
-        }
+        documento.setRutaArchivo("archivos/ControlDocumentos/documentos/" + txtNombreArchivo.getText());
         cds.actualizarDocumento(conexion, documento);
-        cerrarVentana();
-        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
+        notificarActualizacion();
         cds.abrirDocumentacionGUI(usuario, documento.getIdProceso());
     }
 
-    private void actualizarFormato() {
+    private void agregarFormato() {
         FormatosM formato = new FormatosM();
         formato.setNombre(txtNombreArchivo.getText());
         formato.setIdP(procedimiento.getIdp());
-        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
-            cds.cargarArchivo(rutaArchivo, formato::setContenido);
-        }
+        formato.setRutaArchivo("archivos/ControlDocumentos/Formatos/" + txtNombreArchivo.getText());
         cds.agregarFormatoNuevo(conexion, formato);
-        cerrarVentana();
-        JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
+        notificarActualizacion();
         cds.abrirFormatosGUI(usuario, procedimiento);
     }
 
     private void actualizarDiagrama() {
+        cds.eliminarDiagramaAnterior(proceso);
         proceso.setNombreDT(txtNombreArchivo.getText());
-        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
-            cds.cargarArchivo(rutaArchivo, proceso::setDiagramaTortuga);
-        }
+        proceso.setRutaArchivo("archivos/ControlDocumentos/DiagramasTortuga/" + txtNombreArchivo.getText());
         cds.actualizarDiagramaTortuga(conexion, proceso);
+        notificarActualizacion();
+        cds.abrirDocumentacionGUI(usuario, proceso.getId());
+    }
+
+    
+
+    private void notificarActualizacion() {
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
-        cds.abrirDocumentacionGUI(usuario, proceso.getId());
     }
 
     /**

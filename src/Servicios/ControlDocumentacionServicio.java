@@ -19,15 +19,12 @@ import Modelos.SolicitudesM;
 import Modelos.Usuarios;
 import java.awt.Component;
 import java.awt.Desktop;
-import java.awt.Font;
 import java.awt.Window;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,28 +35,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ImageIcon;
 import java.util.Date;
-import java.util.function.Consumer;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import jnafilechooser.api.JnaFileChooser;
-import swing.Button;
 
 public class ControlDocumentacionServicio {
 
     final String UPDATE_REVISION_FROM_DOCPROCEDIMIENTOS = "UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?";
     final String UPDATE_PROCEDIMIENTOS_BY_ID = "UPDATE docprocedimientos SET no = ?, codigo = ?, revision = ?, procedimiento = ?, encargado = ? WHERE id = ?";
-    final String UPDATE_MANUAL_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo = 'manual' AND idProcedimiento = ?";
-    final String UPDATE_DIAGRAMA_FLUJO_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo = 'diagrama_flujo' AND idProcedimiento = ?";
+    final String UPDATE_MANUAL_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo = 'MANUAL' AND idProcedimiento = ?";
+    final String UPDATE_DIAGRAMA_FLUJO_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo = 'DIAGRAMA DE FLUJO' AND idProcedimiento = ?";
     final String UPDATE_DIAGRAMA_TORTUGA_BY_PROCESO = "UPDATE docprocesos SET nombreDt = ?, diagramaTortuga = ? WHERE proceso = ?";
     final String UPDATE_FORMATO = "UPDATE formatos SET nombre = ?, contenido = ? WHERE idProcedimiento = ? AND nombre = ?";
-    final String UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS = "UPDATE documentos SET nombre = ?, contenido = ? WHERE idProceso = ? AND tipo_archivo = 'instructivo' AND nombre = ?";
-    final String UPDATE_DIAGRAMA_TORTUGA_BY_ID = "UPDATE docprocesos SET nombreDt = ?, diagramaTortuga = ? WHERE id = ?";
+    final String UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS = "UPDATE documentos SET nombre = ?, contenido = ? WHERE idProceso = ? AND tipo_archivo = 'INSTRUCTIVO' AND nombre = ?";
+    final String UPDATE_DIAGRAMA_TORTUGA_BY_ID = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE id = ?";
     final String UPDATE_DOCUMENTO = "UPDATE documentos SET fechaActualizacion = ?, nombre = ?, contenido = ? WHERE id = ?";
     final String INSERT_INTO_DOCUMENTOS_WITH_SUBQUERY = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES((SELECT idProceso FROM docProcesos WHERE nombreProceso = ?), ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_DOCUMENTOS = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    final String INSERT_INTO_FORMATOS = "INSERT INTO formatos(idProcedimiento, nombre, contenido) VALUES(?, ?, ?)";
+    final String INSERT_INTO_FORMATOS = "INSERT INTO formatos(idProcedimiento, nombre, rutaArchivo) VALUES(?, ?, ?)";
     final String INSERT_INTO_SOLICITUDES_CAMBIO = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, archivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_PROCEDIMIENTOS = "INSERT INTO docprocedimientos(idp, no, codigo, revision, proceso, procedimiento, encargado) VALUES (?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_REGISTROS = "INSERT INTO docregistros(idp, fechaModificacion, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombre) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -111,17 +105,17 @@ public class ControlDocumentacionServicio {
     }
 
     public void abrirModificarArchivosGUI(Usuarios usr, DocumentosM documento) {
-        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, documento);
+        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, documento, "documentos");
         mostrarVentana(doc);
     }
 
     public void abrirModificarArchivosGUI(Usuarios usr, ProcesosM proceso) {
-        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, proceso);
+        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, proceso, "DiagramasTortuga");
         mostrarVentana(doc);
     }
 
     public void abrirModificarArchivosGUI(Usuarios usr, ProcedimientosM procedimiento) {
-        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, procedimiento);
+        ModificarArchivosGUI doc = new ModificarArchivosGUI(usr, procedimiento, "Formatos");
         mostrarVentana(doc);
     }
 
@@ -161,7 +155,7 @@ public class ControlDocumentacionServicio {
                     ps1.setString(1, solicitud.getRevNueva());
                     ps1.setString(2, fechaFormateada);
                     ps1.setString(3, solicitud.getNombre());
-                    ps1.setBytes(4, solicitud.getArchivo());
+                    ps1.setString(4, solicitud.getRutaArchivo());
                     ps1.setInt(5, solicitud.getId());
                     ps1.executeUpdate();
                 }
@@ -176,7 +170,7 @@ public class ControlDocumentacionServicio {
                     ps1.setString(1, solicitud.getRevNueva());
                     ps1.setString(2, fechaFormateada);
                     ps1.setString(3, solicitud.getNombre());
-                    ps1.setBytes(4, solicitud.getArchivo());
+                    ps1.setString(4, solicitud.getRutaArchivo());
                     ps1.setInt(5, solicitud.getId());
                     ps1.executeUpdate();
                 }
@@ -184,7 +178,7 @@ public class ControlDocumentacionServicio {
                 if (solicitud.getTipoArchivo().equals("DIAGRAMA DE TORTUGA")) {
                     PreparedStatement ps1 = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA_BY_PROCESO);
                     ps1.setString(1, solicitud.getNombre());
-                    ps1.setBytes(2, solicitud.getArchivo());
+                    ps1.setString(2, solicitud.getRutaArchivo());
                     ps1.setString(3, solicitud.getProceso());
                     ps1.executeUpdate();
                 }
@@ -192,7 +186,7 @@ public class ControlDocumentacionServicio {
                 if (solicitud.getTipoArchivo().equals("FORMATO")) {
                     PreparedStatement ps = conexion.prepareStatement(UPDATE_FORMATO);
                     ps.setString(1, solicitud.getNombre());
-                    ps.setBytes(2, solicitud.getArchivo());
+                    ps.setString(2, solicitud.getRutaArchivo());
                     ps.setInt(3, solicitud.getId());
                     ps.setString(4, solicitud.getNombreD());
                     ps.executeUpdate();
@@ -201,7 +195,7 @@ public class ControlDocumentacionServicio {
                 if (solicitud.getTipoArchivo().equals("INSTRUCTIVO")) {
                     PreparedStatement ps = conexion.prepareStatement(UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS);
                     ps.setString(1, solicitud.getNombre());
-                    ps.setBytes(2, solicitud.getArchivo());
+                    ps.setString(2, solicitud.getRutaArchivo());
                     ps.setInt(3, solicitud.getId());
                     ps.setString(4, solicitud.getNombreD());
                     ps.executeUpdate();
@@ -217,7 +211,7 @@ public class ControlDocumentacionServicio {
                     ps.setString(4, fechaFormateada);
                     ps.setString(5, solicitud.getTipoArchivo());
                     ps.setString(6, solicitud.getNombre());
-                    ps.setBytes(7, solicitud.getArchivo());
+                    ps.setString(7, solicitud.getRutaArchivo());
                     ps.executeUpdate();
                 }
 
@@ -225,7 +219,7 @@ public class ControlDocumentacionServicio {
                     PreparedStatement ps = conexion.prepareStatement(INSERT_INTO_FORMATOS);
                     ps.setInt(1, solicitud.getId());
                     ps.setString(2, solicitud.getNombre());
-                    ps.setBytes(3, solicitud.getArchivo());
+                    ps.setString(3, solicitud.getRutaArchivo());
                     ps.executeUpdate();
                 }
                 break;
@@ -242,10 +236,9 @@ public class ControlDocumentacionServicio {
                     PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_FORMATOS);
                     ps.setInt(1, solicitud.getId());
                     ps.setString(2, solicitud.getNombre());
-                    ps.setBytes(3, solicitud.getArchivo());
+                    ps.setString(3, solicitud.getRutaArchivo());
                     ps.executeUpdate();
                 }
-
         }
         insertarRegistro(conexion, solicitud, fechaFormateada);
         eliminarSolicitud(conexion, solicitud.getCodigo());
@@ -255,7 +248,7 @@ public class ControlDocumentacionServicio {
         try {
             PreparedStatement ps = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA_BY_ID);
             ps.setString(1, proceso.getNombreDT());
-            ps.setBytes(2, proceso.getDiagramaTortuga());
+            ps.setString(2, proceso.getRutaArchivo());
             ps.setInt(3, proceso.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -270,7 +263,7 @@ public class ControlDocumentacionServicio {
             PreparedStatement ps = conexion.prepareStatement(UPDATE_DOCUMENTO);
             ps.setString(1, formatearFecha(fechaActual));
             ps.setString(2, documento.getNombre());
-            ps.setBytes(3, documento.getContenido());
+            ps.setString(3, documento.getRutaArchivo());
             ps.setInt(4, documento.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -288,7 +281,7 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setString(4, formatearFecha(fechaActual));
             pstmtSelect.setString(5, documento.getTipo());
             pstmtSelect.setString(6, documento.getNombre());
-            pstmtSelect.setBytes(7, documento.getContenido());
+            pstmtSelect.setString(7, documento.getRutaArchivo());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
@@ -299,9 +292,10 @@ public class ControlDocumentacionServicio {
         try (PreparedStatement pstmtSelect = conexion.prepareStatement(INSERT_INTO_FORMATOS)) {
             pstmtSelect.setInt(1, formato.getIdP());
             pstmtSelect.setString(2, formato.getNombre());
-            pstmtSelect.setBytes(3, formato.getContenido());
+            pstmtSelect.setString(3, formato.getRutaArchivo());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al agregar el formato", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -334,306 +328,10 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setString(9, solicitud.getTipoArchivo());
             pstmtSelect.setString(10, solicitud.getNombreD());
             pstmtSelect.setString(11, solicitud.getNombre());
-            pstmtSelect.setBytes(12, solicitud.getArchivo());
+            pstmtSelect.setString(12, solicitud.getRutaArchivo());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void cargarArchivo(String rutaArchivo, Consumer<byte[]> setterFunction) {
-        try {
-            byte[] archivoData = leerArchivo(rutaArchivo);
-            setterFunction.accept(archivoData);
-        } catch (IOException ex) {
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public Button crearBoton(Object object, ImageIcon icon, String texto) {
-        // Crear una fuente con el tamaño deseado
-        Font customFont = new Font("Arial", Font.PLAIN, 10);
-        Button boton; // Se define el boton
-        if (object != null) { // Si el objeto que se manda es nulo
-            if (object instanceof byte[]) { // Si es un arreglo de bytes                
-                byte[] byteArray = (byte[]) object; // Se crea el arreglo de bytes del objecto
-                if (byteArray.length != 0) { // Si la longitud es diferente a cero...
-                    boton = new Button(); // Se crea el nuevo boton
-                    // Agregar un MouseListener al botón
-                    //boton.setRolloverEnabled(true);
-                    boton.setIcon(icon);
-                } else {
-                    boton = new Button(); // Se crea el nuevo boton
-                    boton.setText(texto);
-                    boton.setFont(customFont);
-                }
-            } else {
-                boton = new Button(); // Se crea el nuevo boton
-                boton.setText(texto);
-                boton.setFont(customFont);
-            }
-        } else {
-            boton = new Button(); // Se crea el nuevo boton
-            boton.setText(texto);
-        }
-        return boton;
-    }
-
-    public void ejecutarArchivo(Connection conexion, String nombre) throws ClassNotFoundException, SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conexion.prepareStatement(SELECT_CONTENIDO_NOMBRE_FROM_FORMATOS);
-            ps.setString(1, nombre);
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                byte[] b = rs.getBytes("contenido");
-                String tipo = rs.getString("extension");
-
-                String nombreArchivo = "nuevoArchivo." + tipo;
-                try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream(nombreArchivo)) {
-
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-
-                    while ((bytesRead = bos.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-
-                    System.out.println("Archivo " + tipo + " creado correctamente.");
-                }
-
-                // Abrir el archivo con la aplicación predeterminada
-                File archivo = new File(nombreArchivo);
-                if (archivo.exists()) {
-                    Desktop.getDesktop().open(archivo);
-                    System.out.println("Archivo " + nombreArchivo + " abierto correctamente.");
-                } else {
-                    System.out.println("El archivo no se encontró.");
-                }
-            } else {
-                System.out.println("No se encontraron datos para el ID proporcionado.");
-            }
-        } catch (IOException | SQLException ex) {
-            System.out.println("Error al abrir o crear el archivo: " + ex.getMessage());
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException e) {
-                System.out.println("Error al cerrar recursos: " + e.getMessage());
-            }
-        }
-    }
-
-    public void ejecutarArchivoSC(Connection conexion, String nombre) throws ClassNotFoundException, SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conexion.prepareStatement(SELECT_NOMBRE_ARCHIVO_FROM_SOLICITUDES_CAMBIO);
-            ps.setString(1, nombre);
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                byte[] b = rs.getBytes("archivo");
-                String tipo = rs.getString("extension");
-                String nombreDoc = rs.getString("nombre");
-
-                String nombreArchivo = nombreDoc;
-                try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream(nombreArchivo)) {
-
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-
-                    while ((bytesRead = bos.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-
-                    System.out.println("Archivo " + tipo + " creado correctamente.");
-                }
-
-                // Abrir el archivo con la aplicación predeterminada
-                File archivo = new File(nombreArchivo);
-                if (archivo.exists()) {
-                    Desktop.getDesktop().open(archivo);
-                    System.out.println("Archivo " + nombreArchivo + " abierto correctamente.");
-                } else {
-                    System.out.println("El archivo no se encontró.");
-                }
-            } else {
-                System.out.println("No se encontraron datos para el ID proporcionado.");
-            }
-        } catch (IOException | SQLException ex) {
-            System.out.println("Error al abrir o crear el archivo: " + ex.getMessage());
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException e) {
-                System.out.println("Error al cerrar recursos: " + e.getMessage());
-            }
-        }
-    }
-
-    public void ejecutarDiagramaTortuga(Connection conexion, ProcesosM proceso) throws ClassNotFoundException, SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conexion.prepareStatement(SELECT_DIAGRAMA_TORTUGA);
-            ps.setInt(1, proceso.getId());
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                byte[] b = rs.getBytes(1);
-
-                try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream(proceso.getNombreDT())) {
-
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-
-                    while ((bytesRead = bos.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-
-                }
-            } else {
-                JOptionPane.showMessageDialog(null, "No se encontraron datos para el ID proporcionado.");
-            }
-        } catch (IOException | SQLException ex) {
-            System.out.println("Error al abrir o crear el archivo PowerPoint: " + ex.getMessage());
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException e) {
-                System.out.println("Error al cerrar recursos: " + e.getMessage());
-            }
-        }
-    }
-
-    public void ejecutarFormato(Connection conexion, String nombreFormato) throws ClassNotFoundException, SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conexion.prepareStatement(SELECT_CONTENIDO_NOMBRE_FROM_FORMATOS);
-
-            ps.setString(1, nombreFormato);
-
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                byte[] b = rs.getBytes("contenido");
-                String nombre = rs.getString("nombre");
-
-                String nombreArchivo = nombre;
-                try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream(nombre)) {
-
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-
-                    while ((bytesRead = bos.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                }
-
-                // Abrir el archivo con la aplicación predeterminada
-                File archivo = new File(nombreArchivo);
-                if (archivo.exists()) {
-                    Desktop.getDesktop().open(archivo);
-                    System.out.println("Archivo " + nombreArchivo + " abierto correctamente.");
-                } else {
-                    System.out.println("El archivo no se encontró.");
-                }
-            } else {
-                System.out.println("No se encontraron datos para el ID proporcionado.");
-            }
-        } catch (IOException | SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al cerrar la conexión: ", ex);
-            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("ERROR al cerrar la conexión: ", ex);
-                Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-
-    public void ejecutarManual(Connection conexion, ProcedimientosM procedimiento, String tipoDocto) throws ClassNotFoundException, SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conexion.prepareStatement(SELECT_CONTENIDO_NOMBRE_FROM_DOCUMENTOS);
-
-            ps.setString(1, tipoDocto);
-            ps.setInt(2, procedimiento.getIdp());
-
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                byte[] b = rs.getBytes("contenido");
-                String nombre = rs.getString("nombre");
-
-                String nombreArchivo = nombre;
-                try (InputStream bos = new ByteArrayInputStream(b);
-                        OutputStream out = new FileOutputStream(nombre)) {
-
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-
-                    while ((bytesRead = bos.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                }
-
-                // Abrir el archivo con la aplicación predeterminada
-                File archivo = new File(nombreArchivo);
-                if (archivo.exists()) {
-                    Desktop.getDesktop().open(archivo);
-                } else {
-                    System.out.println("El archivo no se encontró.");
-                }
-            } else {
-                System.out.println("No se encontraron datos para el ID proporcionado.");
-            }
-        } catch (IOException | SQLException ex) {
-            Utilidades.manejarExcepcion("Error al abrir o crear el archivo PDF: ", ex);
-            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("Error al cerrar recursos: ", ex);
-                Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
     }
 
@@ -756,7 +454,7 @@ public class ControlDocumentacionServicio {
                         resultado.getString("fechaActualizacion"),
                         resultado.getString("tipo"),
                         resultado.getString("nombre"),
-                        resultado.getBytes("contenido")
+                        resultado.getString("rutaArchivo")
                 );
                 documentos.add(documento);
             }
@@ -782,7 +480,7 @@ public class ControlDocumentacionServicio {
                         resultado.getString("tipoArchivo"),
                         resultado.getString("nombrePrev"),
                         resultado.getString("nombre"),
-                        resultado.getBytes("archivo")
+                        resultado.getString("rutaArchivo")
                 );
                 listaSolicitudes.add(ap1);
             }
@@ -800,7 +498,7 @@ public class ControlDocumentacionServicio {
                         resultado.getInt("id"),
                         resultado.getInt("idProcedimiento"),
                         resultado.getString("nombre"),
-                        resultado.getBytes("contenido")
+                        resultado.getString("rutaArchivo")
                 );
                 formatos.add(formato);
             }
@@ -845,7 +543,7 @@ public class ControlDocumentacionServicio {
                         resultado.getString("proceso"),
                         resultado.getString("encargado"),
                         resultado.getString("nombreDt"),
-                        resultado.getBytes("diagramaTortuga")
+                        resultado.getString("rutaArchivo")
                 );
             }
         }
@@ -912,5 +610,64 @@ public class ControlDocumentacionServicio {
         }
 
         return null;
+    }
+
+    // Método para limpiar el nombre del archivo
+    private String limpiarNombreArchivo(String nombreArchivo) {
+        // Reemplaza los caracteres no válidos en el sistema de archivos
+        return nombreArchivo.replaceAll("[<>:\"/\\|?*]", "_");
+    }
+
+    public void abrirDocumento(String rutaArchivo) {
+        if (rutaArchivo == null || rutaArchivo.isEmpty()) {
+            Utilidades.manejarExcepcion("La ruta del archivo no es válida.", null);
+            return;
+        }
+
+        String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo; // Ruta de red
+
+        try {
+            File archivo = new File(urlArchivo);
+            if (!archivo.exists()) {
+                Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);
+                return;
+            }
+
+            abrirArchivoLocal(archivo);
+        } catch (IOException ex) {
+            Utilidades.manejarExcepcion("Error al abrir el archivo local: ", ex);
+        }
+    }
+
+    private void abrirArchivoLocal(File archivo) throws IOException {
+        Desktop desktop = Desktop.getDesktop();
+        desktop.open(archivo);
+    }
+
+    public void eliminarDiagramaAnterior(Connection conexion, ProcesosM proceso) {
+        try {
+            PreparedStatement ps = conexion.prepareStatement("DELETE nombreDt, rutaArchivo FROM docProcesos WHERE id = ?");
+            ps.setInt(1, proceso.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al eliminar el documento seleccionado: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void eliminarDiagramaAnterior(ProcesosM proceso) {
+        String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + proceso.getRutaArchivo(); // Ruta de red
+
+        if (!Utilidades.eliminarArchivo(urlArchivo)) {
+            JOptionPane.showMessageDialog(null, "El archivo no se pudo eliminar o no existe.");
+        }
+    }
+
+    public void eliminarArchivoFormato(FormatosM formato) {
+        String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + formato.getRutaArchivo(); // Ruta de red
+
+        if (!Utilidades.eliminarArchivo(urlArchivo)) {
+            JOptionPane.showMessageDialog(null, "El archivo no se pudo eliminar o no existe.");
+        }
     }
 }

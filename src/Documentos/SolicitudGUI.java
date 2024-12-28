@@ -14,6 +14,10 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -28,16 +32,14 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
     private ProcesosM proceso; // Objeto para manejar la información del proceso
-    private List<ProcedimientosM> listaProcedimientos; // Lista de procedimientos
-    private List<DocumentosM> listaInstructivos; // Lista de otros instructivos
-    private List<FormatosM> listaFormatos; // Lista de Formatos
     private int indexSeleccionado; // atributos para la posicion de los procedimientos 
+    private List<FormatosM> listaFormatos; // Lista de Formatos
+    private List<DocumentosM> listaInstructivos; // Lista de otros instructivos
+    private List<ProcedimientosM> listaProcedimientos; // Lista de procedimientos
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
-    private String rutaArchivo;
-
     public SolicitudGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public SolicitudGUI(Usuarios usuario, ProcesosM proceso) {
@@ -215,14 +217,24 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private void btnSolicitudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudActionPerformed
         JOptionPane.showMessageDialog(this, "SE HA REALIZADO LA SOLICITUD DE CAMBIO");
         SolicitudesM solicitudCambio = crearSolicitudCambio();
-        cds.cargarArchivo(rutaArchivo, solicitudCambio::setArchivo);
+        solicitudCambio.setRutaArchivo("archivos/ControlDocumentos/Solicitudes/"+txtNombreArchivo.getText());
         cds.agregarSolicitud(conexion, solicitudCambio);
         cerrarVentana();
         cds.abrirControlDocumentosGUI(usuario);
     }//GEN-LAST:event_btnSolicitudActionPerformed
 
     private void btnNuevoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoArchivoActionPerformed
-        seleccionarArchivo();
+        File archivoSeleccionado = cds.seleccionarArchivo(this);
+        if (archivoSeleccionado != null) {
+            try {
+                String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\ControlDocumentos\\Solicitudes\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                txtNombreArchivo.setText(nombreArchivo);
+            } catch (IOException ex) {
+                Utilidades.manejarExcepcion("ERROR al seleccionar el archivo", ex);
+                Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_btnNuevoArchivoActionPerformed
 
     private void cbxProcedimientosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxProcedimientosActionPerformed
@@ -246,8 +258,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
+            inicializarAtributos();
             configurarLabelsYTextFields();
             configurarProcedimientosComboBox();
             configurarAccionComboBox();
@@ -263,6 +274,11 @@ public class SolicitudGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.cds = new ControlDocumentacionServicio();
     }
 
     private void configurarLabelsYTextFields() {
@@ -365,7 +381,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private void eliminarElemento() {
         System.out.println("Elemento eliminado");
     }
-    
+
     private void ocultarDocumentos() {
         lblDocumentos.setVisible(false);
         cbxDocumentos.setVisible(false);
@@ -393,15 +409,6 @@ public class SolicitudGUI extends javax.swing.JFrame {
                 antiguaRev, nuevaRev, encargado, accion, tipoArchivo, nombreDocumento,
                 nombreArchivo, null);
     }
-    
-    private void seleccionarArchivo() {
-        File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
-            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
-            txtNombreArchivo.setText(nombreArchivo);
-        }
-    }
 
     private void manejarTipoArchivo(String tipoArchivo, int index) {
         lblDocumentos.setVisible(true);
@@ -413,7 +420,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
             Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void actualizarDoctos(String tipoDocumento, int index) throws SQLException {
         lblDocumentos.setVisible(true);
         cbxDocumentos.setVisible(true);
@@ -443,7 +450,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
             Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void visualizarCbxDocumentos(boolean documentos) {
         if (!documentos) {
             lblDocumentos.setVisible(false);

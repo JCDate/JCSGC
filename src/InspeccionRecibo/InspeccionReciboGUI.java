@@ -1,15 +1,16 @@
 package InspeccionRecibo;
 
-import Modelos.Iconos;
-import Servicios.imgTabla;
+import BotonesAccion.TableActionCellEditorIR;
+import BotonesAccion.TableActionCellRenderIR;
+import BotonesAccion.TableActionEventIR;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
+import Paginacion.EventPaginacion;
 import Servicios.Conexion;
 import Servicios.GeneradorExcel;
 import Servicios.InspeccionReciboServicio;
 import Servicios.Utilidades;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
@@ -21,11 +22,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
+import javax.swing.JScrollPane;
 import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -33,22 +35,14 @@ import swing.Button;
 
 public class InspeccionReciboGUI extends javax.swing.JFrame {
 
-    // Usuario y Conexión a la base de datos
-    private Usuarios usuario;
-    private Connection conexion;
-
-    // Definición de la estructura de la tabla
-    private DefaultTableModel modeloTabla;
-
-    // Servicios y Utilidades
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
-    private GeneradorExcel excel = new GeneradorExcel();
-
-    // Lista de registros de Inspección Recibo
-    private List<InspeccionReciboM> listaInspeccionRecibo;
-
-    // Objeto filtrador de campos de la tabla
-    private TableRowSorter<DefaultTableModel> trs;
+    // Atributos 
+    private Usuarios usuario;// Usuario
+    private Connection conexion; // Conexión a la base de datos
+    private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
+    private InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Servicios y Utilidades
+    private GeneradorExcel excel = new GeneradorExcel(); // Servicios para trabajar con los archivos de excel    
+    private List<InspeccionReciboM> listaInspeccionRecibo; // Lista de registros de Inspección Recibo
+    private TableRowSorter<DefaultTableModel> trs; // Objeto filtrador de campos de la tabla
 
     // Columnas de la tabla
     private static final int COLUMNA_NO_HOJA = 0;
@@ -66,7 +60,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private static final int COLUMNA_VER_HOJA_INSTRUCCION = 12;
 
     public InspeccionReciboGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public InspeccionReciboGUI(Usuarios usuario) {
@@ -99,9 +93,11 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         btnAgregarCalibre = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         jScrollPane1 = new javax.swing.JScrollPane();
         tblInspeccionRecibo = new javax.swing.JTable();
-        btnToExcel = new swing.Button(new Color(107, 240, 105),new Color(75, 212, 73));
         txtBuscador = new swing.TextField();
         jPanel1 = new javax.swing.JPanel();
+        btnToExcel = new swing.Button(new Color(107, 240, 105),new Color(75, 212, 73));
+        jPanel2 = new javax.swing.JPanel();
+        paginacion1 = new Paginacion.Paginacion();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -195,22 +191,18 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-        tblInspeccionRecibo.setBorder(javax.swing.BorderFactory.createCompoundBorder());
         tblInspeccionRecibo.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null}
+
             },
             new String [] {
-                "No.", "FECHA DE FACTURA", "PROVEEDOR", "NO. FACTURA", "NO. PEDIDO", "CALIBRE", "PRESENTACIÓN DE LAMINA", "NO. ROLLO", "PZ/Kg", "ESTATUS", "VER FACTURA", "VER CERTIFICADO", "HOJA DE INSTRUACCIÓN"
+                "No.", "FECHA DE FACTURA", "PROVEEDOR", "NO. FACTURA", "NO. PEDIDO", "CALIBRE", "PRESENTACIÓN DE LAMINA", "NO. ROLLO", "PZ/Kg", "ESTATUS", "VER FACTURA"
             }
         ));
-        tblInspeccionRecibo.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         tblInspeccionRecibo.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
-        tblInspeccionRecibo.setMinimumSize(new java.awt.Dimension(600, 500));
-        tblInspeccionRecibo.setPreferredSize(new java.awt.Dimension(600, 500));
+        tblInspeccionRecibo.setMinimumSize(new java.awt.Dimension(400, 300));
+        tblInspeccionRecibo.setPreferredSize(new java.awt.Dimension(90000, 70000));
+        tblInspeccionRecibo.setRowHeight(50);
         tblInspeccionRecibo.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tblInspeccionReciboMouseClicked(evt);
@@ -218,15 +210,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(tblInspeccionRecibo);
 
-        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 139, 1130, -1));
-
-        btnToExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excel.png"))); // NOI18N
-        btnToExcel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnToExcelActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnToExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1190, 10, 80, 80));
+        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 139, 1150, 350));
 
         txtBuscador.setPrefixIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/find.png"))); // NOI18N
         txtBuscador.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -234,14 +218,32 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 txtBuscadorKeyTyped(evt);
             }
         });
-        getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 95, 240, 40));
+        getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 95, 260, 40));
 
         jPanel1.setBackground(new java.awt.Color(251, 251, 251));
         jPanel1.setForeground(new java.awt.Color(242, 242, 242));
         jPanel1.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
         jPanel1.setMinimumSize(new java.awt.Dimension(130, 350));
         jPanel1.setPreferredSize(new java.awt.Dimension(130, 350));
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1280, 570));
+        jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        btnToExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excel.png"))); // NOI18N
+        btnToExcel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnToExcelActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnToExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1210, 10, 80, 80));
+
+        jPanel2.setBackground(new java.awt.Color(84, 139, 249));
+        jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        paginacion1.setOpaque(false);
+        jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 10, -1, -1));
+
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 490, 1150, 50));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, 610));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -327,10 +329,10 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            inicializarServicios();
-            configurarBuscador();
+            inicializarAtributos();
             inicializarTabla();
+//            configurarBuscador();
+
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir InspeccionReciboGUI: ", ex);
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -344,9 +346,11 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void inicializarServicios() {
+    private void inicializarAtributos() throws SQLException {
         this.irs = new InspeccionReciboServicio();
         this.excel = new GeneradorExcel();
+        this.conexion = Conexion.getInstance().conectar();
+        this.modeloTabla = (DefaultTableModel) tblInspeccionRecibo.getModel();
     }
 
     private void configurarBuscador() {
@@ -355,43 +359,58 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     }
 
     private void inicializarTabla() {
-        try {
-            this.modeloTabla = construirModeloTabla();
-            this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion);
-            tblInspeccionRecibo.setModel(modeloTabla);
-            this.trs = new TableRowSorter(tblInspeccionRecibo.getModel());
-            tblInspeccionRecibo.setRowSorter(trs);
-            tblInspeccionRecibo.setRowHeight(27);
-            tblInspeccionRecibo.setPreferredSize(new Dimension(4500, 4500));  // CONSIDERAR QUITARLAS
-            tblInspeccionRecibo.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // CONSIDERAR QUITARLAS
-            mostrarDatosTabla();
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al inicializar la tabla: ", ex);
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private DefaultTableModel construirModeloTabla() {
-        modeloTabla = new DefaultTableModel() {
+        configurarAccionesTabla();
+//            paginacion1.setPaginacionItemRender(paginationItemRender);
+        paginacion1.addEventPaginacion(new EventPaginacion() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+            public void pageChanged(int page) {
+                try {
+                    cargarDatosTabla(page);
+                    mostrarDatosTabla(page);
+                } catch (SQLException ex) {
+                    Utilidades.manejarExcepcion("ERROR al inicializar la tabla", ex);
+                    Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-        };
+        });
 
-        String[] nombresColumnas = {"NO.", "FECHA DE FACTURA", "PROVEEDOR", "FACTURA", "PEDIDO",
-            "CALIBRE", "PRESENTACIÓN", "ROLLO", "Pz/Kg.", "ESTATUS",
-            "VER FACTURA", "VER CERTIFICADO", "VER HOJA DE INSTRUCCIONES"};
-
-        modeloTabla.setColumnIdentifiers(nombresColumnas); // Establecer los nombres de las columnas en el modelo de tabla.
-
-        return modeloTabla;
+//            this.trs = new TableRowSorter(tblInspeccionRecibo.getModel());
+//            tblInspeccionRecibo.setRowSorter(trs);
+        // Asegúrate de que no hay filtro en el TableRowSorter
     }
 
-    private void mostrarDatosTabla() {
+    private void cargarDatosTabla(int page) throws SQLException {
+        this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion, page);
+        System.out.println(listaInspeccionRecibo.size());
+    }
+
+    private void configurarAccionesTabla() {
+        TableActionEventIR event = crearTableActionEventIR();
+        tblInspeccionRecibo.getColumnModel().getColumn(10).setCellRenderer(new TableActionCellRenderIR());
+        tblInspeccionRecibo.getColumnModel().getColumn(10).setCellEditor(new TableActionCellEditorIR(event));
+    }
+
+    private void mostrarDatosTabla(int page) {
         limpiarTabla();
+
+        int limit = 10;
+        String sqlCount = " SELECT COUNT(*) FROM inspeccionrecibo";
+
+        int count = 0;
+        try {
+            ResultSet r = conexion.prepareStatement(sqlCount).executeQuery();
+            if (r.first()) {
+                count = r.getInt(1);
+            }
+
+            r.close();
+            int totalPage = (int) Math.ceil(count / limit);
+            paginacion1.setPaginagination(page, totalPage);
+        } catch (Exception e) {
+        }
+
         llenarTabla();
-        configurarRenderizacionTabla();
+
     }
 
     private void limpiarTabla() {
@@ -400,15 +419,15 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void llenarTabla() {
         if (listaInspeccionRecibo != null && !listaInspeccionRecibo.isEmpty()) {
-            listaInspeccionRecibo.forEach(aceptacionProducto -> {
-                Object[] fila = crearFila(aceptacionProducto);
+            listaInspeccionRecibo.forEach(inspeccionRecibo -> {
+                Object[] fila = crearFila(inspeccionRecibo);
                 modeloTabla.addRow(fila);
             });
         }
     }
 
     private Object[] crearFila(InspeccionReciboM inspeccionRecibo) {
-        Object fila[] = new Object[13];
+        Object fila[] = new Object[11];
         fila[COLUMNA_NO_HOJA] = inspeccionRecibo.getNoHoja();
         fila[COLUMNA_FECHA] = inspeccionRecibo.getFechaFactura();
         fila[COLUMNA_PROVEEDOR] = inspeccionRecibo.getProveedor();
@@ -419,16 +438,8 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         fila[COLUMNA_NO_ROLLO] = inspeccionRecibo.getNoRollo();
         fila[COLUMNA_PZKG] = inspeccionRecibo.getPzKg();
         fila[COLUMNA_ESTATUS] = inspeccionRecibo.getEstatus();
-
-        // Se crean los botones para el resto de campos
-        fila[COLUMNA_VER_FACTURA] = irs.crearBoton(inspeccionRecibo.getFacturapdf(), Iconos.ICONO_PDF, "Vacío");
-        fila[COLUMNA_VER_CERTIFICADO] = irs.crearBoton(inspeccionRecibo.getCertificadopdf(), Iconos.ICONO_PDF, "Vacío");
-        fila[COLUMNA_VER_HOJA_INSTRUCCION] = irs.crearBoton(inspeccionRecibo.getHojaIns(), Iconos.ICONO_EXCEL_2, "Realizar");
+        fila[COLUMNA_VER_FACTURA] = "VER FACTURA - CERTIFICADO - HOJA INSTRUCCIÓN";
         return fila;
-    }
-
-    private void configurarRenderizacionTabla() {
-        tblInspeccionRecibo.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     private void cerrarVentana() {
@@ -446,7 +457,27 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-   
+
+    private TableActionEventIR crearTableActionEventIR() {
+        return new TableActionEventIR() {
+            @Override
+            public void onViewFactura(int row) {
+                System.out.println("te quiero coger");
+            }
+
+            @Override
+            public void onViewCertificado(int row) {
+                System.out.println("de la mano");
+            }
+
+            @Override
+            public void onHojaInstruccion(int row) {
+                System.out.println("y ser felices");
+            }
+
+        };
+    }
+
     private void manejarCeldaSeleccionada(int filaSeleccionada, int columnaSeleccionada) {
         String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, 0);
         int posicion = -1;
@@ -492,17 +523,16 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 break;
         }
     }
-    
+
     private void filtrarTabla() {
         String filtro = txtBuscador.getText();
         try {
-            RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter(filtro, 2, 3, 5, 7);
+            RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter(filtro, 2, 3, 5, 7); // Se filtra por proveedor, número de factura, calibre y no. de rollo
             trs.setRowFilter(filtroFila);
         } catch (PatternSyntaxException e) {
             trs.setRowFilter(null);
         }
     }
-    
 
     /**
      * @param args the command line arguments
@@ -540,9 +570,11 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private javax.swing.JButton btnModificar;
     private javax.swing.JButton btnToExcel;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblJCIcono;
     private javax.swing.JLabel lblReporteInspeccionRecibo;
+    private Paginacion.Paginacion paginacion1;
     private javax.swing.JTable tblInspeccionRecibo;
     private swing.TextField txtBuscador;
     // End of variables declaration//GEN-END:variables

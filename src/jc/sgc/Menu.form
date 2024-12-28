@@ -334,12 +334,12 @@
                     </Constraint>
                   </Constraints>
                 </Component>
-                <Component class="javax.swing.JButton" name="jButton10">
+                <Component class="javax.swing.JButton" name="btnAPQP">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="16" style="1"/>
+                      <Font name="Tahoma" size="12" style="1"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Proceso 10"/>
+                    <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;center&gt;PLANEACI&#xd3;N AVANZADA DE &lt;br&gt;LA CALIDAD DEL PRODUCTO&lt;/center&gt;&lt;/html&gt;"/>
                     <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                       <Dimension value="[270, 36]"/>
                     </Property>
@@ -350,9 +350,15 @@
                       <Dimension value="[270, 36]"/>
                     </Property>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnAPQPActionPerformed"/>
+                  </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new swing.Button()"/>
+                  </AuxValues>
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="20" y="470" width="290" height="-1"/>
+                      <AbsoluteConstraints x="20" y="470" width="290" height="50"/>
                     </Constraint>
                   </Constraints>
                 </Component>

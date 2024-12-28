@@ -5,6 +5,7 @@ import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.InspeccionReciboServicio;
+import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -20,15 +21,16 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
-    private InspeccionReciboM inspeccionRecibo; // Maneja la información de la inspección 
     private CalibreIRM calibreIRM; // Maneja la información sobre el calibre
     private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
+    private InspeccionReciboM inspeccionRecibo; // Maneja la información de la inspección 
 
     public AgregarCalibreHIGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
-    public AgregarCalibreHIGUI(Usuarios usr) {
+    public AgregarCalibreHIGUI(Usuarios usuario) {
+        this.usuario = usuario;
         inicializarVentanaYComponentes();
     }
 
@@ -141,13 +143,8 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
-        try {
-            cerrarVentana();
-            irs.abrirEspecificacionesGUI(usuario, inspeccionRecibo);
-        } catch (SQLException | ClassNotFoundException ex) {
-            irs.manejarExcepcion("ERROR al abrir EspecificacionesGUI: ", ex);
-            Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        cerrarVentana();
+        irs.abrirEspecificacionesGUI(usuario, inspeccionRecibo);
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
@@ -177,16 +174,11 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.irs = new InspeccionReciboServicio();
-            this.calibreIRM = new CalibreIRM();
-
-            chkDescripcionMP.addActionListener(e -> {
-                actualizarDescripcion();
-            });
-
+            inicializarAtributos();
+            inicializarListener();
             cargarEspecificaciones();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al inicializar los componentes", ex);
             Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -196,6 +188,18 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.irs = new InspeccionReciboServicio();
+        this.calibreIRM = new CalibreIRM();
+    }
+
+    private void inicializarListener() {
+        chkDescripcionMP.addActionListener(e -> {
+            actualizarDescripcion();
+        });
     }
 
     private void actualizarDescripcion() {

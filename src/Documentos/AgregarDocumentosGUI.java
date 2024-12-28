@@ -10,6 +10,10 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -21,14 +25,14 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
+    private String rutaArchivo; // Guarda la ruta del nuevo documento
     private Connection conexion; // Conexión a la Base de Datos
     private DocumentosM documento; // Maneja la información del documento 
     private ProcedimientosM procedimiento; // maneja la información del procedimiento actual
-    private String rutaArchivo; // Guarda la ruta del nuevo documento
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
 
     public AgregarDocumentosGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public AgregarDocumentosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
@@ -140,7 +144,18 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSeleccionarArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSeleccionarArchivoActionPerformed
-        seleccionarArchivo();
+        File archivoSeleccionado = cds.seleccionarArchivo(this);
+        if (archivoSeleccionado != null) {
+            try {
+                String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
+                String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\192.168.1.75\\archivos\\ControlDocumentos\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                txtNombreArchivo.setText(nombreArchivo);
+            } catch (IOException ex) {
+                Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
+                Logger.getLogger(AgregarDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_btnSeleccionarArchivoActionPerformed
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
@@ -159,8 +174,7 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
+            inicializarAtributos();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir AgregarDocumentosGUI: ", ex);
             Logger.getLogger(AgregarDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -174,13 +188,9 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void seleccionarArchivo() {
-        File archivoSeleccionado = cds.seleccionarArchivo(this); // Se selecciona el archivo
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName(); // Se obtiene el nombre
-            rutaArchivo = archivoSeleccionado.getAbsolutePath(); // Actualiza la ruta absoluta
-            txtNombreArchivo.setText(nombreArchivo);
-        }
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.cds = new ControlDocumentacionServicio();
     }
 
     private void configurarDocumento() {
@@ -189,9 +199,7 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
         documento.setRevision(txtRevision.getText());
         documento.setTipo(cbxTipoArchivo.getSelectedItem().toString());
         documento.setNombre(txtNombreArchivo.getText());
-        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
-            cds.cargarArchivo(rutaArchivo, documento::setContenido);
-        }
+        documento.setRutaArchivo("archivos/ControlDocumentos/documentos/" + rutaArchivo);
     }
 
     private void cerrarVentana() {

@@ -1,12 +1,14 @@
 package Documentos;
 
+import BotonesAccion.TableActionCellEditor;
+import BotonesAccion.TableActionCellRender;
+import BotonesAccion.TableActionEvent;
 import Modelos.Iconos;
 import Modelos.SolicitudesM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
 import Servicios.Utilidades;
-import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -28,25 +30,11 @@ public class SolicitudesGUI extends javax.swing.JFrame {
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
-    private List<SolicitudesM> listaSolicitudes; // Lista de Solicitudes
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
-
-    // Columnas de la tabla
-    private static final int COLUMNA_CODIGO = 0;
-    private static final int COLUMNA_PROCESO = 1;
-    private static final int COLUMNA_PROCEDIMIENTO = 2;
-    private static final int COLUMNA_REV_ANTERIOR = 3;
-    private static final int COLUMNA_REV_NUEVA = 4;
-    private static final int COLUMNA_ENCARGADO = 5;
-    private static final int COLUMNA_ACCION = 6;
-    private static final int COLUMNA_TIPO_ARCHIVO = 7;
-    private static final int COLUMNA_NOMBRE = 8;
-    private static final int COLUMNA_ARCHIVO = 9;
-    private static final int COLUMNA_BTN_ACEPTAR = 10;
-    private static final int COLUMNA_BTN_RECHAZAR = 11;
+    private List<SolicitudesM> listaSolicitudes; // Lista de Solicitudes
 
     public SolicitudesGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public SolicitudesGUI(Usuarios usuario) {
@@ -105,11 +93,6 @@ public class SolicitudesGUI extends javax.swing.JFrame {
                 "CÓDIGO", "PROCESO", "PROCEDIMIENTO", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO", "ACCION", "TIPO DE ARCHIVO", "NOMBRE", "ARCHIVO", "APROBAR", "RECHAZAR"
             }
         ));
-        tblSolicitudes.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblSolicitudesMouseClicked(evt);
-            }
-        });
         jScrollPane1.setViewportView(tblSolicitudes);
         if (tblSolicitudes.getColumnModel().getColumnCount() > 0) {
             tblSolicitudes.getColumnModel().getColumn(4).setResizable(false);
@@ -133,21 +116,6 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void tblSolicitudesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblSolicitudesMouseClicked
-        int columnaSeleccionada = tblSolicitudes.getColumnModel().getColumnIndexAtX(evt.getX());
-        int filaSeleccionada = tblSolicitudes.rowAtPoint(evt.getPoint());
-
-        if (Utilidades.esCeldaValida(tblSolicitudes, filaSeleccionada, columnaSeleccionada)) {
-            String id = (String) tblSolicitudes.getValueAt(filaSeleccionada, 0);
-            Object value = tblSolicitudes.getValueAt(filaSeleccionada, columnaSeleccionada);
-
-            if (value instanceof JButton) {
-                JButton boton = (JButton) value;
-                manejarBoton(boton.getText(), id, filaSeleccionada, columnaSeleccionada);
-            }
-        }
-    }//GEN-LAST:event_tblSolicitudesMouseClicked
-
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
         cds.abrirControlDocumentosGUI(usuario);
@@ -161,8 +129,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
+            inicializarAtributos();
             inicializarTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al abrir SolicitudesGUI: ", ex);
@@ -177,12 +144,16 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.cds = new ControlDocumentacionServicio();
+        this.modeloTabla = (DefaultTableModel) tblSolicitudes.getModel();
+    }
+
     private void inicializarTabla() {
         try {
-            this.modeloTabla = construirModeloTabla();
             listaSolicitudes = cds.obtenerSolicitudes(conexion);
-            tblSolicitudes.setModel(modeloTabla);
-            tblSolicitudes.setRowHeight(40);
+            configurarAccionesTabla(false, false, true, false, true, true);
             mostrarDatosTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
@@ -190,24 +161,60 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         }
     }
 
-    private DefaultTableModel construirModeloTabla() {
-        final String[] nombresColumnas = {"CÓDIGO", "PROCESO", "PROCEDIMIENTO", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO", "ACCIÓN", "TIPO DE ARCHIVO", "NOMBRE NUEVO", "ARCHIVO", "ACEPTAR", "DENEGAR"};
+    private void configurarAccionesTabla(boolean btnEditar, boolean btnEliminar, boolean btnVer, boolean btnRegistro, boolean btnAceptar, boolean btnRechazar) {
+        TableActionEvent event = crearTableActionEvent();
+        tblSolicitudes.getColumnModel().getColumn(9).setCellRenderer(new TableActionCellRender(btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRechazar));
+        tblSolicitudes.getColumnModel().getColumn(9).setCellEditor(new TableActionCellEditor(event, btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRechazar));
+    }
 
-        modeloTabla = new DefaultTableModel() {
+    private TableActionEvent crearTableActionEvent() {
+        return new TableActionEvent() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+            public void onEdit(int row) {
+                // Nada ...
+            }
+
+            @Override
+            public void onDelete(int row) {
+                // Nada ...
+            }
+
+            @Override
+            public void onView(int row) {
+                cerrarVentana();
+                cds.abrirDocumento(listaSolicitudes.get(row).getRutaArchivo());
+            }
+
+            @Override
+            public void onOpenRecords(int row) {
+                // Nada ...
+            }
+
+            @Override
+            public void onAccept(int row) {
+                try {
+                    aprobarSolicitud(row);
+                } catch (SQLException | ClassNotFoundException ex) {
+                    Utilidades.manejarExcepcion("ERROR al aprobar la solicitud: ", ex);
+                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+
+            @Override
+            public void onReject(int row) {
+                try {
+                    eliminarSolicitud(listaSolicitudes.get(row).getCodigo());
+                } catch (SQLException ex) {
+                    Utilidades.manejarExcepcion("Error al eliminar la solicitud", ex);
+                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         };
-        modeloTabla.setColumnIdentifiers(nombresColumnas);
-
-        return modeloTabla;
     }
 
     public void mostrarDatosTabla() {
         limpiarTabla();
         llenarTabla();
-        configurarRenderizacionTabla();
     }
 
     private void limpiarTabla() {
@@ -229,66 +236,17 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         btnAceptar.setIcon(Iconos.ICONO_ACEPTAR);
         btnRechazar.setIcon(Iconos.ICONO_RECHAZAR);
         Object fila[] = new Object[12];
-        fila[COLUMNA_CODIGO] = solicitud.getCodigo();
-        fila[COLUMNA_PROCESO] = solicitud.getProceso();
-        fila[COLUMNA_PROCEDIMIENTO] = solicitud.getProcedimiento();
-        fila[COLUMNA_REV_ANTERIOR] = solicitud.getRevAnterior();
-        fila[COLUMNA_REV_NUEVA] = solicitud.getRevNueva();
-        fila[COLUMNA_ENCARGADO] = solicitud.getEncargado();
-        fila[COLUMNA_ACCION] = solicitud.getAccion();
-        fila[COLUMNA_TIPO_ARCHIVO] = solicitud.getTipoArchivo();
-        fila[COLUMNA_NOMBRE] = solicitud.getNombre();
-        fila[COLUMNA_ARCHIVO] = cds.crearBoton(solicitud.getArchivo(), Iconos.ICONO_VER, "Vacío");
-        fila[COLUMNA_BTN_ACEPTAR] = btnAceptar;
-        fila[COLUMNA_BTN_RECHAZAR] = btnRechazar;
+        fila[0] = solicitud.getCodigo();
+        fila[1] = solicitud.getProceso();
+        fila[2] = solicitud.getProcedimiento();
+        fila[3] = solicitud.getRevAnterior();
+        fila[4] = solicitud.getRevNueva();
+        fila[5] = solicitud.getEncargado();
+        fila[6] = solicitud.getAccion();
+        fila[7] = solicitud.getTipoArchivo();
+        fila[8] = solicitud.getNombre();
+        fila[9] = "OPERACIONES";
         return fila;
-    }
-
-    private void configurarRenderizacionTabla() {
-        tblSolicitudes.setDefaultRenderer(Object.class, new imgTabla());
-    }
-
-    private void manejarBoton(String textoBoton, String id, int filaSeleccionada, int columnaSeleccionada) {
-        switch (textoBoton) {
-            case "Vacío":
-                JOptionPane.showMessageDialog(null, "No hay archivo");
-                break;
-            default:
-                manejarAccion(columnaSeleccionada, id, filaSeleccionada);
-                break;
-        }
-    }
-
-    private void manejarAccion(int columnaSeleccionada, String id, int filaSeleccionada) {
-        switch (columnaSeleccionada) {
-            case 9: {
-                try {
-                    cds.ejecutarArchivoSC(conexion, id);
-                } catch (ClassNotFoundException | SQLException ex) {
-                    Utilidades.manejarExcepcion("ERROR al ejecutar el archivo: ", ex);
-                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            break;
-            case 10: {
-                try {
-                    aprobarSolicitud(filaSeleccionada);
-                } catch (SQLException | ClassNotFoundException ex) {
-                    Utilidades.manejarExcepcion("ERROR al aprobar la solicitud: ", ex);
-                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            break;
-            case 11: {
-                try {
-                    eliminarSolicitud(id);
-                } catch (SQLException ex) {
-                    Utilidades.manejarExcepcion("ERROR al eliminar la solicitud: ", ex);
-                    Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            break;
-        }
     }
 
     private void aprobarSolicitud(int filaSeleccionada) throws SQLException, ClassNotFoundException {

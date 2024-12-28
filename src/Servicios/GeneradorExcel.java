@@ -461,10 +461,10 @@ public class GeneradorExcel {
                 }
 
                 // Crear un nuevo archivo Excel para guardar los cambios
-                String newFilePath = "-" + ap1m.get(0).getComponente() + ".xlsx";
+                String newFilePath = "\\\\" + Utilidades.SERVIDOR + "\\" + "archivos\\AceptacionProducto\\"+"-" + ap1m.get(0).getComponente() + ".xlsx";
                 try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
                     workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
-                    nuevaRutaArchivoRD = newFilePath;
+                    nuevaRutaArchivoRD = "archivos\\AceptacionProducto\\"+"-" + ap1m.get(0).getComponente() + ".xlsx";
                 }
 
             } catch (IOException e) {
@@ -883,7 +883,6 @@ public class GeneradorExcel {
     private void mostrarProcesos(XSSFSheet sheet, List<AceptacionPc1> ap1m) {
         String noOps = ap1m.get(0).getNoOps();
 
-
         for (int i = 1; i <= 5; i++) {
 
             Row rowNoOps;
@@ -937,7 +936,7 @@ public class GeneradorExcel {
                     cellNoOps.setCellValue("X");
                     break;
                 case 4:
-  
+
                     rowNoOps = sheet.getRow(80);
                     if (rowNoOps == null) {
                         rowNoOps = sheet.createRow(80);
@@ -1061,8 +1060,8 @@ public class GeneradorExcel {
     }
 
     private void setValorCeldasHojaInstruccion(Sheet sheet, int pocisionFila, int pocisionCelda, String valor) {
-        Row fila = sheet.getRow(pocisionFila); 
+        Row fila = sheet.getRow(pocisionFila);
         Cell celda = fila.getCell(pocisionCelda);
-        celda.setCellValue(valor); 
+        celda.setCellValue(valor);
     }
 }

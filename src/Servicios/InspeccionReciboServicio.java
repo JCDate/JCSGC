@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,6 +48,7 @@ import jnafilechooser.api.JnaFileChooser;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import swing.Button;
 
@@ -59,13 +61,13 @@ public class InspeccionReciboServicio {
     final String SQL_CONSULTA_INSPECTORES = "SELECT nombre FROM usuarios WHERE id_tipo=?";
     final String SELECT_NOMBRE_PROVEEDORES_SQL = "SELECT DISTINCT nombre FROM proveedores";
     final String SELECT_NO_HOJA_INSTRUCCION_SQL = "SELECT noHoja FROM inspeccionrecibo WHERE noHoja LIKE ? ORDER BY noHoja DESC LIMIT 1";
-    final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id_ir FROM inspeccionrecibo WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
+    final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id FROM inspeccionrecibo WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
     final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM inspeccionrecibo WHERE noHoja = ?";
     final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM inspeccionrecibo WHERE noHoja = ?";
-    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo";
+    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo LIMIT ?";
     final String INSERT_INSPECCION_RECIBO_SQL = "INSERT INTO inspeccionrecibo(fechaFactura,Proveedor,noFactura,noPedido,calibre,pLamina,noRollo,pzKg,estatus,noHoja,pdfFactura,pdfCertificado,hojaInstruccion,nombreHJ,nombreFact,nombreCert) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM inspeccionrecibo WHERE noHoja=? AND fechaFactura=? AND noFactura=? AND noPedido=? AND pzKg=?";
-    final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE inspeccionrecibo SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id_ir=?";
+    final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE inspeccionrecibo SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id=?";
 
     public String direcciomImg = "img\\jc.png";
 
@@ -108,7 +110,7 @@ public class InspeccionReciboServicio {
         return listaCalibreIRM;
     }
 
-    public void abrirEspecificacionesGUI(Usuarios usr, InspeccionReciboM irm) throws SQLException, ClassNotFoundException {
+    public void abrirEspecificacionesGUI(Usuarios usr, InspeccionReciboM irm) {
         EspecificacionesGUI esGUI = new EspecificacionesGUI(usr, irm); // Se crea una instancia de la interfaz gráfica
         esGUI.setVisible(true); // Se hace visible la ventana
         esGUI.setLocationRelativeTo(null); // Indica que la ventana actual se abrirá al centro de la pantalla principal del sistema 
@@ -283,13 +285,15 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion) throws SQLException {
+    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion, int page) throws SQLException {
         List<InspeccionReciboM> listaIr = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL);
-                ResultSet resultado = consulta.executeQuery()) {
+        int limite = page - 1;
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL)) {
+            consulta.setInt(1, limite);
+            ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(
-                        resultado.getInt("id_ir"),
+                        resultado.getInt("id"),
                         resultado.getString("fechaFactura"),
                         resultado.getString("Proveedor"),
                         resultado.getString("noFactura"),
@@ -300,9 +304,9 @@ public class InspeccionReciboServicio {
                         resultado.getString("pzKg"),
                         resultado.getString("estatus"),
                         resultado.getString("noHoja"),
-                        resultado.getBytes("pdfFactura"),
-                        resultado.getBytes("pdfCertificado"),
-                        resultado.getBytes("hojaInstruccion"),
+                        null,
+                        null,
+                        null,
                         resultado.getString("nombreHJ"),
                         resultado.getString("nombreFact"),
                         resultado.getString("nombreCert")
@@ -310,7 +314,7 @@ public class InspeccionReciboServicio {
                 listaIr.add(ir);
             }
         } catch (SQLException ex) {
-            throw new SQLException("Error al ejecutar la consulta SQL: " + ex.getMessage(), ex);
+            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
         }
         return listaIr;
     }
@@ -321,7 +325,7 @@ public class InspeccionReciboServicio {
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(
-                        resultado.getInt("id_ir"),
+                        resultado.getInt("id"),
                         resultado.getString("fechaFactura"),//
                         resultado.getString("Proveedor"), //
                         resultado.getString("noFactura"), //
@@ -396,7 +400,7 @@ public class InspeccionReciboServicio {
             consulta.setString(4, irm2.getPzKg());
             ResultSet rs = consulta.executeQuery();
             if (rs.next()) {
-                int id = rs.getInt("id_ir");
+                int id = rs.getInt("id");
 
                 updateConsulta.setString(1, irm.getFechaFactura());
                 updateConsulta.setString(2, irm.getProveedor());
@@ -444,7 +448,7 @@ public class InspeccionReciboServicio {
     }
 
     public void subirHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
-        String sqlInsertIr = "UPDATE inspeccionrecibo SET hojaInstruccion=? WHERE id_ir=?";
+        String sqlInsertIr = "UPDATE inspeccionrecibo SET hojaInstruccion=? WHERE id=?";
         try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setBytes(1, irm.getHojaIns());
             sqlInsert.setInt(2, irm.getId());
@@ -541,11 +545,11 @@ public class InspeccionReciboServicio {
         return null;
     }
 
-    public void ejecutarArchivoXLSX(Connection conexion, String id, int column) throws ClassNotFoundException, SQLException {
+    public void ejecutarArchivoXLSX(Connection conexion, String id, int columna) throws ClassNotFoundException, SQLException {
         final String SELECT_HOJA_INSTRUCCION_SQL = "SELECT hojaInstruccion FROM inspeccionRecibo WHERE noHoja = ?";
-        //PreparedStatement ps = null;
         ResultSet rs;
         byte[] b = null;
+
         try {
             PreparedStatement ps = conexion.prepareStatement(SELECT_HOJA_INSTRUCCION_SQL);
             ps.setString(1, id);
@@ -553,36 +557,28 @@ public class InspeccionReciboServicio {
             while (rs.next()) {
                 b = rs.getBytes(1);
             }
-            try (InputStream bos = new ByteArrayInputStream(b)) {
-                int tamanoInput = bos.available();
-                byte[] datosXLSX = new byte[tamanoInput];
-                bos.read(datosXLSX, 0, tamanoInput);
-                try (OutputStream out = new FileOutputStream("nuevaHojaInstruccion.xlsx")) {
-                    out.write(datosXLSX);
 
-                    // Verificar la existencia del archivo antes de abrirlo con Excel
-                    File archivoXLSX = new File("nuevaHojaInstruccion.xlsx");
-                    if (archivoXLSX.exists() && Desktop.isDesktopSupported()) {
-                        Desktop.getDesktop().open(archivoXLSX);
-                    } else {
-                        System.out.println("El archivo no existe o el escritorio no es compatible para abrirlo.");
-                    }
-                } catch (IOException ex) {
-                    // Manejo de la excepción de E/S
-                    System.out.println("Error al escribir en el archivo: " + ex.getMessage());
-                } catch (UnsupportedOperationException ex) {
-                    // Manejo de la excepción si el escritorio no es compatible
-                    System.out.println("El escritorio no es compatible para abrir archivos: " + ex.getMessage());
-                } catch (Exception ex) {
-                    // Manejo de cualquier otra excepción inesperada
-                    System.out.println("Error al descargar el documento: " + ex.getMessage());
+            try (InputStream bos = new ByteArrayInputStream(b)) {
+
+                XSSFWorkbook workbook = new XSSFWorkbook(bos);
+
+                // Obtener y mostrar los nombres de las hojas
+                int numberOfSheets = workbook.getNumberOfSheets();
+                System.out.println(id);
+                for (int i = 0; i < numberOfSheets; i++) {
+                    System.out.println("Hoja " + (i + 1) + ": " + workbook.getSheetName(i));
                 }
 
+            } catch (IOException ex) {
+                System.out.println("Error al procesar el archivo XLSX: " + ex.getMessage());
+            } catch (Exception ex) {
+                System.out.println("Error inesperado: " + ex.getMessage());
             }
+
             ps.close();
             rs.close();
-        } catch (IOException | NumberFormatException | SQLException ex) {
-            System.out.println("Error al abrir archivo XLSX: " + ex.getMessage());
+        } catch (SQLException ex) {
+            System.out.println("Error al abrir archivo XLSX desde la base de datos: " + ex.getMessage());
         }
     }
 
@@ -757,7 +753,7 @@ public class InspeccionReciboServicio {
     }
 
     public int getIdHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
-        String sqlInsertIr = "SELECT id_ir FROM inspeccionrecibo WHERE fechaFactura=? AND noFactura=? AND noPedido=? AND noRollo=? AND pzKg=? AND noHoja=?";
+        String sqlInsertIr = "SELECT id FROM inspeccionrecibo WHERE fechaFactura=? AND noFactura=? AND noPedido=? AND noRollo=? AND pzKg=? AND noHoja=?";
         try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setString(1, irm.getFechaFactura());
             sqlInsert.setString(2, irm.getNoFactura());
@@ -768,7 +764,7 @@ public class InspeccionReciboServicio {
             ResultSet rs = sqlInsert.executeQuery();
             int id = 0;
             if (rs.next()) {
-                id = rs.getInt("id_ir");
+                id = rs.getInt("id");
             } else {
                 System.out.println("id =" + id);
             }
@@ -780,7 +776,7 @@ public class InspeccionReciboServicio {
     }
 
     public int getData(Connection conexion, int id) throws SQLException {
-        String sqlInsertIr = "SELECT * FROM inspeccionrecibo WHERE id_ir=?";
+        String sqlInsertIr = "SELECT * FROM inspeccionrecibo WHERE id=?";
         try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setInt(1, id);
             ResultSet rs = sqlInsert.executeQuery();
@@ -927,5 +923,37 @@ public class InspeccionReciboServicio {
 
     public int obtenerAnioActual() {
         return Calendar.getInstance().get(Calendar.YEAR);
+    }
+
+    public void migrarArchivos(Connection conexion) {
+        String carpetaDestino = "C:/xampp/htdocs/archivos/InspeccionRecibo/HojasInstruccion/";
+        File carpeta = new File(carpetaDestino);
+        if (!carpeta.exists()) {
+            carpeta.mkdirs();
+        }
+
+        try {
+            PreparedStatement ps = conexion.prepareStatement("SELECT id, nombreHJ, hojaInstruccion FROM inspeccionrecibo WHERE hojaInstruccion IS NOT NULL AND hojaInstruccion != '' ");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                int idp = rs.getInt("id");
+                byte[] documento = rs.getBytes("hojaInstruccion");
+
+                // Guarda el archivo en el sistema de archivos
+                String nombreArchivo = rs.getString("nombreHJ"); // Usa un formato adecuado
+                File archivoDestino = new File(carpetaDestino + nombreArchivo);
+                Files.write(archivoDestino.toPath(), documento);
+
+                // Actualiza la ruta en la base de datos
+                PreparedStatement psUpdate = conexion.prepareStatement("UPDATE inspeccionrecibo SET rutaHojaInstruccion = ? WHERE id = ?");
+                psUpdate.setString(1, "archivos/InspeccionRecibo/HojasInstruccion/" + nombreArchivo);
+                psUpdate.setInt(2, idp);
+                psUpdate.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

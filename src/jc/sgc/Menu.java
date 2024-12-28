@@ -1,5 +1,6 @@
 package jc.sgc;
 
+import APQP.ApqpGUI;
 import AceptacionProducto.AceptacionProductoGUI;
 import Documentos.ControlDocumentosGUI;
 import InspeccionRecibo.InspeccionReciboGUI;
@@ -7,10 +8,8 @@ import Modelos.Usuarios;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 
 public class Menu extends javax.swing.JFrame {
 
@@ -33,11 +32,12 @@ public class Menu extends javax.swing.JFrame {
         jButton7.setEnabled(false);
         jButton8.setEnabled(false);
         jButton9.setEnabled(false);
-        jButton10.setEnabled(false);
+        btnAPQP.setEnabled(true);
 
         setColores(btnInspeccionRecibo);
         setColores(btnAceptacionProducto);
         setColores(btnCtrlDocumentosYRegistros);
+        setColores(btnAPQP);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class Menu extends javax.swing.JFrame {
         jButton7 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
         jButton9 = new javax.swing.JButton();
-        jButton10 = new javax.swing.JButton();
+        btnAPQP = new swing.Button();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -180,12 +180,17 @@ public class Menu extends javax.swing.JFrame {
         jButton9.setPreferredSize(new java.awt.Dimension(270, 36));
         pnlMenu.add(jButton9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 430, 290, -1));
 
-        jButton10.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
-        jButton10.setText("Proceso 10");
-        jButton10.setMaximumSize(new java.awt.Dimension(270, 36));
-        jButton10.setMinimumSize(new java.awt.Dimension(270, 36));
-        jButton10.setPreferredSize(new java.awt.Dimension(270, 36));
-        pnlMenu.add(jButton10, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 470, 290, -1));
+        btnAPQP.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnAPQP.setText("<html><center>PLANEACIÓN AVANZADA DE <br>LA CALIDAD DEL PRODUCTO</center></html>");
+        btnAPQP.setMaximumSize(new java.awt.Dimension(270, 36));
+        btnAPQP.setMinimumSize(new java.awt.Dimension(270, 36));
+        btnAPQP.setPreferredSize(new java.awt.Dimension(270, 36));
+        btnAPQP.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAPQPActionPerformed(evt);
+            }
+        });
+        pnlMenu.add(btnAPQP, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 470, 290, 50));
 
         jScrollPane1.setViewportView(pnlMenu);
 
@@ -215,17 +220,20 @@ public class Menu extends javax.swing.JFrame {
     }//GEN-LAST:event_btnInspeccionReciboActionPerformed
 
     private void btnCtrlDocumentosYRegistrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCtrlDocumentosYRegistrosActionPerformed
-
         ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usuario);
         docGUI.setVisible(true);
-
     }//GEN-LAST:event_btnCtrlDocumentosYRegistrosActionPerformed
+
+    private void btnAPQPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAPQPActionPerformed
+        ApqpGUI apqpGUI = new ApqpGUI(usuario);
+        apqpGUI.setVisible(true);
+    }//GEN-LAST:event_btnAPQPActionPerformed
 
     private void inicializarVentanaYComponentes() {
         initComponents();
         this.setResizable(false);
-        this.setDefaultCloseOperation(0);
         this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
     private void setColores(JButton btn) {
@@ -261,13 +269,13 @@ public class Menu extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAPQP;
     private javax.swing.JButton btnAceptacionProducto;
     private javax.swing.JButton btnAnalisisSistemasMedicion;
     private javax.swing.JButton btnCerrarSesion;
     private javax.swing.JButton btnCtrlDocumentosYRegistros;
     private javax.swing.JButton btnInspeccionFinal;
     private javax.swing.JButton btnInspeccionRecibo;
-    private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;

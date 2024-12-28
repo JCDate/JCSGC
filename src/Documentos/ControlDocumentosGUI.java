@@ -21,11 +21,11 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
-    private List<SolicitudesM> listaSolicitudes; // Lista de solicitudes de cambio
     private ControlDocumentacionServicio cds; // Servicio para manejar el control de documentos
+    private List<SolicitudesM> listaSolicitudes; // Lista de solicitudes de cambio
 
     public ControlDocumentosGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public ControlDocumentosGUI(Usuarios usuario) {
@@ -281,8 +281,7 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
+            inicializarAtributos();
             definirVisibilidadBotonSolicitud();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al abrir ControlDocumentosGUI: ", ex);
@@ -295,6 +294,11 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.cds = new ControlDocumentacionServicio();
     }
 
     private void definirVisibilidadBotonSolicitud() {

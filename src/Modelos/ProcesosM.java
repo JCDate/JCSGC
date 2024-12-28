@@ -10,9 +10,9 @@ public class ProcesosM {
     private String proceso;
     private String encargado;
     private String nombreDT;
-    private byte[] diagramaTortuga;
+    private String rutaArchivo;
 
-    public ProcesosM(int id, int uid, String no, String codigo, String revision, String proceso, String encargado, String nombreDT, byte[] diagramaTortuga) {
+    public ProcesosM(int id, int uid, String no, String codigo, String revision, String proceso, String encargado, String nombreDT, String rutaArchivo) {
         this.id = id;
         this.uid = uid;
         this.no = no;
@@ -21,7 +21,7 @@ public class ProcesosM {
         this.proceso = proceso;
         this.encargado = encargado;
         this.nombreDT = nombreDT;
-        this.diagramaTortuga = diagramaTortuga;
+        this.rutaArchivo = rutaArchivo;
     }
 
     public int getId() {
@@ -88,11 +88,11 @@ public class ProcesosM {
         this.nombreDT = nombreDT;
     }
 
-    public byte[] getDiagramaTortuga() {
-        return diagramaTortuga;
+    public String getRutaArchivo() {
+        return rutaArchivo;
     }
 
-    public void setDiagramaTortuga(byte[] diagramaTortuga) {
-        this.diagramaTortuga = diagramaTortuga;
+    public void setRutaArchivo(String rutaArchivo) {
+        this.rutaArchivo = rutaArchivo;
     }
 }

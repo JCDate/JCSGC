@@ -192,12 +192,12 @@
         <Component class="javax.swing.JLabel" name="lblTitulo">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Wide Latin" size="14" style="1"/>
+              <Font name="Wide Latin" size="12" style="1"/>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="6e" red="a" type="rgb"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="MODIFICAR INFORMACI&#xd3;N DEL PROCESO:"/>
+            <Property name="text" type="java.lang.String" value="MODIFICAR INFORMACI&#xd3;N DEL PROCEDIMIENTO:"/>
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">

@@ -9,7 +9,7 @@ import AceptacionProducto.RetencionDimensionalGUI;
 import Modelos.AceptacionPc1;
 import Modelos.AceptacionPc2;
 import Modelos.AceptacionPc3;
-import Modelos.AceptacionProducto;
+import Modelos.AceptacionProductoM;
 import Modelos.DatosFilaRD;
 import Modelos.Usuarios;
 import java.awt.Desktop;
@@ -30,9 +30,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
@@ -45,11 +43,11 @@ public class AceptacionProductoServicio {
     final String INSERT_INTO_ACEPTACION_PC2 = "INSERT INTO aceptacionpc2(componente, fecha, noOrden, tamLote, tamMta, inspector, turno, disp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_ACEPTACION_PC3 = "INSERT INTO aceptacionpc3(componente, noOp, noTroquel, fecha, variable, especificacion, valor, procesoCritico) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_PRODUCTOS_ACTIVIDADES_PC = "INSERT INTO productosactividadespc(nombreProducto) VALUES (?)";
-    final String INSERT_INTO_ACEPTACION_PRODUCTO = "INSERT INTO aceptacionproducto(componente, retencionDimensionalpdf) VALUES (?, ?)";
+    final String INSERT_INTO_ACEPTACION_PRODUCTO = "INSERT INTO aceptacionproducto(componente, rutaArchivo) VALUES (?, ?)";
     final String SELECT_NO_ROLLO_SQL = "SELECT noRollo FROM inspeccionRecibo";
     final String SELECT_ACEPTACION_PC1_BY_COMPONENTE = "SELECT * FROM aceptacionpc1 WHERE componente = ?";
     final String SELECT_ACEPTACION_PC2_BY_COMPONENTE = "SELECT * FROM aceptacionpc2 WHERE componente = ?";
-    final String SELECT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY fecha, noOp";
+    final String SELECT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp, STR_TO_DATE(fecha, '%d/%m/%Y')";
     final String SELECT_ACEPTACION_PRODUCTO_ORDER_BY_COMPONENTE = "SELECT * FROM aceptacionProducto ORDER BY componente";
     final String SELECT_ID_FROM_ACEPTACION_PC3 = "SELECT id FROM aceptacionpc3 WHERE noOp = ? AND fecha = ? AND variable = ? AND especificacion = ? AND valor = ?";
     final String SELECT_NOMBRE_PRODUCTO = "SELECT nombreProducto FROM productosactividadespc";
@@ -61,19 +59,19 @@ public class AceptacionProductoServicio {
     final String SELECT_ACEPTACION_PC1 = "SELECT * FROM aceptacionpc1 WHERE componente = ?";
     final String SELECT_FILA_FROM_ESPECIFICACIONES_IR = "SELECT fila FROM especificacionesir WHERE especificacion = ?";
     final String SELECT_COUNT_FROM_ACEPTACION_PC1 = "SELECT COUNT(*) FROM aceptacionpc1 WHERE componente = ? AND fecha = ?";
-    final String SELECT_COUNT_FROM_ACEPTACION_PC2 = "SELECT COUNT(*) FROM aceptacionpc2 WHERE componente = ? AND fecha = ? ";
+    final String SELECT_COUNT_FROM_ACEPTACION_PC2 = "SELECT COUNT(*) FROM aceptacionpc2 WHERE componente = ? AND fecha = ? AND noOrden = ?";
     final String SELECT_COUNT_FROM_ACEPTACION_PC3 = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? AND noOp = ? AND fecha = ? AND variable = ? AND valor = ?";
     final String SELECT_FECHA_ACEPTACION_PC1 = "SELECT fecha FROM aceptacionpc1 WHERE componente = ?";
-    final String SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT * FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
+    final String SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT a1.id AS id_pc1, a2.id AS id_pc2, a1.*, a2.* FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
     final String SELECT_NO_ORDEN_FROM_ACEPTACION_PC2 = "SELECT noOrden FROM aceptacionpc2 WHERE componente = ? AND fecha = ?";
     final String UPDATE_ACEPTACION_PC3 = "UPDATE aceptacionpc3 SET noOp = ?, fecha = ?, variable = ?, especificacion = ?, valor = ? WHERE id = ?";
-    final String UPDATE_ACEPTACION_PRODUCTO = "UPDATE aceptacionproducto SET retencionDimensionalpdf = ? WHERE componente = ?";
-    final String UPDATE_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noRollo = ?, inspVisual = ?, observacion = ? WHERE componente = ? AND fecha = ?";
-    final String UPDATE_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ?, tamLote = ?, tamMta = ?, inspector = ?, turno = ?, disp = ? WHERE componente = ? AND fecha = ?";
+    final String UPDATE_ACEPTACION_PRODUCTO = "UPDATE aceptacionproducto SET rutaArchivo = ? WHERE componente = ?";
+    final String UPDATE_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noRollo = ?, inspVisual = ?, observacion = ? WHERE id = ? ";
+    final String UPDATE_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ?, tamLote = ?, tamMta = ?, inspector = ?, turno = ?, disp = ? WHERE id = ?";
     final String UPDATE_NO_ORDEN_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ? WHERE componente = ? AND fecha = ?";
     final String UPDATE_NO_OPS_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noOps = ? WHERE componente = ? ";
     final String DELETE_ACEPTACION_PC3 = "DELETE FROM aceptacionpc3 WHERE fecha = ? AND noOp = ? AND variable = ? AND especificacion = ? AND valor = ?";
-    final String DELETE_COMPONENTE_FROM_ANTECEDENTES_FAMILIA = "SELECT componente FROM antecedentesfamilia";
+    final String SELECT_COMPONENTE_FROM_ANTECEDENTES_FAMILIA = "SELECT TRIM(componente) AS componente FROM antecedentesfamilia";
     final String DELETE_ACEPTACION_PRODUCTO = "DELETE FROM aceptacionproducto WHERE componente = ?";
     final String DELETE_ACEPTACION_PC1 = "DELETE FROM aceptacionpc1 WHERE componente = ?";
     final String DELETE_ACEPTACION_PC2 = "DELETE FROM aceptacionpc2 WHERE componente = ?";
@@ -109,8 +107,8 @@ public class AceptacionProductoServicio {
         mostrarVentana(rdGUI);
     }
 
-    public void abrirModificarAPGUI(Usuarios usr) {
-        ModificarAPGUI moGUI = new ModificarAPGUI(usr);
+    public void abrirModificarAPGUI(Usuarios usr, AceptacionProductoM aceptacionProducto) {
+        ModificarAPGUI moGUI = new ModificarAPGUI(usr, aceptacionProducto);
         mostrarVentana(moGUI);
     }
 
@@ -266,10 +264,10 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public void eliminarAceptacionProducto(Connection conexion, String componente) {
+    public void eliminarAceptacionProducto(Connection conexion, AceptacionProductoM aceptacionProducto) {
         try {
             PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PRODUCTO);
-            ps.setString(1, componente);
+            ps.setString(1, aceptacionProducto.getComponente());
             ps.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionProducto: ", ex);
@@ -278,7 +276,7 @@ public class AceptacionProductoServicio {
 
         try {
             PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC1);
-            ps.setString(1, componente);
+            ps.setString(1, aceptacionProducto.getComponente());
             ps.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionPc1: ", ex);
@@ -287,7 +285,7 @@ public class AceptacionProductoServicio {
 
         try {
             PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC2);
-            ps.setString(1, componente);
+            ps.setString(1, aceptacionProducto.getComponente());
             ps.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionPc2: ", ex);
@@ -296,7 +294,7 @@ public class AceptacionProductoServicio {
 
         try {
             PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC3_WHERE_COMPONENTE);
-            ps.setString(1, componente);
+            ps.setString(1, aceptacionProducto.getComponente());
             ps.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionPc3: ", ex);
@@ -350,6 +348,7 @@ public class AceptacionProductoServicio {
         try (PreparedStatement ps = conexion.prepareCall(SELECT_COUNT_FROM_ACEPTACION_PC2)) {
             ps.setString(1, apc2.getComponente());
             ps.setString(2, apc2.getFecha());
+            ps.setString(3, apc2.getNoOrden());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;
@@ -407,14 +406,14 @@ public class AceptacionProductoServicio {
         return dateFormat.format(fecha);
     }
 
-    public void guardarArchivoRetencionDimensional(Connection conexion, AceptacionProducto ap) throws SQLException {
+    public void guardarArchivoRetencionDimensional(Connection conexion, AceptacionProductoM ap) throws SQLException {
         try (PreparedStatement sqlSelectStatement = conexion.prepareStatement(SELECT_ACEPTACION_PRODUCTO)) {
             sqlSelectStatement.setString(1, ap.getComponente());
             ResultSet resultSet = sqlSelectStatement.executeQuery();
 
             if (resultSet.next()) {
                 try (PreparedStatement sqlUpdateStatement = conexion.prepareStatement(UPDATE_ACEPTACION_PRODUCTO)) {
-                    sqlUpdateStatement.setBytes(1, ap.getArchivo());
+                    sqlUpdateStatement.setString(1, ap.getRutaArchivo());
                     sqlUpdateStatement.setString(2, ap.getComponente());
                     sqlUpdateStatement.executeUpdate();
                     JOptionPane.showMessageDialog(null, "El Archivo se actualizo Correctamente");
@@ -422,15 +421,17 @@ public class AceptacionProductoServicio {
             } else {
                 try (PreparedStatement sqlInsert = conexion.prepareStatement(INSERT_INTO_ACEPTACION_PRODUCTO)) {
                     sqlInsert.setString(1, ap.getComponente());
-                    sqlInsert.setBytes(2, ap.getArchivo());
+                    sqlInsert.setString(2, ap.getRutaArchivo());
                     sqlInsert.executeUpdate();
                     JOptionPane.showMessageDialog(null, "El Archivo se genero y se guardo Correctamente");
                 }
             }
+
+            
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        } 
     }
 
     public byte[] leerArchivo(String rutaArchivo) throws IOException {
@@ -472,13 +473,12 @@ public class AceptacionProductoServicio {
         }
     }
 
-    public void modificarInfoRetencionDimensional(Connection conexion, AceptacionPc1 apc1, DatosFilaRD datosFila) throws SQLException {
+    public void modificarInfoRetencionDimensional(Connection conexion, DatosFilaRD datosFila) throws SQLException {
         try (PreparedStatement consulta = conexion.prepareStatement(UPDATE_ACEPTACION_PC1)) {
-            consulta.setString(1, apc1.getNoRollo());
-            consulta.setString(2, apc1.getInspVisual());
-            consulta.setString(3, apc1.getObservacion());
-            consulta.setString(4, apc1.getComponente());
-            consulta.setString(5, apc1.getFecha());
+            consulta.setString(1, datosFila.getNoRollo());
+            consulta.setString(2, datosFila.getInspVisual());
+            consulta.setString(3, datosFila.getObservaciones());
+            consulta.setInt(4, datosFila.getId_pc1());
             consulta.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al modificar los datos: ", ex);
@@ -486,14 +486,13 @@ public class AceptacionProductoServicio {
         }
 
         try (PreparedStatement consulta = conexion.prepareStatement(UPDATE_ACEPTACION_PC2)) {
-            consulta.setString(1, String.join(", ", datosFila.getNoOrden()));
+            consulta.setString(1, datosFila.getNoOrden());
             consulta.setString(2, datosFila.getTamLote());
             consulta.setString(3, datosFila.getTamMta());
             consulta.setString(4, datosFila.getInsp());
             consulta.setString(5, datosFila.getTurno());
             consulta.setString(6, datosFila.getDisp());
-            consulta.setString(7, apc1.getComponente());
-            consulta.setString(8, apc1.getFecha());
+            consulta.setInt(7, datosFila.getId_pc2());
             consulta.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al modificar los datos: ", ex);
@@ -583,15 +582,15 @@ public class AceptacionProductoServicio {
         return listaAp3;
     }
 
-    public List<AceptacionProducto> obtenerAceptacionProducto(Connection conexion) {
-        List<AceptacionProducto> lista = new ArrayList<>();
+    public List<AceptacionProductoM> obtenerAceptacionProducto(Connection conexion) {
+        List<AceptacionProductoM> lista = new ArrayList<>();
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ACEPTACION_PRODUCTO_ORDER_BY_COMPONENTE);
                 ResultSet resultado = consulta.executeQuery()) {
             while (resultado.next()) {
-                AceptacionProducto ir = new AceptacionProducto(
+                AceptacionProductoM ir = new AceptacionProductoM(
                         resultado.getInt("id"),
                         resultado.getString("componente"),
-                        resultado.getBytes("retencionDimensionalpdf")
+                        resultado.getString("rutaArchivo")
                 );
                 lista.add(ir);
             }
@@ -673,46 +672,34 @@ public class AceptacionProductoServicio {
         return ap1;
     }
 
-    public DatosFilaRD obtenerInfoRetencionDimensional(Connection conexion, String componenteSeleccionado, String fechaSeleccionada) throws SQLException {
-        DatosFilaRD datosFilaRD = new DatosFilaRD();
-
+    public List<DatosFilaRD> obtenerInfoRetencionDimensional(Connection conexion, String componenteSeleccionado, String fechaSeleccionada) throws SQLException {
+        List<DatosFilaRD> datosFilaRD = new ArrayList<>();
         try (PreparedStatement ps = conexion.prepareStatement(SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2)) {
             ps.setString(1, componenteSeleccionado);
             ps.setString(2, fechaSeleccionada);
             ResultSet resultado = ps.executeQuery();
-            Map<String, DatosFilaRD> dataRowMap = new HashMap<>();
-
             while (resultado.next()) {
-                String key = resultado.getString("fecha") + "-" + resultado.getString("componente");
-
-                DatosFilaRD dataRow;
-                if (dataRowMap.containsKey(key)) {
-                    dataRow = dataRowMap.get(key);
-                } else {
-                    dataRow = new DatosFilaRD();
-                    dataRow.setNoRollo(resultado.getString("noRollo"));
-                    dataRow.setInspVisual(resultado.getString("inspVisual"));
-                    dataRow.setObservaciones(resultado.getString("observacion"));
-                    dataRow.setTamLote(resultado.getString("tamLote"));
-                    dataRow.setTamMta(resultado.getString("tamMta"));
-                    dataRow.setInsp(resultado.getString("inspector"));
-                    dataRow.setTurno(resultado.getString("turno"));
-                    dataRow.setDisp(resultado.getString("disp"));
-                    dataRowMap.put(key, dataRow);
-                }
-                dataRow.agregarOtraOrden(resultado.getString("noOrden"));
-            }
-
-            if (!dataRowMap.isEmpty()) {
-                datosFilaRD = dataRowMap.values().iterator().next();
+                DatosFilaRD datoRD = new DatosFilaRD(
+                        resultado.getInt("id_pc1"),
+                        resultado.getInt("id_pc2"),
+                        resultado.getString("noRollo"),
+                        resultado.getString("inspVisual"),
+                        resultado.getString("observacion"),
+                        resultado.getString("noOrden"),
+                        resultado.getString("inspector"),
+                        resultado.getString("tamLote"),
+                        resultado.getString("turno"),
+                        resultado.getString("tamMta"),
+                        resultado.getString("disp")
+                );
+                datosFilaRD.add(datoRD);
             }
         }
-
         return datosFilaRD;
     }
 
     public List<String> obtenerListaComponentes(Connection conexion) throws SQLException {
-        try (PreparedStatement consulta = conexion.prepareStatement(DELETE_COMPONENTE_FROM_ANTECEDENTES_FAMILIA)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COMPONENTE_FROM_ANTECEDENTES_FAMILIA)) {
             return obtenerDatos(consulta, "componente");
         }
     }
@@ -758,4 +745,30 @@ public class AceptacionProductoServicio {
             return obtenerDatos(consulta, "nombreProducto");
         }
     }
+
+    public void abrirDocumento(String rutaArchivo) {
+        try {
+            if (rutaArchivo == null || rutaArchivo.isEmpty()) {
+                Utilidades.manejarExcepcion("La ruta del archivo no es válida.", null);
+                return;
+            }
+
+            String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo; // Ruta de red
+            System.out.println(urlArchivo);
+            File archivo = new File(urlArchivo);
+            if (!archivo.exists()) {
+                Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);
+                return;
+            }
+            abrirArchivoLocal(archivo);
+        } catch (IOException ex) {
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void abrirArchivoLocal(File archivo) throws IOException {
+        Desktop desktop = Desktop.getDesktop();
+        desktop.open(archivo);
+    }
+
 }

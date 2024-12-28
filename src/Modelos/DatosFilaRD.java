@@ -5,10 +5,12 @@ import java.util.List;
 
 public class DatosFilaRD {
 
+    private int id_pc1;
+    private int id_pc2;
     private String noRollo;
     private String inspVisual;
     private String observaciones;
-    private List<String> noOrden;
+    private String noOrden;
     private String insp;
     private String tamLote;
     private String turno;
@@ -16,10 +18,12 @@ public class DatosFilaRD {
     private String disp;
 
     public DatosFilaRD() {
+        this.id_pc1 = 0;
+        this.id_pc2 = 0;
         this.noRollo = "";
         this.inspVisual = "";
         this.observaciones = "";
-        this.noOrden = new ArrayList<>();
+        this.noOrden = "";
         this.insp = "";
         this.tamLote = "";
         this.turno = "";
@@ -27,7 +31,9 @@ public class DatosFilaRD {
         this.disp = "";
     }
 
-    public DatosFilaRD(String noRollo, String inspVisual, String observaciones, List<String> noOrden, String insp, String tamLote, String turno, String tamMta, String disp) {
+    public DatosFilaRD(int id_pc1, int id_pc2, String noRollo, String inspVisual, String observaciones, String noOrden, String insp, String tamLote, String turno, String tamMta, String disp) {
+        this.id_pc1 = id_pc1;
+        this.id_pc2 = id_pc2;
         this.noRollo = noRollo;
         this.inspVisual = inspVisual;
         this.observaciones = observaciones;
@@ -38,7 +44,23 @@ public class DatosFilaRD {
         this.tamMta = tamMta;
         this.disp = disp;
     }
-    
+
+    public int getId_pc1() {
+        return id_pc1;
+    }
+
+    public void setId_pc1(int id_pc1) {
+        this.id_pc1 = id_pc1;
+    }
+
+    public int getId_pc2() {
+        return id_pc2;
+    }
+
+    public void setId_pc2(int id_pc2) {
+        this.id_pc2 = id_pc2;
+    }
+
     public String getNoRollo() {
         return noRollo;
     }
@@ -63,11 +85,11 @@ public class DatosFilaRD {
         this.observaciones = observaciones;
     }
 
-    public List<String> getNoOrden() {
+    public String getNoOrden() {
         return noOrden;
     }
 
-    public void setNoOrden(List<String> noOrden) {
+    public void setNoOrden(String noOrden) {
         this.noOrden = noOrden;
     }
 
@@ -109,9 +131,5 @@ public class DatosFilaRD {
 
     public void setDisp(String disp) {
         this.disp = disp;
-    }
-
-    public void agregarOtraOrden(String orden) {
-        this.noOrden.add(orden);
     }
 }

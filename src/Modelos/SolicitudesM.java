@@ -13,9 +13,9 @@ public class SolicitudesM {
     private String tipoArchivo;
     private String nombreD;
     private String nombre;
-    private byte[] archivo;
+    private String rutaArchivo;
 
-    public SolicitudesM(int id, String codigo, String proceso, String procedimiento, String revAnterior, String revNueva, String encargado, String accion, String tipoArchivo, String nombreD, String nombre, byte[] archivo) {
+    public SolicitudesM(int id, String codigo, String proceso, String procedimiento, String revAnterior, String revNueva, String encargado, String accion, String tipoArchivo, String nombreD, String nombre, String rutaArchivo) {
         this.id = id;
         this.codigo = codigo;
         this.proceso = proceso;
@@ -27,7 +27,7 @@ public class SolicitudesM {
         this.tipoArchivo = tipoArchivo;
         this.nombreD = nombreD;
         this.nombre = nombre;
-        this.archivo = archivo;
+        this.rutaArchivo = rutaArchivo;
     }
 
     public int getId() {
@@ -118,11 +118,11 @@ public class SolicitudesM {
         this.nombre = nombre;
     }
 
-    public byte[] getArchivo() {
-        return archivo;
+    public String getRutaArchivo() {
+        return rutaArchivo;
     }
 
-    public void setArchivo(byte[] archivo) {
-        this.archivo = archivo;
+    public void setRutaArchivo(String rutaArchivo) {
+        this.rutaArchivo = rutaArchivo;
     }
 }

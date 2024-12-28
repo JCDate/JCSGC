@@ -5,16 +5,16 @@ public class FormatosM {
     private int id;
     private int idP;
     private String nombre;
-    private byte[] contenido;
+    private String rutaArchivo;
 
     public FormatosM() {
     }
 
-    public FormatosM(int id, int idP, String nombre, byte[] contenido) {
+    public FormatosM(int id, int idP, String nombre, String rutaArchivo) {
         this.id = id;
         this.idP = idP;
         this.nombre = nombre;
-        this.contenido = contenido;
+        this.rutaArchivo = rutaArchivo;
     }
 
     public int getId() {
@@ -41,11 +41,11 @@ public class FormatosM {
         this.nombre = nombre;
     }
 
-    public byte[] getContenido() {
-        return contenido;
+    public String getRutaArchivo() {
+        return rutaArchivo;
     }
 
-    public void setContenido(byte[] contenido) {
-        this.contenido = contenido;
+    public void setRutaArchivo(String rutaArchivo) {
+        this.rutaArchivo = rutaArchivo;
     }
 }

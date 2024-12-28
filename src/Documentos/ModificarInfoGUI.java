@@ -20,14 +20,14 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
 
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
-    private Connection conexion; // Conexión a la Base de Datos
     private ProcesosM proceso; // Gestiona la información del proceso
+    private Connection conexion; // Conexión a la Base de Datos
+    private String tipoOperacion; // Define si la operación corresponde a un documento, proceso o procedimiento
     private ProcedimientosM procedimiento; // Manejar la información del procedimiento
     private ControlDocumentacionServicio cds; // Servicios y Utilidades
-    private String tipoOperacion; // Define si la operación corresponde a un documento, proceso o procedimiento
 
     public ModificarInfoGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public ModificarInfoGUI(Usuarios usuario, ProcedimientosM procedimiento) {
@@ -117,9 +117,9 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
         jPanel1.add(txtProcedimiento, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 290, 250, -1));
         jPanel1.add(txtDueñoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 350, 230, -1));
 
-        lblTitulo.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
+        lblTitulo.setFont(new java.awt.Font("Wide Latin", 1, 12)); // NOI18N
         lblTitulo.setForeground(new java.awt.Color(10, 110, 255));
-        lblTitulo.setText("MODIFICAR INFORMACIÓN DEL PROCESO:");
+        lblTitulo.setText("MODIFICAR INFORMACIÓN DEL PROCEDIMIENTO:");
         jPanel1.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 40, 640, 50));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
@@ -173,11 +173,8 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
-            if (tipoOperacion.equals("modificar")) {
-                inicializarCampos();
-            }
+            inicializarAtributos();
+            definirTitulo();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir ModificarInfoGUI: ", ex);
             Logger.getLogger(ModificarInfoGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -189,6 +186,20 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.cds = new ControlDocumentacionServicio();
+    }
+
+    private void definirTitulo() {
+        if (tipoOperacion.equals("modificar")) {
+            lblTitulo.setText("MODIFICAR INFORMACIÓN DEL PROCEDIMIENTO: ");
+            inicializarCampos();
+        } else {
+            lblTitulo.setText("AGREGAR PROCEDIMIENTO: ");
+        }
     }
 
     private void inicializarCampos() {

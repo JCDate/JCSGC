@@ -24,7 +24,7 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
 
     public AceptacionProductoGUI2() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public AceptacionProductoGUI2(Usuarios usuario) {
@@ -143,13 +143,12 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnContinuarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContinuarActionPerformed
-        Date fechaSeleccionada = dchFechaLiberacion.getDate();
-
-        if (fechaSeleccionada == null || cbxComponente.getSelectedItem() == null || cbxNoRollo.getSelectedItem() == null) {
+        if (dchFechaLiberacion.getDate() == null || cbxComponente.getSelectedItem() == null || cbxNoRollo.getSelectedItem() == null) {
             JOptionPane.showMessageDialog(this, "Por Favor, complete los campos obligatorios");
             return;
         }
 
+        Date fechaSeleccionada = dchFechaLiberacion.getDate();
         String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // Se formatea a formato: "dd/mm/aaaa" 
 
         asignarValoresAceptacionProducto(fechaLiberacion);
@@ -160,11 +159,9 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.aps = new AceptacionProductoServicio();
+            inicializarAtributos();
             configurarComponentes();
             definirValoresPredeterminados();
-            inicializarListeners();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir AceptacionProductoGUI2: ", ex);
             Logger.getLogger(AceptacionProductoGUI2.class.getName()).log(Level.SEVERE, null, ex);
@@ -176,6 +173,11 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.aps = new AceptacionProductoServicio();
+        this.conexion = Conexion.getInstance().conectar();
     }
 
     private void configurarComponentes() {
@@ -192,10 +194,6 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
         dchFechaLiberacion.setDate(new Date());
         txtInspeccionVisual.setText("OK");
         txtObservaciones.setText("INSPECCIÓN 100%");
-    }
-
-    private void inicializarListeners() {
-        cbxComponente.addActionListener(cbxNoRollo);
     }
 
     private void cerrarVentana() {

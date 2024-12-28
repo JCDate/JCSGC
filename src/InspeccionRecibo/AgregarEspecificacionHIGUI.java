@@ -22,7 +22,7 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
     private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
 
     public AgregarEspecificacionHIGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public AgregarEspecificacionHIGUI(Usuarios usuario) {
@@ -32,7 +32,7 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
 
     @Override
     public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
-        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png")); 
+        Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
         return retValue;
     }
 
@@ -114,19 +114,23 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.irs = new InspeccionReciboServicio();
+            inicializarAtributos();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir AgregarEspecificacionHIGUI: ", ex);
             Logger.getLogger(AgregarEspecificacionHIGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void configurarVentana() {
-        initComponents(); 
-        this.setResizable(false); 
-        this.setLocationRelativeTo(null); 
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
+        initComponents();
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.irs = new InspeccionReciboServicio();
     }
 
     private void cerrarVentana() {

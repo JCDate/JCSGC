@@ -1,12 +1,13 @@
 package AceptacionProducto;
 
-import Modelos.AceptacionProducto;
-import Modelos.Iconos;
+import BotonesAccion.TableActionCellEditor;
+import BotonesAccion.TableActionCellRender;
+import BotonesAccion.TableActionEvent;
+import Modelos.AceptacionProductoM;
 import Modelos.Usuarios;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
 import Servicios.Utilidades;
-import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -18,13 +19,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-import swing.Button;
 
 public class AceptacionProductoGUI extends javax.swing.JFrame {
 
@@ -32,16 +31,12 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
-    private DefaultTableModel modeloTabla; // Define la estructura de la tabla
+    private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
     private TableRowSorter<DefaultTableModel> filtroTabla; // Permite filtraer y ordenar la tabla de acuerdo a los criterios definidos
-    private List<AceptacionProducto> listaAceptacionProducto; // Listas de información para la gestión de los archivos de aceptación de productos
-
-    // Columnas de la tabla
-    private static final int COLUMNA_COMPONENTE = 0;
-    private static final int COLUMNA_ARCHIVO_RETENCION = 1;
+    private List<AceptacionProductoM> listaAceptacionProducto; // Listas de información para la gestión de los archivos de aceptación de productos
 
     public AceptacionProductoGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public AceptacionProductoGUI(Usuarios usuario) {
@@ -67,8 +62,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblAceptacionProducto = new javax.swing.JTable();
         btnActualizar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
-        btnEliminar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
-        btnModificar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnCrear = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -105,14 +98,10 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Componente", "Ver Rentención Dimensional"
+                "COMPONENTE", "OPERACIONES"
             }
         ));
-        tblAceptacionProducto.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblAceptacionProductoMouseClicked(evt);
-            }
-        });
+        tblAceptacionProducto.setRowHeight(50);
         jScrollPane1.setViewportView(tblAceptacionProducto);
 
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 100, 710, -1));
@@ -128,28 +117,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnActualizar, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 290, 210, 50));
 
-        btnEliminar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnEliminar.setForeground(new java.awt.Color(255, 255, 255));
-        btnEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Eliminar.png"))); // NOI18N
-        btnEliminar.setText("ELIMINAR");
-        btnEliminar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnEliminarActionPerformed(evt);
-            }
-        });
-        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 350, 210, 50));
-
-        btnModificar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnModificar.setForeground(new java.awt.Color(255, 255, 255));
-        btnModificar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/modificar.png"))); // NOI18N
-        btnModificar.setText("MODIFICAR");
-        btnModificar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnModificarActionPerformed(evt);
-            }
-        });
-        jPanel1.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 230, 210, 50));
-
         btnCrear.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCrear.setForeground(new java.awt.Color(255, 255, 255));
         btnCrear.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/1004733.png"))); // NOI18N
@@ -159,44 +126,16 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
                 btnCrearActionPerformed(evt);
             }
         });
-        jPanel1.add(btnCrear, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 170, 210, 50));
+        jPanel1.add(btnCrear, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, 210, 50));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1120, 540));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarActionPerformed
-        cerrarVentana();
-        aps.abrirModificarAPGUI(usuario);
-    }//GEN-LAST:event_btnModificarActionPerformed
-
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
     }//GEN-LAST:event_btnCerrarActionPerformed
-
-    private void tblAceptacionProductoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblAceptacionProductoMouseClicked
-        int columnaSeleccionada = tblAceptacionProducto.getColumnModel().getColumnIndexAtX(evt.getX());
-        int filaSeleccionada = tblAceptacionProducto.rowAtPoint(evt.getPoint());
-        if (Utilidades.esCeldaValida(tblAceptacionProducto, filaSeleccionada, columnaSeleccionada)) {
-            manejarCeldaSeleccionada(filaSeleccionada, columnaSeleccionada);
-        }
-    }//GEN-LAST:event_tblAceptacionProductoMouseClicked
-
-    private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
-        int filaSeleccionada = tblAceptacionProducto.getSelectedRow();
-
-        if (filaSeleccionada == -1) {
-            JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
-            return;
-        }
-
-        String nombreComponente = (String) tblAceptacionProducto.getValueAt(filaSeleccionada, 0);
-
-        if (confirmarEliminacion()) {
-            eliminarComponente(nombreComponente);
-        }
-    }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarActionPerformed
         cerrarVentana();
@@ -212,8 +151,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.aps = new AceptacionProductoServicio();
+            inicializarAtributos();
             configurarBuscador();
             inicializarTabla();
             inicializarListeners();
@@ -231,6 +169,12 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void inicializarAtributos() throws SQLException {
+        this.aps = new AceptacionProductoServicio();
+        this.conexion = Conexion.getInstance().conectar();
+        this.modeloTabla = (DefaultTableModel) tblAceptacionProducto.getModel();
+    }
+
     private void configurarBuscador() {
         txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
         txtBuscador.setHint("Buscar...");
@@ -238,10 +182,8 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
     private void inicializarTabla() {
         try {
-            this.modeloTabla = construirModeloTabla();
-            this.listaAceptacionProducto = aps.obtenerAceptacionProducto(conexion);
-            tblAceptacionProducto.setModel(modeloTabla);
-            tblAceptacionProducto.setRowHeight(40);
+            cargarDatosTabla();
+            configurarAccionesTabla();
             mostrarDatosTabla();
         } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
@@ -249,25 +191,56 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         }
     }
 
-    private DefaultTableModel construirModeloTabla() {
-        final String[] nombresColumnas = {"COMPONENTE", "VER DOCUMENTO RETENCIÓN DIMENSIONAL"};
+    private void cargarDatosTabla() {
+        this.listaAceptacionProducto = aps.obtenerAceptacionProducto(conexion);
+    }
 
-        modeloTabla = new DefaultTableModel() {
+    private void configurarAccionesTabla() {
+        TableActionEvent event = crearTableActionEvent();
+        tblAceptacionProducto.getColumnModel().getColumn(1).setCellRenderer(new TableActionCellRender(true, true, true, false, false, false));
+        tblAceptacionProducto.getColumnModel().getColumn(1).setCellEditor(new TableActionCellEditor(event, true, true, true, false, false, false));
+    }
+
+    private TableActionEvent crearTableActionEvent() {
+        return new TableActionEvent() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+            public void onEdit(int row) {
+                cerrarVentana();
+                aps.abrirModificarAPGUI(usuario, listaAceptacionProducto.get(row));
+            }
+
+            @Override
+            public void onDelete(int row) {
+                if (Utilidades.confirmarEliminacion()) {
+                    eliminarDocumento(listaAceptacionProducto.get(row));
+                }
+            }
+
+            @Override
+            public void onView(int row) {
+                aps.abrirDocumento(listaAceptacionProducto.get(row).getRutaArchivo());
+            }
+
+            @Override
+            public void onOpenRecords(int row) {
+                // nada...
+            }
+
+            @Override
+            public void onAccept(int row) {
+                // Nada...
+            }
+
+            @Override
+            public void onReject(int row) {
+                // Nada...
             }
         };
-
-        modeloTabla.setColumnIdentifiers(nombresColumnas);
-
-        return modeloTabla;
     }
 
     private void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
         limpiarTabla();
         llenarTabla();
-        configurarRenderizacionTabla();
     }
 
     private void limpiarTabla() {
@@ -283,15 +256,11 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         }
     }
 
-    private Object[] crearFila(AceptacionProducto aceptacionProducto) {
+    private Object[] crearFila(AceptacionProductoM aceptacionProducto) {
         Object[] fila = new Object[2];
-        fila[COLUMNA_COMPONENTE] = aceptacionProducto.getComponente();
-        fila[COLUMNA_ARCHIVO_RETENCION] = Utilidades.crearBoton(aceptacionProducto.getArchivo(), Iconos.ICONO_EXCEL_2, "Vacío");
+        fila[0] = aceptacionProducto.getComponente();
+        fila[1] = "OPERACIONES";
         return fila;
-    }
-
-    private void configurarRenderizacionTabla() {
-        tblAceptacionProducto.setDefaultRenderer(Object.class, new imgTabla());
     }
 
     private void inicializarListeners() {
@@ -325,39 +294,8 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         Conexion.getInstance().desconectar(conexion);
     }
 
-    private void manejarCeldaSeleccionada(int filaSeleccionada, int columnaSeleccionada) {
-        String componente = (String) tblAceptacionProducto.getValueAt(filaSeleccionada, 0);
-        Object valor = tblAceptacionProducto.getValueAt(filaSeleccionada, columnaSeleccionada);
-        if (valor instanceof JButton) {
-            JButton boton = (Button) valor;
-            procesarBoton(boton, componente, columnaSeleccionada);
-        }
-    }
-
-    private void procesarBoton(JButton boton, String componente, int columnaSeleccionada) {
-        try {
-            String textoBoton = boton.getText();
-            switch (textoBoton) {
-                case "Vacío":
-                    JOptionPane.showMessageDialog(this, "No hay archivo");
-                    break;
-                default:
-                    aps.ejecutarArchivoXLSX(conexion, componente, columnaSeleccionada);
-                    break;
-            }
-        } catch (ClassNotFoundException | SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Ejecutar el archivo xlsx", ex);
-            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private boolean confirmarEliminacion() {
-        int respuesta = JOptionPane.showConfirmDialog(this, "SE ELIMINARÁ TODA LA INFORMACIÓN DEL COMPONENTE, ¿ESTÁS DE ACUERDO?", "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-        return respuesta == JOptionPane.YES_OPTION;
-    }
-
-    private void eliminarComponente(String componente) {
-        aps.eliminarAceptacionProducto(conexion, componente);
+    private void eliminarDocumento(AceptacionProductoM aceptacionProducto) {
+        aps.eliminarAceptacionProducto(conexion, aceptacionProducto);
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
         aps.abrirAceptacionProductoGUI(usuario);
@@ -394,8 +332,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private javax.swing.JButton btnActualizar;
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnCrear;
-    private javax.swing.JButton btnEliminar;
-    private javax.swing.JButton btnModificar;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;

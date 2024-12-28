@@ -5,10 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author JC
- */
 public class SQL {
 
     Conexion conexion = Conexion.getInstance(); // Obtener la conexión a la base de datos

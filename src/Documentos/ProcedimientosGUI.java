@@ -1,13 +1,14 @@
 package Documentos;
 
+import BotonesAccion.TableActionCellEditor;
+import BotonesAccion.TableActionCellRender;
+import BotonesAccion.TableActionEvent;
 import Modelos.DocumentosM;
-import Modelos.Iconos;
 import Modelos.ProcedimientosM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
 import Servicios.Utilidades;
-import Servicios.imgTabla;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -16,11 +17,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import swing.Button;
 
 public class ProcedimientosGUI extends javax.swing.JFrame {
 
@@ -29,19 +28,11 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private Connection conexion; // Conexión a la Base de Datos
     private ProcedimientosM procedimiento; // Objeto para manejar la documentacion por procedimiento
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
-    private List<DocumentosM> listaDocumentos; // Listas para el control del formato
     private ControlDocumentacionServicio cds; // Listas de información de control de documentación
-
-    // Columnas de la tabla
-    private static final int COLUMNA_TIPO_ARCHIVO = 0;
-    private static final int COLUMNA_FECHA_ACTUALIZACION = 1;
-    private static final int COLUMNA_NOMBRE = 2;
-    private static final int COLUMNA_ARCHIVO = 3;
-    private static final int COLUMNA_MODIFICAR = 4;
-    private static final int COLUMNA_ELIMINAR = 5;
+    private List<DocumentosM> listaDocumentos; // Listas para el control del formato
 
     public ProcedimientosGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public ProcedimientosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
@@ -99,11 +90,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
                 "TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "ARCHIVO", "REGISTROS"
             }
         ));
-        tblDocumentos.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblDocumentosMouseClicked(evt);
-            }
-        });
+        tblDocumentos.setRowHeight(50);
         jScrollPane1.setViewportView(tblDocumentos);
 
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1170, 170));
@@ -151,19 +138,6 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void tblDocumentosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDocumentosMouseClicked
-        int columnaSeleccionada = tblDocumentos.getColumnModel().getColumnIndexAtX(evt.getX());
-        int filaSeleccionada = tblDocumentos.rowAtPoint(evt.getPoint());
-
-        if (Utilidades.esCeldaValida(tblDocumentos, filaSeleccionada, columnaSeleccionada)) {
-            Object value = tblDocumentos.getValueAt(filaSeleccionada, columnaSeleccionada);
-            if (value instanceof JButton) {
-                JButton boton = (JButton) value;
-                manejarAccionBoton(boton, filaSeleccionada, columnaSeleccionada);
-            }
-        }
-    }//GEN-LAST:event_tblDocumentosMouseClicked
-
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
         cds.abrirDocumentacionGUI(usuario, procedimiento.getIdp());
@@ -183,8 +157,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         try {
             configurarVentana();
             lblProcedimiento.setText("<html>PROCEDIMIENTO: <br>" + procedimiento.getProcedimiento() + "</html>");
-            this.conexion = Conexion.getInstance().conectar();
-            this.cds = new ControlDocumentacionServicio();
+            inicializarAtributos();
             inicializarTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al abrir ProcedimientosGUI: ", ex);
@@ -199,12 +172,16 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void inicializarAtributos() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+        this.cds = new ControlDocumentacionServicio();
+        this.modeloTabla = (DefaultTableModel) tblDocumentos.getModel();
+    }
+
     private void inicializarTabla() {
         try {
-            this.modeloTabla = construirModeloTabla();
-            this.listaDocumentos = cds.obtenerDocumentos(conexion, procedimiento.getId());
-            tblDocumentos.setModel(modeloTabla);
-            tblDocumentos.setRowHeight(40);
+            cargarDatosTabla();
+            configurarAccionesTabla(false, false, true, false, false, false);
             mostrarDatosTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
@@ -212,31 +189,57 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         }
     }
 
-    private DefaultTableModel construirModeloTabla() {
-        final String[] nombresColumnas;
+    private void cargarDatosTabla() throws SQLException {
+        this.listaDocumentos = cds.obtenerDocumentos(conexion, procedimiento.getId());
+    }
 
-        if (cds.esUsuarioAutorizado(usuario)) {
-            nombresColumnas = new String[]{"TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "ARCHIVO", "MODIFICAR", "ELIMINAR"};
-        } else {
-            nombresColumnas = new String[]{"TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "ARCHIVO"};
-        }
+    private void configurarAccionesTabla(boolean btnEditar, boolean btnEliminar, boolean btnVer, boolean btnRegistro, boolean btnAceptar, boolean btnRegistrar) {
+        TableActionEvent event = crearTableActionEvent();
+        tblDocumentos.getColumnModel().getColumn(4).setCellRenderer(new TableActionCellRender(btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRegistrar));
+        tblDocumentos.getColumnModel().getColumn(4).setCellEditor(new TableActionCellEditor(event, btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRegistrar));
+    }
 
-        modeloTabla = new DefaultTableModel() {
+    private TableActionEvent crearTableActionEvent() {
+        return new TableActionEvent() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+            public void onEdit(int row) {
+                cerrarVentana();
+                cds.abrirModificarArchivosGUI(usuario, listaDocumentos.get(row));
+            }
+
+            @Override
+            public void onDelete(int row) {
+                if (Utilidades.confirmarEliminacion()) {
+                    eliminarDocumento(listaDocumentos.get(row));
+                }
+            }
+
+            @Override
+            public void onView(int row) {
+                cerrarVentana();
+                cds.abrirDocumento(listaDocumentos.get(row).getRutaArchivo());
+            }
+
+            @Override
+            public void onOpenRecords(int row) {
+                // Nada ...
+            }
+
+            @Override
+            public void onAccept(int row) {
+                // Nada ...
+            }
+
+            @Override
+            public void onReject(int row) {
+                // Nada ...
             }
         };
-
-        modeloTabla.setColumnIdentifiers(nombresColumnas);
-
-        return modeloTabla;
     }
 
     public void mostrarDatosTabla() {
         limpiarTabla();
         llenarTabla();
-        configurarRenderizacionTabla();
     }
 
     private void limpiarTabla() {
@@ -253,85 +256,23 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     }
 
     private Object[] crearFila(DocumentosM documento) {
-        Button botonModificar = new Button();
-        botonModificar.setIcon(Iconos.ICONO_MODIFICAR);
-        Button botonEliminar = new Button();
-        botonEliminar.setIcon(Iconos.ICONO_RECHAZAR);
-        Object fila[];
+        Object[] fila = new Object[4];
+        fila[0] = documento.getTipo();
+        fila[1] = documento.getFechaActualizacion();
+        fila[2] = documento.getNombre();
+        fila[3] = "OPERACIONES";
+
         if (cds.esUsuarioAutorizado(usuario)) {
-            fila = new Object[6];
-            fila[COLUMNA_TIPO_ARCHIVO] = documento.getTipo();
-            fila[COLUMNA_FECHA_ACTUALIZACION] = documento.getFechaActualizacion();
-            fila[COLUMNA_NOMBRE] = documento.getNombre();
-            fila[COLUMNA_ARCHIVO] = cds.crearBoton(documento.getContenido(), Iconos.ICONO_VER, "Vacío");
-            fila[COLUMNA_MODIFICAR] = botonModificar;
-            fila[COLUMNA_ELIMINAR] = botonEliminar;
+            configurarAccionesTabla(true, true, true, false, false, false);
         } else {
-            fila = new Object[4];
-            fila[COLUMNA_TIPO_ARCHIVO] = documento.getTipo();
-            fila[COLUMNA_FECHA_ACTUALIZACION] = documento.getFechaActualizacion();
-            fila[COLUMNA_NOMBRE] = documento.getNombre();
-            fila[COLUMNA_ARCHIVO] = cds.crearBoton(documento.getContenido(), Iconos.ICONO_VER, "Vacío");
+            configurarAccionesTabla(true, false, true, false, false, false);
         }
         return fila;
-    }
-
-    private void configurarRenderizacionTabla() {
-        tblDocumentos.setDefaultRenderer(Object.class, new imgTabla());
-    }
-
-    private void manejarAccionBoton(JButton boton, int filaSeleccionada, int columnaSeleccionada) {
-        String textoPrimeraCelda = obtenerTextoPrimeraCelda(filaSeleccionada);
-        switch (boton.getText()) {
-            case "Vacío":
-                JOptionPane.showMessageDialog(null, "No hay archivo");
-                break;
-            default:
-                manejarAccionDefault(textoPrimeraCelda, columnaSeleccionada, listaDocumentos.get(filaSeleccionada));
-                break;
-        }
-    }
-
-    private void manejarAccionDefault(String textoPrimeraCelda, int columnaSeleccionada, DocumentosM documento) {
-        try {
-            if (columnaSeleccionada == 3) {
-                cds.ejecutarManual(conexion, procedimiento, textoPrimeraCelda);
-            }
-
-            if (columnaSeleccionada == 4) {
-                cerrarVentana();
-                cds.abrirModificarArchivosGUI(usuario, documento);
-            }
-
-            if (columnaSeleccionada == 5) {
-                int filaSeleccionada = tblDocumentos.getSelectedRow();
-
-                if (filaSeleccionada == -1) {
-                    JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
-                    return;
-                }
-
-                if (Utilidades.confirmarEliminacion()) {
-                    eliminarDocumento(listaDocumentos.get(filaSeleccionada));
-                }
-
-                cerrarVentana();
-                cds.abrirModificarArchivosGUI(usuario, documento);
-            }
-        } catch (ClassNotFoundException | SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR en la operación: ", ex);
-            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
     public void cerrarVentana() {
         ProcedimientosGUI.this.dispose();
         Conexion.getInstance().desconectar(conexion);
-    }
-
-    private String obtenerTextoPrimeraCelda(int filaSeleccionada) {
-        Object firstCellValue = tblDocumentos.getValueAt(filaSeleccionada, 0);
-        return firstCellValue != null ? firstCellValue.toString() : "";
     }
 
     private void eliminarDocumento(DocumentosM documento) {
