@@ -13,16 +13,9 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/InspeccionReciboServicio.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/BotonesAccion/TableActionCellRenderIR.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Paginacion/Paginacion.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Paginacion/PaginacionItemRender.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Paginacion/EventPaginacion.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Paginacion/DefaultPaginationItemRender.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/BotonesAccion/PanelActionIR.java</file>
             <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/InspeccionRecibo/InspeccionReciboGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/BotonesAccion/TableActionCellRender.java</file>
             <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/AceptacionProducto/AceptacionProductoGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Paginacion/Pagina.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/BotonesAccion/TableActionCellEditorIR.java</file>
         </group>
     </open-files>
 </project-private>

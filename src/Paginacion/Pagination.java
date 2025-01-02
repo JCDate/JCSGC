@@ -7,56 +7,56 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-public class Paginacion extends JPanel {
+public class Pagination extends JPanel {
 
-    public PaginacionItemRender getPaginacionItemRender() {
+    public PaginationItemRender getPaginationItemRender() {
         return paginationItemRender;
     }
 
-    public void setPaginacionItemRender(PaginacionItemRender paginationItemRender) {
+    public void setPaginationItemRender(PaginationItemRender paginationItemRender) {
         this.paginationItemRender = paginationItemRender;
-        changePagina(page.getCurrent(), page.getTotalPagina());
+        changePage(page.getCurrent(), page.getTotalPage());
     }
 
-    private PaginacionItemRender paginationItemRender;
-    private List<EventPaginacion> events = new ArrayList<>();
-    private Pagina page;
+    private PaginationItemRender paginationItemRender;
+    private List<EventPagination> events = new ArrayList<>();
+    private Page page;
 
-    public Paginacion() {
+    public Pagination() {
         init();
     }
 
     private void init() {
         paginationItemRender = new DefaultPaginationItemRender();
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
-        setPaginagination(1, 1);
+        setPagegination(1, 1);
     }
 
     private void runEvent() {
-        for (EventPaginacion event : events) {
+        for (EventPagination event : events) {
             event.pageChanged(page.getCurrent());
         }
     }
 
     private boolean isEnable(Object item) {
-        return (item instanceof Pagina.BreakLabel || Integer.valueOf(item.toString()) != page.getCurrent());
+        return (item instanceof Page.BreakLabel || Integer.valueOf(item.toString()) != page.getCurrent());
     }
 
-    public void addEventPaginacion(EventPaginacion event) {
+    public void addEventPagination(EventPagination event) {
         events.add(event);
     }
 
-    public void setPaginagination(int current, int totalPagina) {
-        if (current > totalPagina) {
-            current = totalPagina;
+    public void setPagegination(int current, int totalPage) {
+        if (current > totalPage) {
+            current = totalPage;
         }
-        if (page == null || (page.getCurrent() != current || page.getTotalPagina() != totalPagina)) {
-            changePagina(current, totalPagina);
+        if (page == null || (page.getCurrent() != current || page.getTotalPage() != totalPage)) {
+            changePage(current, totalPage);
         }
     }
 
-    private void changePagina(int current, int totalPagina) {
-        page = paginate(current, totalPagina);
+    private void changePage(int current, int totalPage) {
+        page = paginate(current, totalPage);
         removeAll();
         refresh();
         JButton cmdPrev = paginationItemRender.createPaginationItem("Previous", true, false, page.isPrevious());
@@ -64,7 +64,7 @@ public class Paginacion extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (page.getCurrent() > 1) {
-                    setPaginagination(page.getCurrent() - 1, totalPagina);
+                    setPagegination(page.getCurrent() - 1, totalPage);
                     runEvent();
                 }
             }
@@ -81,11 +81,11 @@ public class Paginacion extends JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (!cmd.isSelected() && item != null) {
-                        if (item instanceof Pagina.BreakLabel) {
-                            Pagina.BreakLabel pb = (Pagina.BreakLabel) item;
-                            setPaginagination(pb.getPagina(), totalPagina);
+                        if (item instanceof Page.BreakLabel) {
+                            Page.BreakLabel pb = (Page.BreakLabel) item;
+                            setPagegination(pb.getPage(), totalPage);
                         } else {
-                            setPaginagination(Integer.valueOf(item.toString()), totalPagina);
+                            setPagegination(Integer.valueOf(item.toString()), totalPage);
                         }
                         runEvent();
                     }
@@ -97,8 +97,8 @@ public class Paginacion extends JPanel {
         cmdNext.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (page.getCurrent() < page.getTotalPagina()) {
-                    setPaginagination(page.getCurrent() + 1, totalPagina);
+                if (page.getCurrent() < page.getTotalPage()) {
+                    setPagegination(page.getCurrent() + 1, totalPage);
                     runEvent();
                 }
             }
@@ -111,29 +111,29 @@ public class Paginacion extends JPanel {
         revalidate();
     }
 
-    private Pagina paginate(int current, int max) {
+    private Page paginate(int current, int max) {
         boolean prev = current > 1;
         boolean next = current < max;
         List<Object> items = new ArrayList<>();
         items.add(1);
         if (current == 1 && max == 1) {
-            return new Pagina(current, prev, next, items, max);
+            return new Page(current, prev, next, items, max);
         }
         int r = 2;
         int r1 = current - r;
         int r2 = current + r;
         if (current > 4) {
-            items.add(new Pagina.BreakLabel((r1 > 2 ? r1 : 2) - 1));
+            items.add(new Page.BreakLabel((r1 > 2 ? r1 : 2) - 1));
         }
         for (int i = r1 > 2 ? r1 : 2; i <= Math.min(max, r2); i++) {
             items.add(i);
         }
         if (r2 + 1 < max) {
-            items.add(new Pagina.BreakLabel(Integer.valueOf(items.get(items.size() - 1).toString()) + 1));
+            items.add(new Page.BreakLabel(Integer.valueOf(items.get(items.size() - 1).toString()) + 1));
         }
         if (r2 < max) {
             items.add(max);
         }
-        return new Pagina(current, prev, next, items, max);
+        return new Page(current, prev, next, items, max);
     }
 }

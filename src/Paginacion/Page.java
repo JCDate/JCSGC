@@ -2,24 +2,7 @@ package Paginacion;
 
 import java.util.List;
 
-public class Pagina {
-
-    private int current;
-    private boolean previous;
-    private boolean next;
-    private List<Object> items;
-    private int totalPagina;
-
-    public Pagina() {
-    }
-
-    public Pagina(int current, boolean previous, boolean next, List<Object> items, int totalPagina) {
-        this.current = current;
-        this.previous = previous;
-        this.next = next;
-        this.items = items;
-        this.totalPagina = totalPagina;
-    }
+public class Page {
 
     public int getCurrent() {
         return current;
@@ -53,13 +36,30 @@ public class Pagina {
         this.items = items;
     }
 
-    public int getTotalPagina() {
-        return totalPagina;
+    public int getTotalPage() {
+        return totalPage;
     }
 
-    public void setTotalPagina(int totalPagina) {
-        this.totalPagina = totalPagina;
+    public void setTotalPage(int totalPage) {
+        this.totalPage = totalPage;
     }
+
+    public Page(int current, boolean previous, boolean next, List<Object> items, int totalPage) {
+        this.current = current;
+        this.previous = previous;
+        this.next = next;
+        this.items = items;
+        this.totalPage = totalPage;
+    }
+
+    public Page() {
+    }
+
+    private int current;
+    private boolean previous;
+    private boolean next;
+    private List<Object> items;
+    private int totalPage;
 
     @Override
     public String toString() {
@@ -68,11 +68,11 @@ public class Pagina {
 
     public static class BreakLabel {
 
-        public int getPagina() {
+        public int getPage() {
             return page;
         }
 
-        public void setPagina(int page) {
+        public void setPage(int page) {
             this.page = page;
         }
 

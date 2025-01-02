@@ -1,6 +1,6 @@
 package Paginacion;
 
-public interface EventPaginacion {
+public interface EventPagination {
 
     public void pageChanged(int page);
 }

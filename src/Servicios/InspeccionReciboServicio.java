@@ -48,7 +48,6 @@ import jnafilechooser.api.JnaFileChooser;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import swing.Button;
 
@@ -64,7 +63,7 @@ public class InspeccionReciboServicio {
     final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id FROM inspeccionrecibo WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
     final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM inspeccionrecibo WHERE noHoja = ?";
     final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM inspeccionrecibo WHERE noHoja = ?";
-    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo LIMIT ?";
+    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo LIMIT ?, ?";
     final String INSERT_INSPECCION_RECIBO_SQL = "INSERT INTO inspeccionrecibo(fechaFactura,Proveedor,noFactura,noPedido,calibre,pLamina,noRollo,pzKg,estatus,noHoja,pdfFactura,pdfCertificado,hojaInstruccion,nombreHJ,nombreFact,nombreCert) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM inspeccionrecibo WHERE noHoja=? AND fechaFactura=? AND noFactura=? AND noPedido=? AND pzKg=?";
     final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE inspeccionrecibo SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id=?";
@@ -285,11 +284,44 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion, int page) throws SQLException {
+    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion, int page, int limit) throws SQLException {
         List<InspeccionReciboM> listaIr = new ArrayList<>();
-        int limite = page - 1;
+        int limite = (page - 1) * limit;
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL)) {
             consulta.setInt(1, limite);
+            consulta.setInt(2, limit);
+            ResultSet resultado = consulta.executeQuery();
+            while (resultado.next()) {
+                InspeccionReciboM ir = new InspeccionReciboM(
+                        resultado.getInt("id"),
+                        resultado.getString("fechaFactura"),
+                        resultado.getString("Proveedor"),
+                        resultado.getString("noFactura"),
+                        resultado.getString("noPedido"),
+                        resultado.getString("calibre"),
+                        resultado.getString("pLamina"),
+                        resultado.getString("noRollo"),
+                        resultado.getString("pzKg"),
+                        resultado.getString("estatus"),
+                        resultado.getString("noHoja"),
+                        null,
+                        null,
+                        null,
+                        resultado.getString("nombreHJ"),
+                        resultado.getString("nombreFact"),
+                        resultado.getString("nombreCert")
+                );
+                listaIr.add(ir);
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
+        }
+        return listaIr;
+    }
+
+    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion) throws SQLException {
+        List<InspeccionReciboM> listaIr = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM inspeccionrecibo")) {
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(

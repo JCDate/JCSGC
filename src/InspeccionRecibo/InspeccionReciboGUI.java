@@ -5,7 +5,6 @@ import BotonesAccion.TableActionCellRenderIR;
 import BotonesAccion.TableActionEventIR;
 import Modelos.InspeccionReciboM;
 import Modelos.Usuarios;
-import Paginacion.EventPaginacion;
 import Servicios.Conexion;
 import Servicios.GeneradorExcel;
 import Servicios.InspeccionReciboServicio;
@@ -32,6 +31,9 @@ import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import swing.Button;
+import Paginacion.EventPagination;
+import Paginacion.estilo.PaginationItemRenderStyle1;
+import java.sql.PreparedStatement;
 
 public class InspeccionReciboGUI extends javax.swing.JFrame {
 
@@ -56,8 +58,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private static final int COLUMNA_PZKG = 8;
     private static final int COLUMNA_ESTATUS = 9;
     private static final int COLUMNA_VER_FACTURA = 10;
-    private static final int COLUMNA_VER_CERTIFICADO = 11;
-    private static final int COLUMNA_VER_HOJA_INSTRUCCION = 12;
 
     public InspeccionReciboGUI() {
         initComponents();
@@ -94,10 +94,10 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblInspeccionRecibo = new javax.swing.JTable();
         txtBuscador = new swing.TextField();
-        jPanel1 = new javax.swing.JPanel();
         btnToExcel = new swing.Button(new Color(107, 240, 105),new Color(75, 212, 73));
+        jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        paginacion1 = new Paginacion.Paginacion();
+        paginacion1 = new Paginacion.Pagination();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -189,8 +189,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         });
         getContentPane().add(btnAgregarCalibre, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 100, 180, -1));
 
-        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
         tblInspeccionRecibo.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -199,9 +197,12 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 "No.", "FECHA DE FACTURA", "PROVEEDOR", "NO. FACTURA", "NO. PEDIDO", "CALIBRE", "PRESENTACIÓN DE LAMINA", "NO. ROLLO", "PZ/Kg", "ESTATUS", "VER FACTURA"
             }
         ));
-        tblInspeccionRecibo.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
-        tblInspeccionRecibo.setMinimumSize(new java.awt.Dimension(400, 300));
-        tblInspeccionRecibo.setPreferredSize(new java.awt.Dimension(90000, 70000));
+        tblInspeccionRecibo.setAutoscrolls(false);
+        tblInspeccionRecibo.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        tblInspeccionRecibo.setMaximumSize(new java.awt.Dimension(400, 350));
+        tblInspeccionRecibo.setMinimumSize(new java.awt.Dimension(300, 300));
+        tblInspeccionRecibo.setOpaque(false);
+        tblInspeccionRecibo.setPreferredSize(new java.awt.Dimension(1000, 350));
         tblInspeccionRecibo.setRowHeight(50);
         tblInspeccionRecibo.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -210,7 +211,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(tblInspeccionRecibo);
 
-        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 139, 1150, 350));
+        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 139, 1180, 380));
 
         txtBuscador.setPrefixIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/find.png"))); // NOI18N
         txtBuscador.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -220,6 +221,14 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         });
         getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 95, 260, 40));
 
+        btnToExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excel.png"))); // NOI18N
+        btnToExcel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnToExcelActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnToExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1210, 10, 80, 80));
+
         jPanel1.setBackground(new java.awt.Color(251, 251, 251));
         jPanel1.setForeground(new java.awt.Color(242, 242, 242));
         jPanel1.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
@@ -227,23 +236,15 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         jPanel1.setPreferredSize(new java.awt.Dimension(130, 350));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        btnToExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excel.png"))); // NOI18N
-        btnToExcel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnToExcelActionPerformed(evt);
-            }
-        });
-        jPanel1.add(btnToExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1210, 10, 80, 80));
-
         jPanel2.setBackground(new java.awt.Color(84, 139, 249));
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         paginacion1.setOpaque(false);
-        jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 10, -1, -1));
+        jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 10, -1, -1));
 
-        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 490, 1150, 50));
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 530, 1180, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, 610));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1330, 610));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -330,8 +331,8 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         try {
             configurarVentana();
             inicializarAtributos();
-            inicializarTabla();
-//            configurarBuscador();
+            inicializarTabla(1);
+            configurarBuscador();
 
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir InspeccionReciboGUI: ", ex);
@@ -351,6 +352,14 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         this.excel = new GeneradorExcel();
         this.conexion = Conexion.getInstance().conectar();
         this.modeloTabla = (DefaultTableModel) tblInspeccionRecibo.getModel();
+        this.trs = new TableRowSorter(tblInspeccionRecibo.getModel());
+        tblInspeccionRecibo.setRowSorter(trs);
+
+        paginacion1.addEventPagination((int page) -> {
+            inicializarTabla(page);
+        });
+        paginacion1.setPaginationItemRender(new PaginationItemRenderStyle1());
+
     }
 
     private void configurarBuscador() {
@@ -358,30 +367,18 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         txtBuscador.setHint("Buscar...");
     }
 
-    private void inicializarTabla() {
-        configurarAccionesTabla();
-//            paginacion1.setPaginacionItemRender(paginationItemRender);
-        paginacion1.addEventPaginacion(new EventPaginacion() {
-            @Override
-            public void pageChanged(int page) {
-                try {
-                    cargarDatosTabla(page);
-                    mostrarDatosTabla(page);
-                } catch (SQLException ex) {
-                    Utilidades.manejarExcepcion("ERROR al inicializar la tabla", ex);
-                    Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        });
-
-//            this.trs = new TableRowSorter(tblInspeccionRecibo.getModel());
-//            tblInspeccionRecibo.setRowSorter(trs);
-        // Asegúrate de que no hay filtro en el TableRowSorter
+    private void inicializarTabla(int page) {
+        try {
+            mostrarDatosTabla(page);
+            configurarAccionesTabla();
+        } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    private void cargarDatosTabla(int page) throws SQLException {
-        this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion, page);
-        System.out.println(listaInspeccionRecibo.size());
+    private void cargarDatosTabla(int page, int limit) throws SQLException {
+        this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion, page, limit);
     }
 
     private void configurarAccionesTabla() {
@@ -390,27 +387,34 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         tblInspeccionRecibo.getColumnModel().getColumn(10).setCellEditor(new TableActionCellEditorIR(event));
     }
 
-    private void mostrarDatosTabla(int page) {
+    private void mostrarDatosTabla(int page) throws SQLException, ClassNotFoundException {
         limpiarTabla();
-
-        int limit = 10;
-        String sqlCount = " SELECT COUNT(*) FROM inspeccionrecibo";
-
+        ajustarColumnas();
+        int limit = 7;
+        String sqlCount = "SELECT COUNT(*) FROM inspeccionrecibo";
+        PreparedStatement p = conexion.prepareStatement(sqlCount);
         int count = 0;
-        try {
-            ResultSet r = conexion.prepareStatement(sqlCount).executeQuery();
-            if (r.first()) {
-                count = r.getInt(1);
-            }
-
-            r.close();
-            int totalPage = (int) Math.ceil(count / limit);
-            paginacion1.setPaginagination(page, totalPage);
-        } catch (Exception e) {
+        ResultSet r = p.executeQuery();
+        if (r.first()) {
+            count = r.getInt(1);
         }
-
+        r.close();
+        p.close();
+        int totalPage = (int) Math.ceil(count / limit);
+        cargarDatosTabla(page, limit);
         llenarTabla();
-
+        paginacion1.setPagegination(page, totalPage);
+        
+    }
+    
+    private void ajustarColumnas() {
+        tblInspeccionRecibo.getColumnModel().getColumn(0).setMaxWidth(70);
+        tblInspeccionRecibo.getColumnModel().getColumn(3).setMaxWidth(80);
+        tblInspeccionRecibo.getColumnModel().getColumn(4).setMaxWidth(80);
+        tblInspeccionRecibo.getColumnModel().getColumn(5).setMaxWidth(70);
+        tblInspeccionRecibo.getColumnModel().getColumn(7).setMaxWidth(80);
+        tblInspeccionRecibo.getColumnModel().getColumn(8).setMaxWidth(70);
+        tblInspeccionRecibo.getColumnModel().getColumn(9).setMaxWidth(80);
     }
 
     private void limpiarTabla() {
@@ -427,7 +431,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     }
 
     private Object[] crearFila(InspeccionReciboM inspeccionRecibo) {
-        Object fila[] = new Object[11];
+        Object fila[] = new Object[10];
         fila[COLUMNA_NO_HOJA] = inspeccionRecibo.getNoHoja();
         fila[COLUMNA_FECHA] = inspeccionRecibo.getFechaFactura();
         fila[COLUMNA_PROVEEDOR] = inspeccionRecibo.getProveedor();
@@ -438,7 +442,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         fila[COLUMNA_NO_ROLLO] = inspeccionRecibo.getNoRollo();
         fila[COLUMNA_PZKG] = inspeccionRecibo.getPzKg();
         fila[COLUMNA_ESTATUS] = inspeccionRecibo.getEstatus();
-        fila[COLUMNA_VER_FACTURA] = "VER FACTURA - CERTIFICADO - HOJA INSTRUCCIÓN";
         return fila;
     }
 
@@ -574,7 +577,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblJCIcono;
     private javax.swing.JLabel lblReporteInspeccionRecibo;
-    private Paginacion.Paginacion paginacion1;
+    private Paginacion.Pagination paginacion1;
     private javax.swing.JTable tblInspeccionRecibo;
     private swing.TextField txtBuscador;
     // End of variables declaration//GEN-END:variables

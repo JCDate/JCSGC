@@ -2,7 +2,7 @@ package Paginacion;
 
 import javax.swing.JButton;
 
-public interface PaginacionItemRender {
+public interface PaginationItemRender {
 
     public JButton createPaginationItem(Object value, boolean isPrevious, boolean isNext, boolean enable);
 

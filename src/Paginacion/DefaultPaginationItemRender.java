@@ -3,7 +3,7 @@ package Paginacion;
 import javax.swing.Icon;
 import javax.swing.JButton;
 
-public class DefaultPaginationItemRender implements PaginacionItemRender {
+public class DefaultPaginationItemRender implements PaginationItemRender {
 
     @Override
     public JButton createPaginationItem(Object value, boolean isPrevious, boolean isNext, boolean enable) {
