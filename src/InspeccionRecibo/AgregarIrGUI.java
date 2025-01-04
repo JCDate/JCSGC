@@ -13,9 +13,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -33,13 +35,13 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
-    private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
     private GeneradorExcel excel; // Servicio para generar archivos de excel
-    private InspeccionReciboM inspeccionRecibo; // Objeto para manejar la información de la inspección de componentes
-    private String rutaArchivoCertificado; // Ruta del archivo del certificado
     private String rutaArchivoFactura; // Ruta del archivo del factura
-    private String rutaArchivoHojaInstruccion; // Ruta del archivo de la Hoja de Instrucción
+    private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
+    private String rutaArchivoCertificado; // Ruta del archivo del certificado
     private List<String> listaProveedores; // Obtiene la lista de proveedores
+    private String rutaArchivoHojaInstruccion; // Ruta del archivo de la Hoja de Instrucción
+    private InspeccionReciboM inspeccionRecibo; // Objeto para manejar la información de la inspección de componentes
 
     public AgregarIrGUI() {
         initComponents();
@@ -66,7 +68,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jDateChooser1 = new com.toedter.calendar.JDateChooser();
         jPanel1 = new javax.swing.JPanel();
         lblFechaFactura = new javax.swing.JLabel();
         lblProveedor = new javax.swing.JLabel();
@@ -252,7 +253,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnAgregarFacturaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarFacturaActionPerformed
-        seleccionarFactura();
+        rutaArchivoFactura = seleccionarArchivo(txtNombreFactura, rutaArchivoFactura, "Facturas");
     }//GEN-LAST:event_btnAgregarFacturaActionPerformed
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
@@ -269,17 +270,18 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void btnAgregarCertificadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCertificadoActionPerformed
-        seleccionarCertificado();
+        rutaArchivoCertificado = seleccionarArchivo(txtNombreCertificado, rutaArchivoCertificado, "Certificados");
     }//GEN-LAST:event_btnAgregarCertificadoActionPerformed
 
     private void btnAgregarHojaInstruccionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarHojaInstruccionActionPerformed
-        seleccionarHojaInstruccion();
+        rutaArchivoHojaInstruccion = seleccionarArchivo(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion, "HojasInstruccion");
     }//GEN-LAST:event_btnAgregarHojaInstruccionActionPerformed
 
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            inicializarAtributos();
+            inicializarConexion();
+            inicializarServicios();
             cargarProveedores();
             generarCodigoHoja();
         } catch (SQLException ex) {
@@ -295,11 +297,13 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void inicializarAtributos() throws SQLException {
+    private void inicializarConexion() throws SQLException {
         this.conexion = Conexion.getInstance().conectar();
+    }
+
+    private void inicializarServicios() {
         this.excel = new GeneradorExcel();
         this.irs = new InspeccionReciboServicio();
-        this.listaProveedores = new ArrayList<>();
     }
 
     private void cargarProveedores() throws SQLException {
@@ -311,32 +315,13 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         txtNoHoja.setText(irs.generarCodigoDeHoja());
     }
 
-    private void seleccionarFactura() {
-        rutaArchivoFactura = seleccionarArchivo(txtNombreFactura, rutaArchivoFactura);
-    }
-
-    private String seleccionarArchivo(JTextField textField, String rutaArchivo) {
-        File archivoSeleccionado = irs.seleccionarArchivo(this);
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName();
-            rutaArchivo = archivoSeleccionado.getAbsolutePath();
-            textField.setText(nombreArchivo);
-        }
-        return rutaArchivo;
-    }
-
-    private void cerrarVentana() {
-        AgregarIrGUI.this.dispose();
-        Conexion.getInstance().desconectar(conexion);
-    }
-
     private void procesarArchivoXLS() {
-        Date fechaSeleccionada = dchFechaFactura.getDate();
+        Date fechaSeleccionada = dchFechaFactura.getDate(); // Obtener la fecha seleccionada en el campo de fecha de factura
 
-        String noHoja = txtNoHoja.getText().trim();
+        String noHoja = txtNoHoja.getText().trim(); // Se obtiene el no de hoja de inspección correspondiente
         capturarDatosInspeccionRecibo(noHoja);
 
-        if (fechaSeleccionada == null) {
+        if (fechaSeleccionada == null) { // Si no hay fecha Capturada...
             procesarArchivoExcel(noHoja);
         } else {
             procesarDatosCapturados(fechaSeleccionada, noHoja);
@@ -348,7 +333,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         inspeccionRecibo.setCalibre(txtCalibre.getText().trim());
         inspeccionRecibo.setpLamina(cbxPresentacionLamina.getSelectedItem().toString());
         inspeccionRecibo.setEstatus(cbxEstatus.getSelectedItem().toString());
-        inspeccionRecibo.setNombreHJ(txtNombreHojaInstruccion.getText().trim());
+        inspeccionRecibo.setNombreHojaInstruccion(txtNombreHojaInstruccion.getText().trim());
     }
 
     private void procesarArchivoExcel(String noHoja) {
@@ -357,9 +342,9 @@ public class AgregarIrGUI extends javax.swing.JFrame {
             XSSFWorkbook workbook;
 
             try (FileInputStream fis = new FileInputStream(archivoSeleccionado)) {
-                workbook = new XSSFWorkbook(fis);
-                Sheet hoja1 = workbook.getSheetAt(0);
-                excel.setDatosCeldas(hoja1, 5, 2, noHoja);
+                workbook = new XSSFWorkbook(fis); // Leer el archivo de excel
+                Sheet hoja1 = workbook.getSheetAt(0); // Se obtiene la primera hoja del archivo
+                excel.setDatosCeldas(hoja1, 5, 2, noHoja); // Se modifica 
                 cargarDatosDesdeExcel(hoja1);
             }
 
@@ -367,7 +352,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                 workbook.write(fos);
             }
 
-            irs.cargarArchivo(rutaArchivoHojaInstruccion, inspeccionRecibo::setHojaIns);
             if (irs.existeNoRollo(conexion, txtNoRollo.getText())) {
                 JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
             }
@@ -397,13 +381,13 @@ public class AgregarIrGUI extends javax.swing.JFrame {
 
     private void guardarDatos() {
         try {
-            irs.agregar(conexion, inspeccionRecibo);
+            irs.agregarInspeccion(conexion, inspeccionRecibo);
             JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
             cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);
         } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
-            irs.manejarExcepcion("Error al guardar la información: ", ex);
+            Utilidades.manejarExcepcion("ERROR al guardar la información: ", ex);
+            Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -415,7 +399,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         inspeccionRecibo.setNoPedido(txtNoPedido.getText().trim());
         inspeccionRecibo.setNoRollo(txtNoRollo.getText().trim());
         inspeccionRecibo.setPzKg(txtPzKg.getText().trim());
-        inspeccionRecibo.setNombreHJ(txtNombreHojaInstruccion.getText());
+        inspeccionRecibo.setNombreHojaInstruccion(txtNombreHojaInstruccion.getText());
         inspeccionRecibo.setNombreFact(txtNombreFactura.getText());
         inspeccionRecibo.setNombreCert(txtNombreCertificado.getText());
 
@@ -438,12 +422,25 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                 && !inspeccionRecibo.getFechaFactura().isEmpty();
     }
 
-    private void seleccionarCertificado() {
-        rutaArchivoCertificado = seleccionarArchivo(txtNombreCertificado, rutaArchivoCertificado);
+    private String seleccionarArchivo(JTextField textField, String rutaArchivo, String tipoArchivo) {
+        File archivoSeleccionado = irs.seleccionarArchivo(this);
+        if (archivoSeleccionado != null) {
+            try {
+                String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                textField.setText(nombreArchivo);
+            } catch (IOException ex) {
+                Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
+                Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        return rutaArchivo;
     }
 
-    private void seleccionarHojaInstruccion() {
-        rutaArchivoHojaInstruccion = seleccionarArchivo(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
+    private void cerrarVentana() {
+        AgregarIrGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**
@@ -483,7 +480,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbxPresentacionLamina;
     private javax.swing.JComboBox<String> cbxProveedor;
     private com.toedter.calendar.JDateChooser dchFechaFactura;
-    private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lblAgregar;
     private javax.swing.JLabel lblCalibre;

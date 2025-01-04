@@ -42,25 +42,17 @@ public class EspecificacionesGUI extends JFrame {
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
-
-    // Objetos para manipulación de los datos
-    private DatosIRM datosIR;
-    private EspecificacionM especificacion;
-    private InspeccionReciboM inspeccionRecibo;
-
-    // Servicios y Utilidades
-    private InspeccionReciboServicio irs;
-    private AnchoLargoServicio als;
-    private RugosidadDurezaServicio rds;
-    private EspecificacionesServicio es;
-    private GeneradorExcel xls;
-
-    // Tablas para controlar la rugosidad y el ancho
-    private JTable tblRugosidadDureza;
-    private JTable tblAnchoLargo;
-
-    // Listas de datos
-    private List<JTable> listaTablas;
+    private DatosIRM datosIR; // Maneja los datos de la hoja de instrucción
+    private EspecificacionM especificacion; // Maneja los datos de las especificaciones
+    private InspeccionReciboM inspeccionRecibo; // Maneja la información del registro
+    private InspeccionReciboServicio irs; // Servicios y Utilidades
+    private AnchoLargoServicio als; // Servicios y Utilidades de la tabla ancho/largo
+    private RugosidadDurezaServicio rds; // Servicios y Utilidades de la tabla rugosidad/Dureza
+    private EspecificacionesServicio es; // // Servicios y Utilidades para gestionar las especificaciones
+    private GeneradorExcel xls; // Maneja el archivo de la hoja de instrucción
+    private JTable tblRugosidadDureza;  // Contiene la información de la tabla Rugosidad/Dureza del apartado Anterior
+    private JTable tblAnchoLargo; // Contiene la información de la tabla Ancho/Largo del apartado Anterior
+    private List<JTable> listaTablas; // 
     private List<String> listaMedidasCalibre;
     private List<String> listaEspecificacion;
     private List<AnchoLargoM> listaAnchoLargo;
@@ -90,8 +82,6 @@ public class EspecificacionesGUI extends JFrame {
         this.tblRugosidadDureza = tblRugosidadDureza;
         this.tblAnchoLargo = tblAnchoLargo;
         inicializarVentanaYComponentes();
-        als.setTbl(tblAnchoLargo);
-        rds.setTbl(tblRugosidadDureza);
     }
 
     @Override
@@ -228,10 +218,7 @@ public class EspecificacionesGUI extends JFrame {
             List rdd = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
 
             String HojaIns = xls.generarHojaInstruccion(conexion, datosIR, inspeccionRecibo, tblAnchoLargo, listaTablas, ald, rdd);
-
-            inspeccionRecibo.setHojaIns(this.irs.leerArchivo(HojaIns));
-
-            irs.subirHI(conexion, inspeccionRecibo);
+            inspeccionRecibo.setRutaHojaInstruccion("archivos\\InspeccionRecibo\\HojasInstruccion\\"+HojaIns);
             cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);
         } catch (IOException | SQLException | ClassNotFoundException ex) {
@@ -243,11 +230,13 @@ public class EspecificacionesGUI extends JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            inicializarAtributos();
+            inicializarConexion();
             inicializarServicios();
             inicializarListas();
             configurarPanelYTablas();
             configurarListeners();
+            als.setTbl(tblAnchoLargo);
+            rds.setTbl(tblRugosidadDureza);
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir EspecificacionesGUI: ", ex);
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -261,7 +250,7 @@ public class EspecificacionesGUI extends JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void inicializarAtributos() throws SQLException {
+    private void inicializarConexion() throws SQLException {
         this.conexion = Conexion.getInstance().conectar();
     }
 
@@ -368,11 +357,11 @@ public class EspecificacionesGUI extends JFrame {
     }
 
     private JTable crearTablaConModelo(DefaultTableModel modeloTabla) {
-        JTable newTable = new JTable(modeloTabla);
+        JTable nuevaTabla = new JTable(modeloTabla);
         CustomTableCellRenderer renderer = new CustomTableCellRenderer();
-        newTable.setDefaultRenderer(Object.class, renderer);
-        newTable.setPreferredScrollableViewportSize(new Dimension(100, 30));
-        return newTable;
+        nuevaTabla.setDefaultRenderer(Object.class, renderer);
+        nuevaTabla.setPreferredScrollableViewportSize(new Dimension(100, 30));
+        return nuevaTabla;
     }
 
     private void configurarColumnasTabla(TableColumnModel columnModel, int numPropiedadesMecanicas, int numComposicionQuimica) {
@@ -422,10 +411,10 @@ public class EspecificacionesGUI extends JFrame {
         try {
             return irs.getIdHI(conexion, inspeccionRecibo);
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al Obtener el id de la hoja de instrución solicitada: ", ex);
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-            irs.manejarExcepcion("Error al Obtener el id de la hoja de instrución solicitada: ", ex);
-            return 0;
         }
+        return 0;
     }
 
     /**

@@ -1,8 +1,6 @@
 package InspeccionRecibo;
 
 import Modelos.CalibreIRM;
-import Modelos.InspeccionReciboM;
-import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.InspeccionReciboServicio;
 import Servicios.Utilidades;
@@ -19,24 +17,11 @@ import javax.swing.JOptionPane;
 public class AgregarCalibreHIGUI extends javax.swing.JFrame {
 
     // Atributos
-    private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
     private CalibreIRM calibreIRM; // Maneja la información sobre el calibre
     private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
-    private InspeccionReciboM inspeccionRecibo; // Maneja la información de la inspección 
 
     public AgregarCalibreHIGUI() {
-        initComponents();
-    }
-
-    public AgregarCalibreHIGUI(Usuarios usuario) {
-        this.usuario = usuario;
-        inicializarVentanaYComponentes();
-    }
-
-    public AgregarCalibreHIGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) {
-        this.usuario = usuario;
-        this.inspeccionRecibo = inspeccionRecibo;
         inicializarVentanaYComponentes();
     }
 
@@ -144,7 +129,6 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
         cerrarVentana();
-        irs.abrirEspecificacionesGUI(usuario, inspeccionRecibo);
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
@@ -159,8 +143,7 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
             calibreIRM.setEspecificacion(especificacion);
             calibreIRM.setDescripcionMP(descripcion);
             try {
-                irs.agregar(conexion, calibreIRM);
-                irs.agregarDMP(conexion, calibreIRM);
+                irs.agregarCalibre(conexion, calibreIRM);
                 JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
                 cerrarVentana();
             } catch (SQLException ex) {
@@ -174,11 +157,12 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            inicializarAtributos();
+            inicializarConexion();
+            inicializarAtributosYServicios();
             inicializarListener();
             cargarEspecificaciones();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al inicializar los componentes", ex);
+            Utilidades.manejarExcepcion("ERROR en la conexión de la base de datos: ", ex);
             Logger.getLogger(AgregarCalibreHIGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -190,8 +174,11 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void inicializarAtributos() throws SQLException {
+    private void inicializarConexion() throws SQLException {
         this.conexion = Conexion.getInstance().conectar();
+    }
+
+    private void inicializarAtributosYServicios() {
         this.irs = new InspeccionReciboServicio();
         this.calibreIRM = new CalibreIRM();
     }
@@ -215,13 +202,13 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         irs.obtenerEspecificaciones(conexion).forEach(cbxEspecificaciones::addItem);
     }
 
+    private boolean camposCompletos(String calibre, String medidas) {
+        return !calibre.isEmpty() && !medidas.isEmpty();
+    }
+
     private void cerrarVentana() {
         AgregarCalibreHIGUI.this.dispose();
         Conexion.getInstance().desconectar(conexion);
-    }
-
-    private boolean camposCompletos(String calibre, String medidas) {
-        return !calibre.isEmpty() && !medidas.isEmpty();
     }
 
     /**

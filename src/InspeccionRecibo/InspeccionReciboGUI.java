@@ -12,28 +12,19 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.PatternSyntaxException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-import swing.Button;
-import Paginacion.EventPagination;
 import Paginacion.estilo.PaginationItemRenderStyle1;
-import java.sql.PreparedStatement;
 
 public class InspeccionReciboGUI extends javax.swing.JFrame {
 
@@ -42,9 +33,9 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private Connection conexion; // Conexión a la base de datos
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
     private InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Servicios y Utilidades
-    private GeneradorExcel excel = new GeneradorExcel(); // Servicios para trabajar con los archivos de excel    
+    private GeneradorExcel excel = new GeneradorExcel(); // Servicio para trabajar con archivos excel    
     private List<InspeccionReciboM> listaInspeccionRecibo; // Lista de registros de Inspección Recibo
-    private TableRowSorter<DefaultTableModel> trs; // Objeto filtrador de campos de la tabla
+    private TableRowSorter<DefaultTableModel> trs; // filtrado de los campos de la tabla
 
     // Columnas de la tabla
     private static final int COLUMNA_NO_HOJA = 0;
@@ -57,7 +48,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private static final int COLUMNA_NO_ROLLO = 7;
     private static final int COLUMNA_PZKG = 8;
     private static final int COLUMNA_ESTATUS = 9;
-    private static final int COLUMNA_VER_FACTURA = 10;
+    private static final int COLUMNA_OPERACIONES = 10;
 
     public InspeccionReciboGUI() {
         initComponents();
@@ -83,11 +74,10 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblReporteInspeccionRecibo = new javax.swing.JLabel();
-        btnModificar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
-        btnActualizar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
-        btnAgregar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
-        btnEliminar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        btnModificarRegistro = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        btnActualizarRegistros = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        btnAgregarRegistro = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        btnEliminarRegistro = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
         lblJCIcono = new javax.swing.JLabel();
         btnAgregarCalibre = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
@@ -98,70 +88,65 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         paginacion1 = new Paginacion.Pagination();
+        lblReporteInspeccionRecibo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
         setMinimumSize(new java.awt.Dimension(1280, 570));
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        lblReporteInspeccionRecibo.setBackground(new java.awt.Color(255, 255, 255));
-        lblReporteInspeccionRecibo.setFont(new java.awt.Font("Wide Latin", 1, 18)); // NOI18N
-        lblReporteInspeccionRecibo.setForeground(new java.awt.Color(10, 110, 255));
-        lblReporteInspeccionRecibo.setText("REPORTE DE INSPECCIÓN/RECIBO");
-        getContentPane().add(lblReporteInspeccionRecibo, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 30, 660, 50));
-
-        btnModificar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnModificar.setForeground(new java.awt.Color(255, 255, 255));
-        btnModificar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/modificar.png"))); // NOI18N
-        btnModificar.setText("Modificar");
-        btnModificar.setMaximumSize(new java.awt.Dimension(115, 40));
-        btnModificar.setMinimumSize(new java.awt.Dimension(115, 40));
-        btnModificar.setPreferredSize(new java.awt.Dimension(115, 40));
-        btnModificar.addActionListener(new java.awt.event.ActionListener() {
+        btnModificarRegistro.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnModificarRegistro.setForeground(new java.awt.Color(255, 255, 255));
+        btnModificarRegistro.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/modificar.png"))); // NOI18N
+        btnModificarRegistro.setText("Modificar");
+        btnModificarRegistro.setMaximumSize(new java.awt.Dimension(115, 40));
+        btnModificarRegistro.setMinimumSize(new java.awt.Dimension(115, 40));
+        btnModificarRegistro.setPreferredSize(new java.awt.Dimension(115, 40));
+        btnModificarRegistro.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnModificarActionPerformed(evt);
+                btnModificarRegistroActionPerformed(evt);
             }
         });
-        getContentPane().add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 250, 130, 40));
+        getContentPane().add(btnModificarRegistro, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 250, 130, 40));
 
-        btnActualizar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnActualizar.setForeground(new java.awt.Color(255, 255, 255));
-        btnActualizar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/actualizar.png"))); // NOI18N
-        btnActualizar.setText("Actualizar");
-        btnActualizar.setMaximumSize(new java.awt.Dimension(115, 40));
-        btnActualizar.setMinimumSize(new java.awt.Dimension(115, 40));
-        btnActualizar.setPreferredSize(new java.awt.Dimension(115, 40));
-        btnActualizar.addActionListener(new java.awt.event.ActionListener() {
+        btnActualizarRegistros.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnActualizarRegistros.setForeground(new java.awt.Color(255, 255, 255));
+        btnActualizarRegistros.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/actualizar.png"))); // NOI18N
+        btnActualizarRegistros.setText("Actualizar");
+        btnActualizarRegistros.setMaximumSize(new java.awt.Dimension(115, 40));
+        btnActualizarRegistros.setMinimumSize(new java.awt.Dimension(115, 40));
+        btnActualizarRegistros.setPreferredSize(new java.awt.Dimension(115, 40));
+        btnActualizarRegistros.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnActualizarActionPerformed(evt);
+                btnActualizarRegistrosActionPerformed(evt);
             }
         });
-        getContentPane().add(btnActualizar, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 310, 130, 40));
+        getContentPane().add(btnActualizarRegistros, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 310, 130, 40));
 
-        btnAgregar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnAgregar.setForeground(new java.awt.Color(255, 255, 255));
-        btnAgregar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/1004733.png"))); // NOI18N
-        btnAgregar.setText("Agregar");
-        btnAgregar.addActionListener(new java.awt.event.ActionListener() {
+        btnAgregarRegistro.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnAgregarRegistro.setForeground(new java.awt.Color(255, 255, 255));
+        btnAgregarRegistro.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/1004733.png"))); // NOI18N
+        btnAgregarRegistro.setText("Agregar");
+        btnAgregarRegistro.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAgregarActionPerformed(evt);
+                btnAgregarRegistroActionPerformed(evt);
             }
         });
-        getContentPane().add(btnAgregar, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 190, 130, 40));
+        getContentPane().add(btnAgregarRegistro, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 190, 130, 40));
 
-        btnEliminar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnEliminar.setForeground(new java.awt.Color(255, 255, 255));
-        btnEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Eliminar.png"))); // NOI18N
-        btnEliminar.setText("Eliminar");
-        btnEliminar.setMaximumSize(new java.awt.Dimension(115, 40));
-        btnEliminar.setMinimumSize(new java.awt.Dimension(115, 40));
-        btnEliminar.setPreferredSize(new java.awt.Dimension(115, 40));
-        btnEliminar.addActionListener(new java.awt.event.ActionListener() {
+        btnEliminarRegistro.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnEliminarRegistro.setForeground(new java.awt.Color(255, 255, 255));
+        btnEliminarRegistro.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Eliminar.png"))); // NOI18N
+        btnEliminarRegistro.setText("Eliminar");
+        btnEliminarRegistro.setMaximumSize(new java.awt.Dimension(115, 40));
+        btnEliminarRegistro.setMinimumSize(new java.awt.Dimension(115, 40));
+        btnEliminarRegistro.setPreferredSize(new java.awt.Dimension(115, 40));
+        btnEliminarRegistro.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnEliminarActionPerformed(evt);
+                btnEliminarRegistroActionPerformed(evt);
             }
         });
-        getContentPane().add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 370, 130, 40));
+        getContentPane().add(btnEliminarRegistro, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 370, 130, 40));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -204,11 +189,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         tblInspeccionRecibo.setOpaque(false);
         tblInspeccionRecibo.setPreferredSize(new java.awt.Dimension(1000, 350));
         tblInspeccionRecibo.setRowHeight(50);
-        tblInspeccionRecibo.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblInspeccionReciboMouseClicked(evt);
-            }
-        });
         jScrollPane1.setViewportView(tblInspeccionRecibo);
 
         getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 139, 1180, 380));
@@ -240,9 +220,15 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         paginacion1.setOpaque(false);
-        jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 10, -1, -1));
+        jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 10, -1, -1));
 
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 530, 1180, 50));
+
+        lblReporteInspeccionRecibo.setBackground(new java.awt.Color(255, 255, 255));
+        lblReporteInspeccionRecibo.setFont(new java.awt.Font("Wide Latin", 1, 18)); // NOI18N
+        lblReporteInspeccionRecibo.setForeground(new java.awt.Color(10, 110, 255));
+        lblReporteInspeccionRecibo.setText("REPORTE DE INSPECCIÓN/RECIBO");
+        jPanel1.add(lblReporteInspeccionRecibo, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 30, 660, 50));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1330, 610));
 
@@ -253,54 +239,37 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         cerrarVentana();
     }//GEN-LAST:event_btnCerrarActionPerformed
 
-    private void btnAgregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarActionPerformed
+    private void btnAgregarRegistroActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarRegistroActionPerformed
         cerrarVentana();
         irs.abrirAgregarIrGUI(usuario);
-    }//GEN-LAST:event_btnAgregarActionPerformed
+    }//GEN-LAST:event_btnAgregarRegistroActionPerformed
 
-    private void btnActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarActionPerformed
+    private void btnActualizarRegistrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarRegistrosActionPerformed
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "DATOS ACTUALIZADOS");
         irs.abrirInspeccionReciboGUI(usuario);
-    }//GEN-LAST:event_btnActualizarActionPerformed
+    }//GEN-LAST:event_btnActualizarRegistrosActionPerformed
 
-    private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
+    private void btnEliminarRegistroActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarRegistroActionPerformed
         int filaSeleccionada = tblInspeccionRecibo.getSelectedRow();
-        if (filaSeleccionada != -1) {
-
-            String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_NO_HOJA);
-            String fechaFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_FECHA);
-            String noFactura = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_NO_FACTURA);
-            String noPedido = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_NO_PEDIDO);
-            String pzKg = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, COLUMNA_PZKG);
-
-            if (Utilidades.confirmarEliminacion()) {
-                eliminarRegistro(noHoja, fechaFactura, noFactura, noPedido, pzKg);
+        if (filaSeleccionada != -1) { // Si el usuario selecciono una fila ...
+            if (Utilidades.confirmarEliminacion()) { // Si el usuario confirma la eliminación ...
+                eliminarRegistro(listaInspeccionRecibo.get(filaSeleccionada));
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
+            JOptionPane.showMessageDialog(this, "Seleccione la fila del registro que desea eliminar.");
         }
-    }//GEN-LAST:event_btnEliminarActionPerformed
+    }//GEN-LAST:event_btnEliminarRegistroActionPerformed
 
-    private void btnModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarActionPerformed
+    private void btnModificarRegistroActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarRegistroActionPerformed
         int filaSeleccionada = tblInspeccionRecibo.getSelectedRow();
-        if (filaSeleccionada != -1) {
+        if (filaSeleccionada != -1) { // Si el usuario selecciono una fila ...
             cerrarVentana();
             irs.abrirModificarIrGUI(listaInspeccionRecibo.get(filaSeleccionada), usuario);
         } else {
-            JOptionPane.showMessageDialog(this, "Por favor seleccione una fila.");
+            JOptionPane.showMessageDialog(this, "Seleccione la fila del registro que desea modificar.");
         }
-    }//GEN-LAST:event_btnModificarActionPerformed
-
-    private void tblInspeccionReciboMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblInspeccionReciboMouseClicked
-        int columnaSeleccionada = tblInspeccionRecibo.getColumnModel().getColumnIndexAtX(evt.getX());
-        int filaSeleccionada = tblInspeccionRecibo.rowAtPoint(evt.getPoint());
-
-        if (Utilidades.esCeldaValida(tblInspeccionRecibo, filaSeleccionada, columnaSeleccionada)) {
-            manejarCeldaSeleccionada(filaSeleccionada, columnaSeleccionada);
-
-        }
-    }//GEN-LAST:event_tblInspeccionReciboMouseClicked
+    }//GEN-LAST:event_btnModificarRegistroActionPerformed
 
     private void btnToExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnToExcelActionPerformed
         try {
@@ -309,35 +278,26 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             Utilidades.manejarExcepcion("Error al genear el archivo InspeccionRecibo.xlsx: ", ex);
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
-        JOptionPane.showMessageDialog(this, "Datos Exportados.");
+        JOptionPane.showMessageDialog(this, "Datos Exportados exitosamente.");
     }//GEN-LAST:event_btnToExcelActionPerformed
 
     private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
-        txtBuscador.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(final KeyEvent ke) {
-                String cadena = (txtBuscador.getText());
-                txtBuscador.setText(cadena);
-                filtrarTabla();
-            }
-        });
+        String filtro = txtBuscador.getText(); // Captura el texto actual del buscador
+        RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter(filtro, COLUMNA_PROVEEDOR, COLUMNA_NO_FACTURA, COLUMNA_CALIBRE, COLUMNA_NO_ROLLO); // Columnas donde se aplica el filtro
+        trs.setRowFilter(filtroFila);
     }//GEN-LAST:event_txtBuscadorKeyTyped
 
     private void btnAgregarCalibreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCalibreActionPerformed
-        irs.abrirAgregarCalibreHIGUI(usuario);
+        irs.abrirAgregarCalibreHIGUI();
     }//GEN-LAST:event_btnAgregarCalibreActionPerformed
 
     private void inicializarVentanaYComponentes() {
-        try {
-            configurarVentana();
-            inicializarAtributos();
-            inicializarTabla(1);
-            configurarBuscador();
-
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Abrir InspeccionReciboGUI: ", ex);
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        configurarVentana();
+        inicializarConexion();
+        inicializarServicios();
+        inicializarTabla(1);
+        configurarPaginacion();
+        configurarBuscador();
     }
 
     private void configurarVentana() {
@@ -347,19 +307,23 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void inicializarAtributos() throws SQLException {
+    private void inicializarConexion() {
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR en la conexión de la base de datos: ", ex);
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void inicializarServicios() {
         this.irs = new InspeccionReciboServicio();
         this.excel = new GeneradorExcel();
-        this.conexion = Conexion.getInstance().conectar();
-        this.modeloTabla = (DefaultTableModel) tblInspeccionRecibo.getModel();
-        this.trs = new TableRowSorter(tblInspeccionRecibo.getModel());
-        tblInspeccionRecibo.setRowSorter(trs);
+    }
 
-        paginacion1.addEventPagination((int page) -> {
-            inicializarTabla(page);
-        });
+    private void configurarPaginacion() {
+        paginacion1.addEventPagination(pagina -> inicializarTabla(pagina));
         paginacion1.setPaginationItemRender(new PaginationItemRenderStyle1());
-
     }
 
     private void configurarBuscador() {
@@ -369,6 +333,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void inicializarTabla(int page) {
         try {
+            configurarModeloYFiltro();
             mostrarDatosTabla(page);
             configurarAccionesTabla();
         } catch (SQLException | ClassNotFoundException ex) {
@@ -377,48 +342,39 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         }
     }
 
-    private void cargarDatosTabla(int page, int limit) throws SQLException {
-        this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion, page, limit);
+    private void configurarModeloYFiltro() {
+        this.modeloTabla = (DefaultTableModel) tblInspeccionRecibo.getModel();
+        this.trs = new TableRowSorter(tblInspeccionRecibo.getModel());
+        tblInspeccionRecibo.setRowSorter(trs);
     }
 
-    private void configurarAccionesTabla() {
-        TableActionEventIR event = crearTableActionEventIR();
-        tblInspeccionRecibo.getColumnModel().getColumn(10).setCellRenderer(new TableActionCellRenderIR());
-        tblInspeccionRecibo.getColumnModel().getColumn(10).setCellEditor(new TableActionCellEditorIR(event));
-    }
-
-    private void mostrarDatosTabla(int page) throws SQLException, ClassNotFoundException {
+    private void mostrarDatosTabla(int pagina) throws SQLException, ClassNotFoundException {
         limpiarTabla();
         ajustarColumnas();
-        int limit = 7;
-        String sqlCount = "SELECT COUNT(*) FROM inspeccionrecibo";
-        PreparedStatement p = conexion.prepareStatement(sqlCount);
-        int count = 0;
-        ResultSet r = p.executeQuery();
-        if (r.first()) {
-            count = r.getInt(1);
-        }
-        r.close();
-        p.close();
-        int totalPage = (int) Math.ceil(count / limit);
-        cargarDatosTabla(page, limit);
+        int limiteFilas = 7; // Cantidad de Filas por página
+        int cantidad = irs.contarRegistros(conexion); // Obtener la cantidad total de registros
+        int paginasTotales = (int) Math.ceil(cantidad / limiteFilas);
+        cargarDatosTabla(pagina, limiteFilas);
         llenarTabla();
-        paginacion1.setPagegination(page, totalPage);
-        
-    }
-    
-    private void ajustarColumnas() {
-        tblInspeccionRecibo.getColumnModel().getColumn(0).setMaxWidth(70);
-        tblInspeccionRecibo.getColumnModel().getColumn(3).setMaxWidth(80);
-        tblInspeccionRecibo.getColumnModel().getColumn(4).setMaxWidth(80);
-        tblInspeccionRecibo.getColumnModel().getColumn(5).setMaxWidth(70);
-        tblInspeccionRecibo.getColumnModel().getColumn(7).setMaxWidth(80);
-        tblInspeccionRecibo.getColumnModel().getColumn(8).setMaxWidth(70);
-        tblInspeccionRecibo.getColumnModel().getColumn(9).setMaxWidth(80);
+        paginacion1.setPagegination(pagina, paginasTotales);
     }
 
     private void limpiarTabla() {
         modeloTabla.setRowCount(0);
+    }
+
+    private void ajustarColumnas() {
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_NO_HOJA).setMaxWidth(70);
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_NO_FACTURA).setMaxWidth(80);
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_NO_PEDIDO).setMaxWidth(80);
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_CALIBRE).setMaxWidth(70);
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_NO_ROLLO).setMaxWidth(80);
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_PZKG).setMaxWidth(70);
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_ESTATUS).setMaxWidth(80);
+    }
+
+    private void cargarDatosTabla(int pagina, int limiteFilas) throws SQLException {
+        this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion, pagina, limiteFilas);
     }
 
     private void llenarTabla() {
@@ -445,96 +401,56 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         return fila;
     }
 
-    private void cerrarVentana() {
-        InspeccionReciboGUI.this.dispose();
-        Conexion.getInstance().desconectar(conexion);
-    }
-
-    private void eliminarRegistro(String noHoja, String fechaFactura, String noFactura, String noPedido, String pzKg) {
-        try {
-            this.irs.eliminar(conexion, noHoja, fechaFactura, noFactura, noPedido, pzKg); // Se llama el método de eliminar
-            InspeccionReciboGUI.this.dispose(); // Se liberan los recursos de la ventana
-            JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS"); // Se muestra el mensaje de confirmación de la eliminación
-            this.irs.abrirInspeccionReciboGUI(usuario);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    private void configurarAccionesTabla() {
+        TableActionEventIR event = crearTableActionEventIR();
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellRenderer(new TableActionCellRenderIR());
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellEditor(new TableActionCellEditorIR(event));
     }
 
     private TableActionEventIR crearTableActionEventIR() {
         return new TableActionEventIR() {
             @Override
-            public void onViewFactura(int row) {
-                System.out.println("te quiero coger");
+            public void onViewFactura(int fila) {
+                if (!verificarYAbrirArchivo(listaInspeccionRecibo.get(fila).getRutaFactura())) {
+                    JOptionPane.showMessageDialog(null, "No hay archivo");
+                }
             }
 
             @Override
-            public void onViewCertificado(int row) {
-                System.out.println("de la mano");
+            public void onViewCertificado(int fila) {
+                if (!verificarYAbrirArchivo(listaInspeccionRecibo.get(fila).getRutaCertificado())) {
+                    JOptionPane.showMessageDialog(null, "No hay archivo");
+                }
             }
 
             @Override
-            public void onHojaInstruccion(int row) {
-                System.out.println("y ser felices");
+            public void onHojaInstruccion(int fila) {
+                if (!verificarYAbrirArchivo(listaInspeccionRecibo.get(fila).getRutaHojaInstruccion())) {
+                    cerrarVentana();
+                    irs.abrirHojaInstruccionGUI(usuario, listaInspeccionRecibo.get(fila));
+                }
             }
-
         };
     }
 
-    private void manejarCeldaSeleccionada(int filaSeleccionada, int columnaSeleccionada) {
-        String noHoja = (String) tblInspeccionRecibo.getValueAt(filaSeleccionada, 0);
-        int posicion = -1;
-
-        for (int i = 0; i < listaInspeccionRecibo.size(); i++) {
-            InspeccionReciboM elemento = listaInspeccionRecibo.get(i);
-            if (elemento.getNoHoja().equals(noHoja)) {
-                posicion = i;
-                break;
-            }
+    private boolean verificarYAbrirArchivo(String rutaArchivo) {
+        if (rutaArchivo != null && rutaArchivo.isEmpty()) {
+            Utilidades.abrirDocumento(rutaArchivo);
+            return true;
         }
-
-        Object value = tblInspeccionRecibo.getValueAt(filaSeleccionada, columnaSeleccionada);
-
-        if (value instanceof JButton) {
-            JButton boton = (Button) value;
-            procesarBoton(boton, columnaSeleccionada, posicion, noHoja);
-
-        }
+        return false;
     }
 
-    private void procesarBoton(JButton boton, int columnaSeleccionada, int posicion, String noHoja) {
-        String textoBoton = boton.getText();
-        switch (textoBoton) {
-            case "Vacío":
-                JOptionPane.showMessageDialog(null, "No hay archivo");
-                break;
-            case "Realizar":
-                cerrarVentana();
-                irs.abrirHojaInstruccionGUI(usuario, listaInspeccionRecibo.get(posicion));
-                break;
-            default:
-                try {
-                    if (columnaSeleccionada == 10 || columnaSeleccionada == 11) {
-                        irs.ejecutarArchivoPDF(conexion, noHoja, columnaSeleccionada);
-                    } else if (columnaSeleccionada == 12) {
-                        irs.ejecutarArchivoXLSX(conexion, noHoja, columnaSeleccionada);
-                    }
-                } catch (ClassNotFoundException | SQLException ex) {
-                    Utilidades.manejarExcepcion("ERROR al procesar la información de la columna: ", ex);
-                    Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                break;
-        }
+    private void eliminarRegistro(InspeccionReciboM inspeccionRecibo) {
+        irs.eliminarRegistro(conexion, inspeccionRecibo);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
+        irs.abrirInspeccionReciboGUI(usuario);
     }
 
-    private void filtrarTabla() {
-        String filtro = txtBuscador.getText();
-        try {
-            RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter(filtro, 2, 3, 5, 7); // Se filtra por proveedor, número de factura, calibre y no. de rollo
-            trs.setRowFilter(filtroFila);
-        } catch (PatternSyntaxException e) {
-            trs.setRowFilter(null);
-        }
+    private void cerrarVentana() {
+        InspeccionReciboGUI.this.dispose();
+        Conexion.getInstance().desconectar(conexion);
     }
 
     /**
@@ -565,12 +481,12 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnActualizar;
-    private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnActualizarRegistros;
     private javax.swing.JButton btnAgregarCalibre;
+    private javax.swing.JButton btnAgregarRegistro;
     private javax.swing.JButton btnCerrar;
-    private javax.swing.JButton btnEliminar;
-    private javax.swing.JButton btnModificar;
+    private javax.swing.JButton btnEliminarRegistro;
+    private javax.swing.JButton btnModificarRegistro;
     private javax.swing.JButton btnToExcel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;

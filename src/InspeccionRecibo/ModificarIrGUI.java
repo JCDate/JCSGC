@@ -49,7 +49,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         cargarDatosEnComponentes();
         cargarProveedoresEnComboBox();
         establecerFechaFactura();
-        this.inspeccionReciboOriginal = clonarInspeccionRecibo(inspeccionRecibo);
+//        this.inspeccionReciboOriginal = clonarInspeccionRecibo(inspeccionRecibo);
     }
 
     public ModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario, String rutaArchivoHojaInstruccion) throws ClassNotFoundException {
@@ -331,7 +331,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         txtPzKg.setText(inspeccionRecibo.getPzKg());
         txtNombreFactura.setText(inspeccionRecibo.getNombreFact());
         txtNombreCertificado.setText(inspeccionRecibo.getNombreCert());
-        txtNombreHojaInstruccion.setText(inspeccionRecibo.getNombreHJ());
+//        txtNombreHojaInstruccion.setText(inspeccionRecibo.getNombreHJ());
         txtNoHoja.setText(String.valueOf(inspeccionRecibo.getNoHoja()));
 
         cbxEstatus.setSelectedItem(inspeccionRecibo.getEstatus());
@@ -354,24 +354,24 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         dchFechaFactura.setDate(fechaFactura);
     }
 
-    private InspeccionReciboM clonarInspeccionRecibo(InspeccionReciboM original) {
-        return new InspeccionReciboM(
-                original.getId(),
-                original.getFechaFactura(),
-                "", "", "",
-                original.getCalibre(),
-                "",
-                original.getNoRollo(),
-                original.getPzKg(),
-                "", "",
-                original.getFacturapdf(),
-                original.getCertificadopdf(),
-                original.getHojaIns(),
-                original.getNombreHJ(),
-                original.getNombreFact(),
-                original.getNombreCert()
-        );
-    }
+//    private InspeccionReciboM clonarInspeccionRecibo(InspeccionReciboM original) {
+////        return new InspeccionReciboM(
+////                original.getId(),
+////                original.getFechaFactura(),
+////                "", "", "",
+////                original.getCalibre(),
+////                "",
+////                original.getNoRollo(),
+////                original.getPzKg(),
+////                "", "",
+//////                original.getFacturapdf(),
+//////                original.getCertificadopdf(),
+//////                original.getHojaIns(),
+//////                original.getNombreHJ(),
+////                original.getNombreFact(),
+////                original.getNombreCert()
+////        );
+//    }
 
     public void cerrarVentana() {
         ModificarIrGUI.this.dispose();
@@ -398,7 +398,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         inspeccionRecibo.setPzKg(pzKg);
         inspeccionRecibo.setEstatus(estatus);
         inspeccionRecibo.setNoHoja(noHoja);
-        inspeccionRecibo.setNombreHJ(nombreHJ);
+//        inspeccionRecibo.setNombreHJ(nombreHJ);
         inspeccionRecibo.setNombreFact(nombreFact);
         inspeccionRecibo.setNombreCert(nombreCert);
     }
@@ -408,15 +408,15 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     }
 
     private void modificarDatos() {
-        try {
-            irs.modificar(conexion, inspeccionRecibo, inspeccionReciboOriginal);
-            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
-            cerrarVentana();
-            irs.abrirInspeccionReciboGUI(usuario);
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Ha surgido un error al actualizar el registro: ", ex);
-            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            irs.modificar(conexion, inspeccionRecibo, inspeccionReciboOriginal);
+//            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
+//            cerrarVentana();
+//            irs.abrirInspeccionReciboGUI(usuario);
+//        } catch (SQLException ex) {
+//            Utilidades.manejarExcepcion("Ha surgido un error al actualizar el registro: ", ex);
+//            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     public void seleccionarFactura() {

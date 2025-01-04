@@ -13,14 +13,17 @@ public class InspeccionReciboM {
     private String pzKg;
     private String estatus;
     private String noHoja;
-    private byte[] certificadopdf;
-    private byte[] facturapdf;
-    private byte[] hojaIns;
-    private String nombreHJ;
+    private String nombreHojaInstruccion;
     private String nombreFact;
     private String nombreCert;
+    private String rutaFactura;
+    private String rutaCertificado;
+    private String rutaHojaInstruccion;
 
-    public InspeccionReciboM(int id, String fechaFactura, String proveedor, String noFactura, String noPedido, String calibre, String pLamina, String noRollo, String pzKg, String estatus, String noHoja, byte[] facturapdf, byte[] certificadopdf, byte[] hojaIns, String nombreHJ, String nombreFact, String nombreCert) {
+    public InspeccionReciboM() {
+    }
+
+    public InspeccionReciboM(int id, String fechaFactura, String proveedor, String noFactura, String noPedido, String calibre, String pLamina, String noRollo, String pzKg, String estatus, String noHoja, String nombreHojaInstruccion, String nombreFact, String nombreCert, String rutaFactura, String rutaCertificado, String rutaHojaInstruccion) {
         this.id = id;
         this.fechaFactura = fechaFactura;
         this.proveedor = proveedor;
@@ -32,54 +35,28 @@ public class InspeccionReciboM {
         this.pzKg = pzKg;
         this.estatus = estatus;
         this.noHoja = noHoja;
-        this.facturapdf = facturapdf;
-        this.certificadopdf = certificadopdf;
-        this.hojaIns = hojaIns;
-        this.nombreHJ = nombreHJ;
+        this.nombreHojaInstruccion = nombreHojaInstruccion;
         this.nombreFact = nombreFact;
         this.nombreCert = nombreCert;
+        this.rutaFactura = rutaFactura;
+        this.rutaCertificado = rutaCertificado;
+        this.rutaHojaInstruccion = rutaHojaInstruccion;
     }
 
-    public InspeccionReciboM() {
-        this.id = 0;
-        this.fechaFactura = null;
-        this.proveedor = null;
-        this.noFactura = null;
-        this.noPedido = null;
-        this.calibre = null;
-        this.pLamina = null;
-        this.noRollo = null;
-        this.pzKg = null;
-        this.estatus = null;
-        this.noHoja = null;
-        this.hojaIns = null;
-        this.nombreHJ = null;
-        this.nombreFact = null;
-        this.nombreCert = null;
+    public int getId() {
+        return id;
     }
 
-    public String getNoHoja() {
-        return noHoja;
-    }
-
-    public void setNoHoja(String noHoja) {
-        this.noHoja = noHoja;
-    }
-
-    public byte[] getHojaIns() {
-        return hojaIns;
-    }
-
-    public void setHojaIns(byte[] hojaIns) {
-        this.hojaIns = hojaIns;
-    }
-
-    public void setFechaFactura(String fechaFactura) {
-        this.fechaFactura = fechaFactura;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getFechaFactura() {
         return fechaFactura;
+    }
+
+    public void setFechaFactura(String fechaFactura) {
+        this.fechaFactura = fechaFactura;
     }
 
     public String getProveedor() {
@@ -146,36 +123,20 @@ public class InspeccionReciboM {
         this.estatus = estatus;
     }
 
-    public byte[] getCertificadopdf() {
-        return certificadopdf;
+    public String getNoHoja() {
+        return noHoja;
     }
 
-    public void setCertificadopdf(byte[] certificadopdf) {
-        this.certificadopdf = certificadopdf;
+    public void setNoHoja(String noHoja) {
+        this.noHoja = noHoja;
     }
 
-    public byte[] getFacturapdf() {
-        return facturapdf;
+    public String getNombreHojaInstruccion() {
+        return nombreHojaInstruccion;
     }
 
-    public void setFacturapdf(byte[] facturapdf) {
-        this.facturapdf = facturapdf;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getNombreHJ() {
-        return nombreHJ;
-    }
-
-    public void setNombreHJ(String nombreHJ) {
-        this.nombreHJ = nombreHJ;
+    public void setNombreHojaInstruccion(String nombreHojaInstruccion) {
+        this.nombreHojaInstruccion = nombreHojaInstruccion;
     }
 
     public String getNombreFact() {
@@ -192,5 +153,29 @@ public class InspeccionReciboM {
 
     public void setNombreCert(String nombreCert) {
         this.nombreCert = nombreCert;
+    }
+
+    public String getRutaFactura() {
+        return rutaFactura;
+    }
+
+    public void setRutaFactura(String rutaFactura) {
+        this.rutaFactura = rutaFactura;
+    }
+
+    public String getRutaCertificado() {
+        return rutaCertificado;
+    }
+
+    public void setRutaCertificado(String rutaCertificado) {
+        this.rutaCertificado = rutaCertificado;
+    }
+
+    public String getRutaHojaInstruccion() {
+        return rutaHojaInstruccion;
+    }
+
+    public void setRutaHojaInstruccion(String rutaHojaInstruccion) {
+        this.rutaHojaInstruccion = rutaHojaInstruccion;
     }
 }

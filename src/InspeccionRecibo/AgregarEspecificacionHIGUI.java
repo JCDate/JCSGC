@@ -1,6 +1,5 @@
 package InspeccionRecibo;
 
-import Modelos.Usuarios;
 import Servicios.Conexion;
 import Servicios.InspeccionReciboServicio;
 import Servicios.Utilidades;
@@ -17,19 +16,13 @@ import javax.swing.JOptionPane;
 public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
 
     // Atributos
-    private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
     private InspeccionReciboServicio irs; // Servicio para manejar la inspección y recibo
 
     public AgregarEspecificacionHIGUI() {
-        initComponents();
-    }
-
-    public AgregarEspecificacionHIGUI(Usuarios usuario) {
-        this.usuario = usuario;
         inicializarVentanaYComponentes();
     }
-
+    
     @Override
     public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
@@ -112,13 +105,9 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
-        try {
-            configurarVentana();
-            inicializarAtributos();
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Abrir AgregarEspecificacionHIGUI: ", ex);
-            Logger.getLogger(AgregarEspecificacionHIGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        configurarVentana();
+        inicializarConexion();
+        inicializarServicios();
     }
 
     private void configurarVentana() {
@@ -128,8 +117,16 @@ public class AgregarEspecificacionHIGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void inicializarAtributos() throws SQLException {
-        this.conexion = Conexion.getInstance().conectar();
+    private void inicializarConexion() {
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR en la conexión de la base de datos: ", ex);
+            Logger.getLogger(AgregarEspecificacionHIGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void inicializarServicios() {
         this.irs = new InspeccionReciboServicio();
     }
 

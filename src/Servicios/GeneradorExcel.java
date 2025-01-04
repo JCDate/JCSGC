@@ -251,6 +251,11 @@ public class GeneradorExcel {
                 FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo);
                 workbook.write(fos);
 
+                // Crear un nuevo archivo Excel para guardar los cambios
+                String newFilePath = "\\\\" + Utilidades.SERVIDOR + "\\" + "archivos\\InspeccionRecibo\\HojasInstruccion\\" + nuevaRutaArchivo;
+                try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
+                    workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
+                }
             } catch (IOException e) {
                 Utilidades.manejarExcepcion("Error al procesar el archivo Excel: ", e);
             } finally {
@@ -461,10 +466,10 @@ public class GeneradorExcel {
                 }
 
                 // Crear un nuevo archivo Excel para guardar los cambios
-                String newFilePath = "\\\\" + Utilidades.SERVIDOR + "\\" + "archivos\\AceptacionProducto\\"+"-" + ap1m.get(0).getComponente() + ".xlsx";
+                String newFilePath = "\\\\" + Utilidades.SERVIDOR + "\\" + "archivos\\AceptacionProducto\\" + "-" + ap1m.get(0).getComponente() + ".xlsx";
                 try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
                     workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
-                    nuevaRutaArchivoRD = "archivos\\AceptacionProducto\\"+"-" + ap1m.get(0).getComponente() + ".xlsx";
+                    nuevaRutaArchivoRD = "archivos\\AceptacionProducto\\" + "-" + ap1m.get(0).getComponente() + ".xlsx";
                 }
 
             } catch (IOException e) {
