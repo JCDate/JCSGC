@@ -52,7 +52,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import swing.Button;
 
 public class InspeccionReciboServicio {
-
+    
     private GeneradorExcel excel = new GeneradorExcel(); // Servicio para trabajar con archivos excel 
     final String SQL_CONSULTA_REF_ESPECIFICACION = "SELECT Especificacion, codigoET, fechaEmision, fechaRevision, noRev FROM especificacionesir WHERE Especificacion=?";
     final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";

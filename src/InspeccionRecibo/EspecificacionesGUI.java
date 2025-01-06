@@ -25,7 +25,6 @@ import java.awt.Toolkit;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,13 +51,12 @@ public class EspecificacionesGUI extends JFrame {
     private GeneradorExcel xls; // Maneja el archivo de la hoja de instrucción
     private JTable tblRugosidadDureza;  // Contiene la información de la tabla Rugosidad/Dureza del apartado Anterior
     private JTable tblAnchoLargo; // Contiene la información de la tabla Ancho/Largo del apartado Anterior
-    private List<JTable> listaTablas; // 
-    private List<String> listaMedidasCalibre;
-    private List<String> listaEspecificacion;
-    private List<AnchoLargoM> listaAnchoLargo;
-    private List<RugosidadDurezaM> listaRugosidadDureza;
-    private List<JTable> tablas;
-    private boolean tablaCreada = false;
+    private List<String> listaMedidasCalibre; // Lista que muestra las medidas del calibre previamente seleccionado
+    private List<String> listaEspecificacion; // Lista de especificaciones del calibre
+    private List<AnchoLargoM> listaAnchoLargo; // Lista de valores de la tabla ancho/largo
+    private List<RugosidadDurezaM> listaRugosidadDureza; // Lista de valores de la tabla rugosidad/dureza
+    private JTable tablaEspecificacion; // Tabla que contiene los datos de la especificación seleccionada
+    private boolean tablaCreada = false; // Controla si ya fue seleccionada una especificación
 
     public EspecificacionesGUI() {
         initComponents();
@@ -203,27 +201,31 @@ public class EspecificacionesGUI extends JFrame {
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        int idIR = obtenerIdHojaInstruccion();
-        listaAnchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
-        listaRugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
-        irs.abrirHojaInstruccionGUI(usuario, inspeccionRecibo, datosIR, listaAnchoLargo, listaRugosidadDureza);
-        cerrarVentana();
+        try {
+            List datosInspeccion = recuperarDatosInspeccionRecibo(inspeccionRecibo);
+            irs.abrirHojaInstruccionGUI(usuario, inspeccionRecibo, datosIR, listaAnchoLargo, listaRugosidadDureza);
+            cerrarVentana();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al recuperar el número de hoja: ", ex);
+            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         try {
-            int idIR = obtenerIdHojaInstruccion();
-
+            int idIR = irs.getIdHI(conexion, inspeccionRecibo);
             List ald = als.capturarValores(idIR, datosIR.getAnchoLargo());
             List rdd = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
 
-            String HojaIns = xls.generarHojaInstruccion(conexion, datosIR, inspeccionRecibo, tblAnchoLargo, listaTablas, ald, rdd);
-            inspeccionRecibo.setRutaHojaInstruccion("archivos\\InspeccionRecibo\\HojasInstruccion\\"+HojaIns);
+            String HojaIns = xls.generarHojaInstruccion(conexion, datosIR, inspeccionRecibo, tblAnchoLargo, tablaEspecificacion, ald, rdd);
+            inspeccionRecibo.setRutaHojaInstruccion("archivos\\InspeccionRecibo\\HojasInstruccion\\" + HojaIns);
             cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);
-        } catch (IOException | SQLException | ClassNotFoundException ex) {
+        } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
             irs.manejarExcepcion("ERROR al guarda la información: ", ex);
+        } catch (IOException ex) {
+            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
@@ -232,11 +234,8 @@ public class EspecificacionesGUI extends JFrame {
             configurarVentana();
             inicializarConexion();
             inicializarServicios();
-            inicializarListas();
             configurarPanelYTablas();
             configurarListeners();
-            als.setTbl(tblAnchoLargo);
-            rds.setTbl(tblRugosidadDureza);
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir EspecificacionesGUI: ", ex);
             Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -262,20 +261,25 @@ public class EspecificacionesGUI extends JFrame {
         this.xls = new GeneradorExcel();
     }
 
-    private void inicializarListas() {
-        this.listaTablas = new ArrayList<>();
-        this.listaMedidasCalibre = new ArrayList<>();
-        this.listaEspecificacion = new ArrayList<>();
-        this.listaAnchoLargo = new ArrayList<>();
-        this.listaRugosidadDureza = new ArrayList<>();
-        this.tablas = new ArrayList<>();
+    private void configurarPanelYTablas() {
+        configurarTablas();
+        configurarPanel();
+        cargarMedidasCalibre();
+        actualizarEspecificacionesTecnicas();
     }
 
-    private void configurarPanelYTablas() {
+    private void configurarTablas() {
+        als.setTbl(tblAnchoLargo);
+        rds.setTbl(tblRugosidadDureza);
+    }
+
+    private void configurarPanel() {
         pnlTablas.setLayout(new BoxLayout(pnlTablas, BoxLayout.Y_AXIS));
+    }
+
+    private void cargarMedidasCalibre() {
         listaMedidasCalibre = irs.recuperarMedidasCalibre(conexion, inspeccionRecibo);
         listaMedidasCalibre.forEach(cbxCalibre::addItem);
-        actualizarEspecificacionesTecnicas();
     }
 
     private void actualizarEspecificacionesTecnicas() {
@@ -297,26 +301,30 @@ public class EspecificacionesGUI extends JFrame {
     }
 
     private void crearTabla(String especificacionTecnica, String calibres) throws SQLException, ClassNotFoundException {
+        DefaultTableModel modeloTabla = crearTablaModelo(especificacionTecnica, calibres); // Crear modelo de tabla basado en los datos        
+        actualizarInterfazConTabla(modeloTabla); // Configurar y agregar la tabla al panel
+    }
+
+    private DefaultTableModel crearTablaModelo(String especificacionTecnica, String calibres) throws SQLException, ClassNotFoundException {
         // Obtener datos
         List<PropiedadMecanicaM> propiedadesMecanicas = es.obtenerPropiedadesMecanicas(conexion, especificacionTecnica);
         List<ComposicionQuimicaM> composicionQuimica = es.obtenerCM(conexion, especificacionTecnica);
         especificacion = irs.recuperarReferenciasEspecificacion(conexion, especificacionTecnica);
 
-        // Crear modelo de tabla
+        // Crear y llenar modelo de tabla
         DefaultTableModel modeloTabla = crearModeloTabla(especificacion, calibres);
-
-        // Configurar la tabla
-        JTable nuevaTabla = crearTablaConModelo(modeloTabla);
-        configurarColumnasTabla(nuevaTabla.getColumnModel(), propiedadesMecanicas.size(), composicionQuimica.size());
-
-        // Establecer valores en la tabla
         establecerValoresEnTabla(modeloTabla, propiedadesMecanicas, composicionQuimica);
 
-        // Añadir tabla al panel
-        pnlTablas.add(new JScrollPane(nuevaTabla));
-        listaTablas.add(nuevaTabla);
+        return modeloTabla;
+    }
 
-        // Actualizar la ventana
+    private void actualizarInterfazConTabla(DefaultTableModel modeloTabla) {
+        // Crear y configurar tabla
+        tablaEspecificacion = crearTablaConModelo(modeloTabla);
+        configurarColumnasTabla(tablaEspecificacion.getColumnModel(), modeloTabla.getRowCount(), modeloTabla.getColumnCount());
+
+        // Añadir tabla al panel y actualizar
+        pnlTablas.add(new JScrollPane(tablaEspecificacion));
         pnlTablas.revalidate();
         pnlTablas.repaint();
     }
@@ -364,15 +372,15 @@ public class EspecificacionesGUI extends JFrame {
         return nuevaTabla;
     }
 
-    private void configurarColumnasTabla(TableColumnModel columnModel, int numPropiedadesMecanicas, int numComposicionQuimica) {
-        configurarTamañoColumna(columnModel, 4, 35, 35);
-        configurarTamañoColumna(columnModel, 6, 35, 35);
+    private void configurarColumnasTabla(TableColumnModel modeloColumna, int numPropiedadesMecanicas, int numComposicionQuimica) {
+        configurarTamañoColumna(modeloColumna, 4, 35, 35);
+        configurarTamañoColumna(modeloColumna, 6, 35, 35);
 
-        columnModel.getColumn(4).setCellRenderer(new CheckBoxRenderer(numPropiedadesMecanicas));
-        columnModel.getColumn(4).setCellEditor(new CheckBoxEditor());
+        modeloColumna.getColumn(4).setCellRenderer(new CheckBoxRenderer(numPropiedadesMecanicas));
+        modeloColumna.getColumn(4).setCellEditor(new CheckBoxEditor());
 
-        columnModel.getColumn(6).setCellRenderer(new CheckBoxRenderer(numComposicionQuimica));
-        columnModel.getColumn(6).setCellEditor(new CheckBoxEditor());
+        modeloColumna.getColumn(6).setCellRenderer(new CheckBoxRenderer(numComposicionQuimica));
+        modeloColumna.getColumn(6).setCellEditor(new CheckBoxEditor());
     }
 
     private void establecerValoresEnTabla(DefaultTableModel modeloTabla, List<PropiedadMecanicaM> propiedadesMecanicas, List<ComposicionQuimicaM> composicionQuimica) {
@@ -390,9 +398,9 @@ public class EspecificacionesGUI extends JFrame {
         }
     }
 
-    private void configurarTamañoColumna(TableColumnModel columnModel, int columnIndex, int minWidth, int maxWidth) {
-        columnModel.getColumn(columnIndex).setMinWidth(minWidth);
-        columnModel.getColumn(columnIndex).setMaxWidth(maxWidth);
+    private void configurarTamañoColumna(TableColumnModel modeloColumna, int indexColumna, int minAncho, int maxAncho) {
+        modeloColumna.getColumn(indexColumna).setMinWidth(minAncho);
+        modeloColumna.getColumn(indexColumna).setMaxWidth(maxAncho);
     }
 
     private void cerrarVentana() {
@@ -401,20 +409,16 @@ public class EspecificacionesGUI extends JFrame {
     }
 
     private void eliminarUltimaTabla() {
-        listaTablas.removeAll(tablas);
         pnlTablas.removeAll();
         pnlTablas.revalidate();
         pnlTablas.repaint();
     }
 
-    private int obtenerIdHojaInstruccion() {
-        try {
-            return irs.getIdHI(conexion, inspeccionRecibo);
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al Obtener el id de la hoja de instrución solicitada: ", ex);
-            Logger.getLogger(EspecificacionesGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return 0;
+    private List recuperarDatosInspeccionRecibo(InspeccionReciboM inspeccionRecibo) throws SQLException {
+        int idIR = irs.getIdHI(conexion, inspeccionRecibo);
+        List anchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
+        List rugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
+        return List.of(anchoLargo, rugosidadDureza);
     }
 
     /**

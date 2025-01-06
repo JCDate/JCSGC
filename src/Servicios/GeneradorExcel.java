@@ -42,18 +42,21 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class GeneradorExcel {
 
     private Connection conexion;
+    private InspeccionReciboServicio irs;
 
     public GeneradorExcel() {
         try {
             this.conexion = Conexion.getInstance().conectar();
+            
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
             Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    // Servicios y Utilidades
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio();
+    
+    public GeneradorExcel(InspeccionReciboServicio irs) {
+        this.irs = irs;
+    }
 
     String nuevaRutaArchivo = ""; // Variable para guardar la información de la ruta del archivo de hoja de Instrucción
     String nuevaRutaArchivoRD = ""; // Variable para guardar la información de la ruta del archivo de retención dimensional
@@ -236,7 +239,7 @@ public class GeneradorExcel {
         return celda.getStringCellValue().equalsIgnoreCase("√");
     }
 
-    public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, List<JTable> listTablas, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
+    public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, JTable tabla, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("jc/doctos/HojaInstruccion.xlsx");
 
         if (inputStream != null) {
@@ -244,7 +247,7 @@ public class GeneradorExcel {
             try {
                 workbook = new XSSFWorkbook(inputStream);  // Crear el workbook usando el inputStream
                 procesarPaginaUnoHJ(workbook, irm, dirm, listaAL, listaRD);
-                procesarPaginaDosHJ(workbook, conexion, dirm, listTablas);
+                procesarPaginaDosHJ(workbook, conexion, dirm, tabla);
 
                 // Crear un nuevo archivo de Excel para guardar los cambios
                 nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(dirm.getFechaInspeccion()) + ".xlsx ";  // Ruta del nuevo archivo de Excel
@@ -253,9 +256,9 @@ public class GeneradorExcel {
 
                 // Crear un nuevo archivo Excel para guardar los cambios
                 String newFilePath = "\\\\" + Utilidades.SERVIDOR + "\\" + "archivos\\InspeccionRecibo\\HojasInstruccion\\" + nuevaRutaArchivo;
-                try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
-                    workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
-                }
+//                try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
+//                    workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
+//                }
             } catch (IOException e) {
                 Utilidades.manejarExcepcion("Error al procesar el archivo Excel: ", e);
             } finally {
@@ -362,14 +365,14 @@ public class GeneradorExcel {
         setValorCeldasHojaInstruccion(sheet, 60, 1, dirm.getInspector());
     }
 
-    private void procesarPaginaDosHJ(XSSFWorkbook workbook, Connection conexion, DatosIRM dirm, List<JTable> listTablas) throws SQLException {
+    private void procesarPaginaDosHJ(XSSFWorkbook workbook, Connection conexion, DatosIRM dirm, JTable tabla) throws SQLException {
         Sheet sheet2 = workbook.getSheetAt(1);
         workbook.setSheetName(workbook.getSheetIndex(sheet2), formato.eliminarSeparadores(dirm.getFechaInspeccion()));
 
         List<DatosFila> datosFilas = new ArrayList<>();
 
-        for (JTable table : listTablas) {
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
+      
+            DefaultTableModel model = (DefaultTableModel) tabla.getModel();
             int rowCount = model.getRowCount();
             for (int i = 0; i < rowCount; i++) {
                 Object especificacion = model.getValueAt(0, 0);
@@ -382,7 +385,7 @@ public class GeneradorExcel {
                 DatosFila datosFila = new DatosFila(especificacion, calibres, propiedad, cumplePropiedad, composicion, cumpleComposicion, fila);
                 datosFilas.add(datosFila);
             }
-        }
+        
 
         int numeroFilaEspecificacion = 6;
         String especificacionAnterior = "";
