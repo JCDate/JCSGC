@@ -33,6 +33,7 @@ import Servicios.RugosidadDurezaServicio;
 import Servicios.Utilidades;
 import java.util.List;
 import javax.swing.JFrame;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 
@@ -65,8 +66,21 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     // Objetos para guardar la ruta del archivo Excel
     private String rutaArchivo;
 
+    private static final int FILA_ESTADO = 39;
+    private static final int FILA_FECHA = 5;
+    private static final int COLUMNA_FECHA = 6;
+    private static final int COLUMNA_ACEPTACION = 2;
+    private static final int COLUMNA_RECHAZO = 7;
+    private static final int FILA_INICIAL = 43;
+    private static final int COLUMNA_INICIAL = 2;
+    private static final int NUM_COLUMNAS = 5;
+
+    private static final int INDICE_TBL_ANCHOLARGO = 20;
+    private static final int COLUMNA_ANCHO = 1;
+    private static final int COLUMNA_LARGO = 2;
+
     public HojaInstruccionGUI2() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public HojaInstruccionGUI2(Usuarios usuario, String rutaArchivo, InspeccionReciboM inspeccionRecibo) {
@@ -319,19 +333,13 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
+            inicializarConexion();
             inicializarServicios();
-            this.conexion = Conexion.getInstance().conectar();
-            this.dirm = new DatosIRM();
-            this.listaInspectores = new ArrayList<>();
+            inicializarAtributos();
             inicializarComboBoxInspectores();
             definirTablas();
-            try {
-                leerDatosExcel();
-            } catch (IOException ex) {
-                Utilidades.manejarExcepcion("Error al cargar el archivo excel: ", ex);
-                Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } catch (SQLException ex) {
+            leerDatosExcel();
+        } catch (IOException | SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir HojaInstruccionGUI2: ", ex);
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -344,12 +352,21 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void inicializarConexion() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+    }
+
     private void inicializarServicios() {
         this.irs = new InspeccionReciboServicio();
         this.rds = new RugosidadDurezaServicio();
         this.als = new AnchoLargoServicio();
         this.excel = new GeneradorExcel();
         this.formato = new ExcelFormato();
+    }
+
+    private void inicializarAtributos() {
+        this.dirm = new DatosIRM();
+        this.listaInspectores = new ArrayList<>();
     }
 
     private void inicializarComboBoxInspectores() {
@@ -375,13 +392,21 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     }
 
     private void configurarCamposTexto() {
-        txtHojaInstrucciones.setText(inspeccionRecibo.getNoHoja());
+        obtenerFecha();
+        obtenerDatos();
+    }
+
+    private void obtenerFecha() {
         SimpleDateFormat sdf = new SimpleDateFormat("d 'de' MMMM 'de' yyyy");
         try {
-            dchFechaInspeccion.setDate(sdf.parse(excel.getDatosCeldas(hoja1, 5, 6)));
+            dchFechaInspeccion.setDate(sdf.parse(excel.getDatosCeldas(hoja1, FILA_FECHA, COLUMNA_FECHA)));
         } catch (ParseException ex) {
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    private void obtenerDatos() {
+        txtHojaInstrucciones.setText(inspeccionRecibo.getNoHoja());
         txtDescripcionMP.setText(excel.getDatosCeldas(hoja1, 9, 1));
         txtToleranciaLamina.setText(excel.getDatosCeldas(hoja1, 13, 1));
         txtObservacionesRD.setText(excel.getDatosCeldas(hoja1, 34, 1));
@@ -418,10 +443,10 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
     private String guardarCambios(String nuevaRutaArchivo) throws FileNotFoundException, IOException, ParseException {
         String fechaInspeccion = irs.formatearFecha(dchFechaInspeccion.getDate());
+        String numeroStr = obtenerNoHoja();
+
         cargarDatos(fechaInspeccion);
         validarEstadoAceptacionRechazo();
-
-        String numeroStr = obtenerNoHoja();
 
         try {
             int idHojaInstruccion = irs.getIdHI(conexion, inspeccionRecibo);
@@ -451,63 +476,71 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     }
 
     private void validarEstadoAceptacionRechazo() {
-        if (chkAceptacion.isSelected()) {
-            excel.setDatosCeldas(hoja1, 39, 2, "√"); // Aceptación
-            excel.setDatosCeldas(hoja1, 39, 7, ""); // Rechazo
-        } else {
-            excel.setDatosCeldas(hoja1, 39, 2, ""); // Aceptación
-            excel.setDatosCeldas(hoja1, 39, 7, "√"); // Rechazo
-        }
+        // Determinar valores según el estado del checkbox
+        String valorAceptacion = chkAceptacion.isSelected() ? "√" : "";
+        String valorRechazo = chkAceptacion.isSelected() ? "" : "√";
+
+        // Actualizar celdas de aceptación y rechazo
+        excel.setDatosCeldas(hoja1, FILA_ESTADO, COLUMNA_ACEPTACION, valorAceptacion);
+        excel.setDatosCeldas(hoja1, FILA_ESTADO, COLUMNA_RECHAZO, valorRechazo);
     }
 
     private void obtenerDatosTblAnchoLargo(int idHojaInstruccion) {
-        int numeroFila = 20; // indice de la Tabla Ancho/Largo
         List anchoLargo = als.capturarValores(idHojaInstruccion, dirm.getAnchoLargo());
 
-        for (Object anchoLargo1 : anchoLargo) {
-            AnchoLargoM medida = (AnchoLargoM) anchoLargo1;
-            Row row = hoja1.getRow(numeroFila);
-            excel.setDatosCeldas(hoja1, numeroFila, 1, medida.getAncho()); // Ancho
-            excel.setDatosCeldas(hoja1, numeroFila, 2, medida.getLargo()); // Largo
+        int numeroFila = INDICE_TBL_ANCHOLARGO;
+        for (AnchoLargoM medida : anchoLargo) {
+            escribirValoresExcel(medida, numeroFila);
+            aplicarEstilo(numeroFila);
             numeroFila++;
-            //Aplicación del formato
-            row.getCell(1).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
-            row.getCell(2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
         }
     }
 
+    private void escribirValoresExcel(AnchoLargoM medida, int fila) {
+        excel.setDatosCeldas(hoja1, fila, COLUMNA_ANCHO, medida.getAncho()); // Ancho
+        excel.setDatosCeldas(hoja1, fila, COLUMNA_LARGO, medida.getLargo()); // Largo
+    }
+
+    private void aplicarEstilo(int fila) {
+        Row row = hoja1.getRow(fila);
+        CellStyle estilo = formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER);
+        row.getCell(COLUMNA_ANCHO).setCellStyle(estilo);
+        row.getCell(COLUMNA_LARGO).setCellStyle(estilo);
+    }
+
     private void obtenerDatosTblRugosidadDureza(int idHojaInstruccion) {
-        int numeroFila = 43;
         List<RugosidadDurezaM> rugosidadDureza = rds.recuperarTodas(idHojaInstruccion, dirm.getAnchoLargo());
+        escribirValoresExcel(rugosidadDureza, FILA_INICIAL, true);
+        escribirValoresExcel(rugosidadDureza, FILA_INICIAL + 1, true);
+        aplicarEstilos(FILA_INICIAL, FILA_INICIAL + 1);
+    }
 
-        if (rugosidadDureza.size() == 5) {
-            for (int j = 0; j < 5; j++) {
-                RugosidadDurezaM valores = rugosidadDureza.get(j);
-                excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getRugosidad()); // Rugosidad en fila 1
-            }
+    private void escribirValoresExcel(List<RugosidadDurezaM> valores, int fila, boolean esRugosidad) {
+        for (int j = 0; j < NUM_COLUMNAS; j++) {
+            String valor = esRugosidad ? valores.get(j).getRugosidad() : valores.get(j).getDureza();
+            excel.setDatosCeldas(hoja1, fila, COLUMNA_INICIAL + j, valor);
+        }
+    }
 
-            numeroFila++; // Avanzar a la siguiente fila
-            Row row = hoja1.getRow(numeroFila);
-            for (int j = 0; j < 5; j++) {
-                RugosidadDurezaM valores = rugosidadDureza.get(j);
-                excel.setDatosCeldas(hoja1, numeroFila, j + 2, valores.getDureza()); // Dureza en fila 2
-            }
+    private void aplicarEstilos(int filaRugosidad, int filaDureza) {
+        Row rowRugosidad = hoja1.getRow(filaRugosidad);
+        Row rowDureza = hoja1.getRow(filaDureza);
 
-            for (int j = 0; j < 5; j++) {
-                hoja1.getRow(numeroFila - 1).getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Rugosidad
-                row.getCell(j + 2).setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Formato para Dureza
-            }
+        for (int j = 0; j < NUM_COLUMNAS; j++) {
+            Cell celdaRugosidad = rowRugosidad.getCell(COLUMNA_INICIAL + j);
+            Cell celdaDureza = rowDureza.getCell(COLUMNA_INICIAL + j);
+
+            CellStyle estilo = formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER);
+            celdaRugosidad.setCellStyle(estilo);
+            celdaDureza.setCellStyle(estilo);
         }
     }
 
     private String obtenerNoHoja() {
         String[] partes = txtHojaInstrucciones.getText().split("/"); // Se divide el valor de NoHoja para solo obtener el número
-        String numeroStr = partes[1];
+        String numeroStr = partes[1].trim();
         int numero = Integer.parseInt(numeroStr);
-
-        if (numero < 10) {
-            numeroStr = String.valueOf(numero);
-        }
+        numeroStr = String.valueOf(numero);
         excel.setDatosCeldas(hoja1, 5, 1, numeroStr);
         return numeroStr;
     }
@@ -515,10 +548,6 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private void cerrarVentana() {
         HojaInstruccionGUI2.this.dispose();
         Conexion.getInstance().desconectar(conexion);
-    }
-
-    public String getRutaArchivo() {
-        return rutaArchivo;
     }
 
     /**

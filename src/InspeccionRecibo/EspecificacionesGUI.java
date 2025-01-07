@@ -25,6 +25,7 @@ import java.awt.Toolkit;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -418,7 +419,7 @@ public class EspecificacionesGUI extends JFrame {
         int idIR = irs.getIdHI(conexion, inspeccionRecibo);
         List anchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
         List rugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
-        return List.of(anchoLargo, rugosidadDureza);
+        return Arrays.asList(anchoLargo, rugosidadDureza);
     }
 
     /**

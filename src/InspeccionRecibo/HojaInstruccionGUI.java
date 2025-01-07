@@ -23,26 +23,20 @@ import javax.swing.table.DefaultTableModel;
 
 public class HojaInstruccionGUI extends javax.swing.JFrame {
 
-    // Usuario y Conexión a la base de datos
-    private Usuarios usuario;
-    private Connection conexion;
-
-    // Objetos para la manipulación de los datos
-    private InspeccionReciboM inspeccionRecibo;
-    private DatosIRM dirm;
-
-    // Lista de datos
-    private List<AnchoLargoM> listaAnchoLargo;
-    private List<String> listaInspectores;
-    private List<String> listaDescripcionesMP;
-    private List<String> listaMedidas;
-    private List<RugosidadDurezaM> listaRugosidadDureza;
-
-    // Servicios y Utilidades
-    private InspeccionReciboServicio irs;
+    // Atributos
+    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Connection conexion; // Conexión a la Base de Datos
+    private InspeccionReciboM inspeccionRecibo; // Manejo de la información del registro de la inspeccion
+    private DatosIRM dirm; // Manejo de la información para generar la hoja de instrucción
+    private List<AnchoLargoM> listaAnchoLargo; // Lista de valores de la tabla ancho/largo
+    private List<String> listaInspectores; // Lista de los Inspectores de los registros de inspección
+    private List<String> listaDescripcionesMP; // Lista de descripciones del calibre
+    private List<String> listaMedidas; // Lista de los diferentes medidas del calibre
+    private List<RugosidadDurezaM> listaRugosidadDureza; // Lista de valores de la tabla rugosidad/dureza
+    private InspeccionReciboServicio irs; // Servicios y Utilidades
 
     public HojaInstruccionGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public HojaInstruccionGUI(Usuarios usuario, InspeccionReciboM inspeccionRecibo) {
@@ -303,8 +297,8 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.irs = new InspeccionReciboServicio();
+            inicializarConexion();
+            inicializarServicios();
             obtenerDatosDeArchivoXLSX();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir HojaInstruccionGUI: ", ex);
@@ -319,6 +313,14 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void inicializarConexion() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+    }
+
+    private void inicializarServicios() {
+        this.irs = new InspeccionReciboServicio();
+    }
+
     private void obtenerDatosDeArchivoXLSX() {
         txtHojaInstrucciones.setText(String.valueOf(inspeccionRecibo.getNoHoja()));
         listaInspectores = irs.recuperarInspectores(conexion);
@@ -326,9 +328,16 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     }
 
     private void definirDescripcionesYMedidas() {
+        establecerFechaActual();
+        configurarDescripcionesYMedidas();
+    }
+
+    private void establecerFechaActual() {
         Date fechaActual = Calendar.getInstance().getTime(); // Obtener la fecha actual
         dchFechaInspeccion.setDate(fechaActual);
+    }
 
+    private void configurarDescripcionesYMedidas() {
         listaDescripcionesMP = irs.recuperarDescripciones(conexion, inspeccionRecibo);
         listaDescripcionesMP.forEach(cbxDescripcionMP::addItem);
 
@@ -337,39 +346,50 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     }
 
     private void definirDescripcionesYTablas() {
-        actualizarCampos();
-    }
-
-    private void actualizarCampos() {
-        cbxDescripcionMP.setSelectedItem(dirm.getDescripcionMP());
-        cbxLamina.setSelectedItem(dirm.getCalibreLamina());
-        dchFechaInspeccion.setDate(irs.formatearFecha(dirm.getFechaInspeccion()));
-        txtObservacionesRD.setText(dirm.getObservacionesRD());
-        cbxObservacionesMP.setSelectedItem(dirm.getObsMP());
-        cbxNombreInspector.setSelectedItem(dirm.getInspector());
+        configurarComponetes();
         actualizarTablas();
         actualizarCheckBoxes();
     }
 
+    private void configurarComponetes() {
+        cbxDescripcionMP.setSelectedItem(dirm.getDescripcionMP());
+        cbxLamina.setSelectedItem(dirm.getCalibreLamina());
+
+        Date fechaFormateada = irs.formatearFecha(dirm.getFechaInspeccion());
+        dchFechaInspeccion.setDate(fechaFormateada);
+
+        txtObservacionesRD.setText(dirm.getObservacionesRD());
+        cbxObservacionesMP.setSelectedItem(dirm.getObsMP());
+        cbxNombreInspector.setSelectedItem(dirm.getInspector());
+    }
+
     private void actualizarTablas() {
+        actualizarTablaAnchoLargo();
+        actualizarTablaRugosidadDureza();
+    }
+
+    private void actualizarTablaAnchoLargo() {
         DefaultTableModel modeloTblAnchoLargo = (DefaultTableModel) tblAnchoLargo.getModel();
-        DefaultTableModel modeloTblRugosidadDureza = (DefaultTableModel) tblRugosidadDureza.getModel();
-
-        // Limpiar el modelo de tabla
-        modeloTblAnchoLargo.setRowCount(0);
-        modeloTblRugosidadDureza.setRowCount(0);
-
-        // Agregar filas desde las listas
-        listaAnchoLargo.forEach(medida -> {
+        modeloTblAnchoLargo.setRowCount(0); // Limpiar el modelo de tabla
+        
+        listaAnchoLargo.forEach(medida -> { // Agregar filas desde las listas
             modeloTblAnchoLargo.addRow(new Object[]{medida.getAncho(), medida.getLargo()});
         });
-        listaRugosidadDureza.forEach(rd -> {
+        
+        modeloTblAnchoLargo.fireTableDataChanged(); // Asegurarse de que las tablas se actualicen visualmente
+    }
+    
+    private void actualizarTablaRugosidadDureza() {
+        DefaultTableModel modeloTblRugosidadDureza = (DefaultTableModel) tblRugosidadDureza.getModel();
+        
+        // Limpiar el modelo de tabla
+        modeloTblRugosidadDureza.setRowCount(0);
+        
+        listaRugosidadDureza.forEach(rd -> { // Agregar filas desde las listas
             modeloTblRugosidadDureza.addRow(new Object[]{rd.getRugosidad(), rd.getDureza()});
         });
-
-        // Asegurarse de que las tablas se actualicen visualmente
-        modeloTblAnchoLargo.fireTableDataChanged();
-        modeloTblRugosidadDureza.fireTableDataChanged();
+        
+        modeloTblRugosidadDureza.fireTableDataChanged(); // Asegurarse de que las tablas se actualicen visualmente
     }
 
     private void actualizarCheckBoxes() {
@@ -378,12 +398,19 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     }
 
     private void configurarDatosIrm() {
+        obtenerFecha();
+        configurarDatos();
+    }
+    
+    private void obtenerFecha() {
         if (dchFechaInspeccion.getDate() != null) {
             Date fechaSeleccionada = dchFechaInspeccion.getDate();
             String fechaFormateada = irs.formatearFecha(fechaSeleccionada);
             dirm.setFechaInspeccion(fechaFormateada);
         }
-
+    }
+    
+    private void configurarDatos() {
         dirm.setObsMP(cbxObservacionesMP.getSelectedItem().toString());
         dirm.setObservacionesRD(txtObservacionesRD.getText());
         dirm.setAceptacion(chkAceptacion.isSelected() ? 1 : 0);
