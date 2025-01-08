@@ -47,15 +47,20 @@ public class GeneradorExcel {
     public GeneradorExcel() {
         try {
             this.conexion = Conexion.getInstance().conectar();
-            
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
             Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public GeneradorExcel(InspeccionReciboServicio irs) {
-        this.irs = irs;
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+            this.irs = irs;
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
+            Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     String nuevaRutaArchivo = ""; // Variable para guardar la información de la ruta del archivo de hoja de Instrucción
@@ -205,15 +210,16 @@ public class GeneradorExcel {
             hoja1.addMergedRegion(rango);
         }
 
-        File archivo = new File("InspeccionRecibo.xlsx");
+        String rutaArchivo = "archivos\\InspeccionRecibo\\InspeccionRecibo.xlsx";
+
+        File archivo = new File("\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo);
+        Utilidades.abrirDocumento(rutaArchivo);
         try (FileOutputStream outputStream = new FileOutputStream(archivo)) {
             workbook.write(outputStream);
-            System.out.println("Escribiendo en disco... Listo");
         } catch (IOException ex) {
             System.err.println(ex.getMessage());
             irs.manejarExcepcion("Error al Generar el Archivo InspeccionRecibo.xlsx", ex);
         }
-        System.out.println("Proceso completado.");
     }
 
     public String getDatosCeldas(Sheet hoja, int fila, int columna) {
@@ -371,21 +377,19 @@ public class GeneradorExcel {
 
         List<DatosFila> datosFilas = new ArrayList<>();
 
-      
-            DefaultTableModel model = (DefaultTableModel) tabla.getModel();
-            int rowCount = model.getRowCount();
-            for (int i = 0; i < rowCount; i++) {
-                Object especificacion = model.getValueAt(0, 0);
-                Object calibres = model.getValueAt(0, 2);
-                Object propiedad = model.getValueAt(i, 3);
-                Object cumplePropiedad = model.getValueAt(i, 4);
-                Object composicion = model.getValueAt(i, 5);
-                Object cumpleComposicion = model.getValueAt(i, 6);
-                int fila = aps.obtenerEspecificacion(conexion, especificacion.toString());
-                DatosFila datosFila = new DatosFila(especificacion, calibres, propiedad, cumplePropiedad, composicion, cumpleComposicion, fila);
-                datosFilas.add(datosFila);
-            }
-        
+        DefaultTableModel model = (DefaultTableModel) tabla.getModel();
+        int rowCount = model.getRowCount();
+        for (int i = 0; i < rowCount; i++) {
+            Object especificacion = model.getValueAt(0, 0);
+            Object calibres = model.getValueAt(0, 2);
+            Object propiedad = model.getValueAt(i, 3);
+            Object cumplePropiedad = model.getValueAt(i, 4);
+            Object composicion = model.getValueAt(i, 5);
+            Object cumpleComposicion = model.getValueAt(i, 6);
+            int fila = aps.obtenerEspecificacion(conexion, especificacion.toString());
+            DatosFila datosFila = new DatosFila(especificacion, calibres, propiedad, cumplePropiedad, composicion, cumpleComposicion, fila);
+            datosFilas.add(datosFila);
+        }
 
         int numeroFilaEspecificacion = 6;
         String especificacionAnterior = "";

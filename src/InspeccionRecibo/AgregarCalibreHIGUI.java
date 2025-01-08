@@ -72,6 +72,9 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
         lblCalibre.setText("CALIBRE:");
         jPanel1.add(lblCalibre, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, -1, -1));
         jPanel1.add(txtCalibre, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 120, 450, -1));
+
+        txtEspecificacion.setText("±");
+        txtEspecificacion.setToolTipText("");
         jPanel1.add(txtEspecificacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 170, 380, -1));
 
         lblEspecificacion.setFont(new java.awt.Font("Tahoma", 1, 15)); // NOI18N
@@ -203,7 +206,7 @@ public class AgregarCalibreHIGUI extends javax.swing.JFrame {
     }
 
     private boolean camposCompletos(String calibre, String medidas) {
-        return !calibre.isEmpty() && !medidas.isEmpty();
+        return !calibre.isEmpty() && !medidas.equals("±") && !cbxEspecificaciones.getSelectedItem().equals("");
     }
 
     private void cerrarVentana() {

@@ -340,7 +340,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         try {
             File archivoSeleccionado = new File(rutaArchivoHojaInstruccion);
             XSSFWorkbook workbook;
-
             try (FileInputStream fis = new FileInputStream(archivoSeleccionado)) {
                 workbook = new XSSFWorkbook(fis); // Leer el archivo de excel
                 Sheet hoja1 = workbook.getSheetAt(0); // Se obtiene la primera hoja del archivo

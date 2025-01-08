@@ -66,7 +66,6 @@ public class Utilidades {
             }
 
             String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo; // Ruta de red
-            System.out.println(urlArchivo);
             File archivo = new File(urlArchivo);
             if (!archivo.exists()) {
                 Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);
@@ -82,5 +81,17 @@ public class Utilidades {
     private static void abrirArchivoLocal(File archivo) throws IOException {
         Desktop desktop = Desktop.getDesktop();
         desktop.open(archivo);
+    }
+
+    public static boolean camposCompletos(String... campos) {
+        if (campos == null) {
+            return false;
+        }
+        for (String campo : campos) {
+            if (campo.isEmpty() || campo == null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

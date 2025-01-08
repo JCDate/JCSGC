@@ -9,6 +9,10 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -33,23 +37,19 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     private String rutaArchivoFactura;
     private String rutaArchivoCertificado;
     private String rutaArchivoHojaInstruccion;
-    
+
     // Servicios y Utilidades
     private InspeccionReciboServicio irs;
 
-    // Constructores
     public ModificarIrGUI() {
-        inicializarVentanaYComponentes();
+        initComponents();
     }
 
     public ModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario) {
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
+        this.inspeccionReciboOriginal = clonarInspeccionRecibo(inspeccionRecibo);
         inicializarVentanaYComponentes();
-        cargarDatosEnComponentes();
-        cargarProveedoresEnComboBox();
-        establecerFechaFactura();
-//        this.inspeccionReciboOriginal = clonarInspeccionRecibo(inspeccionRecibo);
     }
 
     public ModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario, String rutaArchivoHojaInstruccion) throws ClassNotFoundException {
@@ -281,7 +281,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         String nombreFact = irs.obtenerTexto(txtNombreFactura);
         String nombreCert = irs.obtenerTexto(txtNombreCertificado);
 
-        if (camposCompletos(proveedor, noFactura, noPedido, calibre, presentacionLamina, noRollo, pzKg, estatus, fechaFactura)) {
+        if (Utilidades.camposCompletos(proveedor, noFactura, noPedido, calibre, presentacionLamina, noRollo, pzKg, estatus, fechaFactura)) {
             actualizarInspeccionRecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, presentacionLamina, noRollo, pzKg, estatus, noHoja, nombreHI, nombreFact, nombreCert);
             cargarArchivos();
             modificarDatos();
@@ -291,15 +291,15 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void btnAgregarFacturaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarFacturaActionPerformed
-        seleccionarFactura();
+        rutaArchivoFactura = seleccionarArchivo(txtNombreFactura, rutaArchivoFactura, "Facturas");
     }//GEN-LAST:event_btnAgregarFacturaActionPerformed
 
     private void btnAgregarCertificadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCertificadoActionPerformed
-        seleccionarCertificado();
+        rutaArchivoCertificado = seleccionarArchivo(txtNombreCertificado, rutaArchivoCertificado, "Certificados");
     }//GEN-LAST:event_btnAgregarCertificadoActionPerformed
 
     private void btnAgregarHojaInstruccionesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarHojaInstruccionesActionPerformed
-        seleccionarHojaInstruccion();
+        rutaArchivoHojaInstruccion = seleccionarArchivo(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion, "HojasInstruccion");
         String rutaAuxiliar = rutaArchivoHojaInstruccion;
         cerrarVentana();
         rutaArchivoHojaInstruccion = irs.abrirHojaInstruccionGUI2(usuario, rutaAuxiliar, inspeccionRecibo);
@@ -308,8 +308,11 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
-            this.conexion = Conexion.getInstance().conectar();
-            this.irs = new InspeccionReciboServicio();
+            inicializarConexion();
+            inicializarServicios();
+            cargarDatosEnComponentes();
+            cargarProveedoresEnComboBox();
+            establecerFechaFactura();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir ModificarIrGUI: ", ex);
             Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -323,6 +326,14 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void inicializarConexion() throws SQLException {
+        this.conexion = Conexion.getInstance().conectar();
+    }
+
+    private void inicializarServicios() {
+        this.irs = new InspeccionReciboServicio();
+    }
+
     private void cargarDatosEnComponentes() {
         txtNoFactura.setText(inspeccionRecibo.getNoFactura());
         txtNoPedido.setText(inspeccionRecibo.getNoPedido());
@@ -331,9 +342,8 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         txtPzKg.setText(inspeccionRecibo.getPzKg());
         txtNombreFactura.setText(inspeccionRecibo.getNombreFact());
         txtNombreCertificado.setText(inspeccionRecibo.getNombreCert());
-//        txtNombreHojaInstruccion.setText(inspeccionRecibo.getNombreHJ());
+        txtNombreHojaInstruccion.setText(inspeccionRecibo.getNombreHojaInstruccion());
         txtNoHoja.setText(String.valueOf(inspeccionRecibo.getNoHoja()));
-
         cbxEstatus.setSelectedItem(inspeccionRecibo.getEstatus());
         cbxPresentacionLamina.setSelectedItem(inspeccionRecibo.getpLamina());
         cbxProveedor.setSelectedItem(inspeccionRecibo.getProveedor());
@@ -354,38 +364,28 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         dchFechaFactura.setDate(fechaFactura);
     }
 
-//    private InspeccionReciboM clonarInspeccionRecibo(InspeccionReciboM original) {
-////        return new InspeccionReciboM(
-////                original.getId(),
-////                original.getFechaFactura(),
-////                "", "", "",
-////                original.getCalibre(),
-////                "",
-////                original.getNoRollo(),
-////                original.getPzKg(),
-////                "", "",
-//////                original.getFacturapdf(),
-//////                original.getCertificadopdf(),
-//////                original.getHojaIns(),
-//////                original.getNombreHJ(),
-////                original.getNombreFact(),
-////                original.getNombreCert()
-////        );
-//    }
+    private InspeccionReciboM clonarInspeccionRecibo(InspeccionReciboM original) {
+        return new InspeccionReciboM(
+                original.getId(),
+                original.getFechaFactura(),
+                original.getCalibre(),
+                original.getNoRollo(),
+                original.getPzKg(),
+                original.getNombreHojaInstruccion(),
+                original.getNombreFact(),
+                original.getNombreCert(),
+                original.getRutaFactura(),
+                original.getRutaCertificado(),
+                original.getNombreCert()
+        );
+    }
 
     public void cerrarVentana() {
         ModificarIrGUI.this.dispose();
         Conexion.getInstance().desconectar(conexion);
     }
 
-    public boolean camposCompletos(String... campos) {
-        for (String campo : campos) {
-            if (campo.isEmpty()) {
-                return false;
-            }
-        }
-        return true;
-    }
+    
 
     private void actualizarInspeccionRecibo(String fechaFactura, String proveedor, String noFactura, String noPedido, String calibre, String pLamina, String noRollo, String pzKg, String estatus, String noHoja, String nombreHJ, String nombreFact, String nombreCert) {
         inspeccionRecibo.setFechaFactura(fechaFactura);
@@ -398,7 +398,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         inspeccionRecibo.setPzKg(pzKg);
         inspeccionRecibo.setEstatus(estatus);
         inspeccionRecibo.setNoHoja(noHoja);
-//        inspeccionRecibo.setNombreHJ(nombreHJ);
+        inspeccionRecibo.setNombreHojaInstruccion(nombreHJ);
         inspeccionRecibo.setNombreFact(nombreFact);
         inspeccionRecibo.setNombreCert(nombreCert);
     }
@@ -408,38 +408,34 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     }
 
     private void modificarDatos() {
-//        try {
-//            irs.modificar(conexion, inspeccionRecibo, inspeccionReciboOriginal);
-//            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
-//            cerrarVentana();
-//            irs.abrirInspeccionReciboGUI(usuario);
-//        } catch (SQLException ex) {
-//            Utilidades.manejarExcepcion("Ha surgido un error al actualizar el registro: ", ex);
-//            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-    }
-
-    public void seleccionarFactura() {
-        rutaArchivoFactura = seleccionarArchivo(txtNombreFactura, rutaArchivoFactura);
-    }
-
-    public void seleccionarCertificado() {
-        rutaArchivoCertificado = seleccionarArchivo(txtNombreCertificado, rutaArchivoCertificado);
-    }
-
-    public void seleccionarHojaInstruccion() {
-        rutaArchivoHojaInstruccion = seleccionarArchivo(txtNombreHojaInstruccion, rutaArchivoHojaInstruccion);
-    }
-
-    public String seleccionarArchivo(JTextField textField, String rutaArchivo) {
-        File archivoSeleccionado = this.irs.seleccionarArchivo(this);
-        if (archivoSeleccionado != null) {
-            String nombreArchivo = archivoSeleccionado.getName();
-            rutaArchivo = archivoSeleccionado.getAbsolutePath();
-            textField.setText(nombreArchivo);
+        try {
+            irs.modificarRegistro(conexion, inspeccionRecibo, inspeccionReciboOriginal);
+            JOptionPane.showMessageDialog(this, "DATOS GUARDADOS.");
+            cerrarVentana();
+            irs.abrirInspeccionReciboGUI(usuario);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Ha surgido un error al actualizar el registro: ", ex);
+            Logger.getLogger(ModificarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    public String seleccionarArchivo(JTextField textField, String rutaArchivo, String tipoArchivo) {
+        File archivoSeleccionado = irs.seleccionarArchivo(this);
+        if (archivoSeleccionado != null) {
+            try {
+                String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                textField.setText(nombreArchivo);
+            } catch (IOException ex) {
+                Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
+                Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
         return rutaArchivo;
     }
+
+    
 
     /**
      * @param args the command line arguments

@@ -52,7 +52,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import swing.Button;
 
 public class InspeccionReciboServicio {
-    
+
     private GeneradorExcel excel = new GeneradorExcel(); // Servicio para trabajar con archivos excel 
     final String SQL_CONSULTA_REF_ESPECIFICACION = "SELECT Especificacion, codigoET, fechaEmision, fechaRevision, noRev FROM especificacionesir WHERE Especificacion=?";
     final String SQL_CONSULTA_ESPECIFICACION = "SELECT especificacion FROM calibresir WHERE calibre = ?";
@@ -64,12 +64,12 @@ public class InspeccionReciboServicio {
     final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id FROM inspeccionrecibo WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
     final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM inspeccionrecibo WHERE noHoja = ?";
     final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM inspeccionrecibo WHERE noHoja = ?";
-    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo LIMIT ?, ?";
+    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ? OR LIMIT ?, ?";
     final String INSERT_INTO_INSPECCION_RECIBO = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, nombreHJ, nombreFact, NombreCert, rutaFactura, rutaCertificado, rutaHojaInstruccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM inspeccionrecibo WHERE id = ?";
-    final String SELECT_COUNT_INSPECCION_RECIBO = "SELECT COUNT(*) FROM inspeccionrecibo";
+    final String SELECT_COUNT_INSPECCION_RECIBO = "SELECT COUNT(*) FROM inspeccionrecibo WHERE noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ?";
     final String SELECT_HOJA_INSTRUCCION_BY_NO_ROLLO = "SELECT hojaInstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
-    final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE inspeccionrecibo SET fechaFactura=?, Proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, pdfFactura=?, pdfCertificado=?, hojaInstruccion=?, nombreHJ=? ,nombreFact=?, nombreCert=? WHERE id=?";
+    final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE inspeccionrecibo SET fechaFactura=?, proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, nombreHJ = ?, nombreFact = ?, nombreCert = ?, rutaFactura = ?, rutaCertificado = ?, rutaHojaInstruccion = ? WHERE id=?";
 
     public String direcciomImg = "img\\jc.png";
 
@@ -207,32 +207,17 @@ public class InspeccionReciboServicio {
         return boton;
     }
 
-    private boolean noRolloExiste(Connection conexion, String noRollo) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM inspeccionrecibo WHERE noRollo = ?";
-        try (PreparedStatement pstmt = conexion.prepareStatement(sql)) {
-            pstmt.setString(1, noRollo);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                rs.next();
-                return rs.getInt(1) > 0;
-            }
-        }
-    }
-
-    private void copiarHojaInstruccion(Connection conexion, String noRollo, byte[] hojaIns) throws SQLException {
-        String sql = "INSERT INTO inspeccionrecibo(noRollo, hojainstruccion) SELECT ?, hojainstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
-        try (PreparedStatement pstmt = conexion.prepareStatement(sql)) {
-            pstmt.setString(1, noRollo);
-            pstmt.setString(2, noRollo);
-            pstmt.executeUpdate();
-        }
-    }
-
-    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion, int page, int limit) throws SQLException {
+    public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion, int page, int limit, String filtro) throws SQLException {
         List<InspeccionReciboM> listaIr = new ArrayList<>();
         int limite = (page - 1) * limit;
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL)) {
-            consulta.setInt(1, limite);
-            consulta.setInt(2, limit);
+            consulta.setString(1, "%" + filtro + "%");
+            consulta.setString(2, "%" + filtro + "%");
+            consulta.setString(3, "%" + filtro + "%");
+            consulta.setString(4, "%" + filtro + "%");
+            consulta.setString(5, "%" + filtro + "%");
+            consulta.setInt(6, limite);
+            consulta.setInt(7, limit);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(
@@ -367,146 +352,40 @@ public class InspeccionReciboServicio {
         }
     }
 
-//    public void modificar(Connection conexion, InspeccionReciboM irm, InspeccionReciboM irm2) throws SQLException {
-//        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ID_INSPECCION_RECIBO_SQL);
-//                PreparedStatement updateConsulta = conexion.prepareStatement(UPDATE_INSPECCION_RECIBO_SQL)) {
-//            consulta.setString(1, irm2.getCalibre());
-//            consulta.setString(2, irm2.getFechaFactura());
-//            consulta.setString(3, irm2.getNoRollo());
-//            consulta.setString(4, irm2.getPzKg());
-//            ResultSet rs = consulta.executeQuery();
-//            if (rs.next()) {
-//                int id = rs.getInt("id");
-//
-//                updateConsulta.setString(1, irm.getFechaFactura());
-//                updateConsulta.setString(2, irm.getProveedor());
-//                updateConsulta.setString(3, irm.getNoFactura());
-//                updateConsulta.setString(4, irm.getNoPedido());
-//                updateConsulta.setString(5, irm.getCalibre());
-//                updateConsulta.setString(6, irm.getpLamina());
-//                updateConsulta.setString(7, irm.getNoRollo());
-//                updateConsulta.setString(8, irm.getPzKg());
-//                updateConsulta.setString(9, irm.getEstatus());
-//                updateConsulta.setString(10, irm.getNoHoja());
-//
-//                // Usar el operador ternario para definir los campos de bytes en la consulta
-//                // Verificar si no se proporcionó un archivo de bytes para el campo facturapdf
-//                if (irm.getFacturapdf() == null || irm.getFacturapdf().length == 0) {
-//                    updateConsulta.setBytes(11, irm2.getFacturapdf());
-//                } else {
-//                    updateConsulta.setBytes(11, irm.getFacturapdf());
-//                }
-//
-//                // Verificar si no se proporcionó un archivo de bytes para el campo certificadopdf
-//                if (irm.getCertificadopdf() == null || irm.getCertificadopdf().length == 0) {
-//                    updateConsulta.setBytes(12, irm2.getCertificadopdf());
-//                } else {
-//                    updateConsulta.setBytes(12, irm.getCertificadopdf());
-//                }
-//
-//                // Verificar si no se proporcionó un archivo de bytes para el campo hojaIns
-//                if (irm.getHojaIns() == null || irm.getHojaIns().length == 0) {
-//                    updateConsulta.setBytes(13, irm2.getHojaIns());
-//                } else {
-//                    updateConsulta.setBytes(13, irm.getHojaIns());
-//                }
-//                updateConsulta.setString(14, irm.getNombreHJ());
-//                updateConsulta.setString(15, irm.getNombreFact());
-//                updateConsulta.setString(16, irm.getNombreCert());
-//                updateConsulta.setInt(17, id);
-//                updateConsulta.executeUpdate();
-//            } else {
-//                System.out.println("No se encontró el ID.");
-//            }
-//        } catch (SQLException ex) {
-//            throw new SQLException(ex);
-//        }
-//    }
-//
-//    public void subirHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
-//        String sqlInsertIr = "UPDATE inspeccionrecibo SET hojaInstruccion=? WHERE id=?";
-//        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
-//            sqlInsert.setBytes(1, irm.getHojaIns());
-//            sqlInsert.setInt(2, irm.getId());
-//            sqlInsert.executeUpdate();
-//            JOptionPane.showMessageDialog(null, "El Archivo se genero y se guardo Correctamente");
-//        } catch (SQLException ex) {
-//            JOptionPane.showMessageDialog(null, "Error al ejecutar la consulta SQL de inserción Y NO SE SUBIO NADA: " + ex.getMessage());
-//
-//        }
-//    }
-    public void ejecutarArchivoPDF(Connection conexion, String id, int columna) throws ClassNotFoundException, SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            // Prepara la consulta SQL basada en la columna
-            if (columna == 10) {
-                ps = conexion.prepareStatement(SELECT_FACTURA_SQL);
-            } else if (columna == 11) {
-                ps = conexion.prepareStatement(SELECT_CERTIFICADO_SQL);
-            }
-            ps.setString(1, id);
-            rs = ps.executeQuery();
-
-            // Procesa el ResultSet
+    public void modificarRegistro(Connection conexion, InspeccionReciboM irm, InspeccionReciboM irm2) throws SQLException {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ID_INSPECCION_RECIBO_SQL);
+                PreparedStatement uConsulta = conexion.prepareStatement(UPDATE_INSPECCION_RECIBO_SQL)) {
+            consulta.setString(1, irm2.getCalibre());
+            consulta.setString(2, irm2.getFechaFactura());
+            consulta.setString(3, irm2.getNoRollo());
+            consulta.setString(4, irm2.getPzKg());
+            ResultSet rs = consulta.executeQuery();
             if (rs.next()) {
-                byte[] pdfBytes = rs.getBytes(1); // Reemplaza 'pdfColumn' con el nombre de la columna
-                String nombreArchivo = (columna == 10) ? rs.getString("nombreFact") : rs.getString("nombreCert");
-                String nombreDocto = (nombreArchivo != "") ? nombreArchivo : "nuevoArchivo.pdf";
-
-                // Escribe el archivo PDF
-                try (InputStream inputStream = new ByteArrayInputStream(pdfBytes);
-                        OutputStream outputStream = new FileOutputStream(nombreDocto)) {
-
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        outputStream.write(buffer, 0, bytesRead);
-                    }
-
-                    System.out.println("Archivo PDF creado correctamente.");
-                }
-
-                // Abre el archivo PDF
-                File archivo = new File(nombreDocto);
-                if (archivo.exists()) {
-                    Desktop.getDesktop().open(archivo);
-                    System.out.println("Archivo " + nombreDocto + " abierto correctamente.");
-                } else {
-                    System.out.println("El archivo no se encontró.");
-                }
+                int id = rs.getInt("id");
+                uConsulta.setString(1, irm.getFechaFactura());
+                uConsulta.setString(2, irm.getProveedor());
+                uConsulta.setString(3, irm.getNoFactura());
+                uConsulta.setString(4, irm.getNoPedido());
+                uConsulta.setString(5, irm.getCalibre());
+                uConsulta.setString(6, irm.getpLamina());
+                uConsulta.setString(7, irm.getNoRollo());
+                uConsulta.setString(8, irm.getPzKg());
+                uConsulta.setString(9, irm.getEstatus());
+                uConsulta.setString(10, irm.getNoHoja());
+                uConsulta.setString(11, irm.getNombreHojaInstruccion());
+                uConsulta.setString(12, irm.getNombreFact());
+                uConsulta.setString(13, irm.getNombreCert());
+                uConsulta.setString(14, irm.getRutaFactura());
+                uConsulta.setString(15, irm.getRutaCertificado());
+                uConsulta.setString(16, irm.getRutaHojaInstruccion());
+                uConsulta.setInt(17, id);
+                uConsulta.executeUpdate();
             } else {
-                System.out.println("No se encontraron datos para el ID proporcionado.");
+                System.out.println("No se encontró el ID.");
             }
-        } catch (IOException | SQLException ex) {
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Error al abrir o crear el archivo PDF: " + ex.getMessage());
-        } finally {
-            // Cierra los recursos
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (SQLException e) {
-                System.out.println("Error al cerrar recursos: " + e.getMessage());
-            }
+        } catch (SQLException ex) {
+            throw new SQLException(ex);
         }
-    }
-
-    public byte[] leerArchivo(String rutaArchivo) throws IOException {
-        File archivo = new File(rutaArchivo); // Se crea un nuevo archivo con la ruta especificada
-        byte[] pdf = new byte[(int) archivo.length()]; // Se crea un arreglo de bytes de la misma longitud del archivo previamente generado
-        if (archivo.exists()) {
-            try (InputStream input = new FileInputStream(archivo)) { // Se crea una instancia para leer los bytes del archivo
-                input.read(pdf); // Se lee la información capturada del arreglo de bytes, lee el archivo de bytes y lo almacena en la variable pdf
-            }
-        }
-        return pdf; // Se regresa el archivo
     }
 
     public File seleccionarArchivo(Component parentComponent) {
@@ -518,43 +397,6 @@ public class InspeccionReciboServicio {
         }
 
         return null;
-    }
-
-    public void ejecutarArchivoXLSX(Connection conexion, String id, int columna) throws ClassNotFoundException, SQLException {
-        final String SELECT_HOJA_INSTRUCCION_SQL = "SELECT hojaInstruccion FROM inspeccionRecibo WHERE noHoja = ?";
-        ResultSet rs;
-        byte[] b = null;
-
-        try {
-            PreparedStatement ps = conexion.prepareStatement(SELECT_HOJA_INSTRUCCION_SQL);
-            ps.setString(1, id);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                b = rs.getBytes(1);
-            }
-
-            try (InputStream bos = new ByteArrayInputStream(b)) {
-
-                XSSFWorkbook workbook = new XSSFWorkbook(bos);
-
-                // Obtener y mostrar los nombres de las hojas
-                int numberOfSheets = workbook.getNumberOfSheets();
-                System.out.println(id);
-                for (int i = 0; i < numberOfSheets; i++) {
-                    System.out.println("Hoja " + (i + 1) + ": " + workbook.getSheetName(i));
-                }
-
-            } catch (IOException ex) {
-                System.out.println("Error al procesar el archivo XLSX: " + ex.getMessage());
-            } catch (Exception ex) {
-                System.out.println("Error inesperado: " + ex.getMessage());
-            }
-
-            ps.close();
-            rs.close();
-        } catch (SQLException ex) {
-            System.out.println("Error al abrir archivo XLSX desde la base de datos: " + ex.getMessage());
-        }
     }
 
     public List<String> selectProveedores(Connection conexion) throws SQLException {
@@ -569,15 +411,6 @@ public class InspeccionReciboServicio {
             throw new SQLException("Error al ejecutar la consulta SQL: " + ex.getMessage(), ex);
         }
         return listaProveedores;
-    }
-
-    public void cargarArchivo(String rutaArchivo, Consumer<byte[]> setterFunction) {
-        try {
-            byte[] archivoData = this.leerArchivo(rutaArchivo);
-            setterFunction.accept(archivoData);
-        } catch (IOException ex) {
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
     public boolean existeNoRollo(Connection conexion, String noRollo) throws ClassNotFoundException {
@@ -929,15 +762,56 @@ public class InspeccionReciboServicio {
         }
     }
 
-    public int contarRegistros(Connection conexion) {
-        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COUNT_INSPECCION_RECIBO);
-                ResultSet resultado = consulta.executeQuery()) {
-            if (resultado.first()) {
-                return resultado.getInt(1);
+    public int contarRegistros(Connection conexion, String filtro) {
+        String sql;
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty(); 
+        if (filtrar) {
+            sql = SELECT_COUNT_INSPECCION_RECIBO;
+        } else {
+            sql = "SELECT COUNT(*) FROM inspeccionRecibo";
+        }
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COUNT_INSPECCION_RECIBO)) {
+            String filtroLike = "%" + filtro + "%";
+            consulta.setString(1, filtroLike); // Para número de hoja
+            consulta.setString(2, filtroLike); // Para proveedor
+            consulta.setString(3, filtroLike); // Para factura
+            consulta.setString(4, filtroLike); // Para calibre
+            consulta.setString(5, filtroLike); // Para número de rollo
+
+            // Ejecutar la consulta y obtener el resultado
+            try (ResultSet resultado = consulta.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
+                }
             }
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 0;
     }
+
+    /*
+    
+    public int contarRegistros(Connection conexion, String filtro) {
+    String sql = "SELECT COUNT(*) FROM tabla WHERE columna1 LIKE ? OR columna2 LIKE ?";
+    try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+        // Establecer los valores del filtro
+        String filtroLike = "%" + filtro + "%";
+        consulta.setString(1, filtroLike); // Para columna1
+        consulta.setString(2, filtroLike); // Para columna2
+
+        // Ejecutar la consulta y obtener el resultado
+        try (ResultSet resultado = consulta.executeQuery()) {
+            if (resultado.first()) {
+                return resultado.getInt(1); // Retorna la cantidad de registros
+            }
+        }
+    } catch (SQLException ex) {
+        Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
+    }
+    return 0; // Si hay un error, retorna 0
+}
+    
+     */
 }

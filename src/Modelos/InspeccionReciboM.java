@@ -43,6 +43,20 @@ public class InspeccionReciboM {
         this.rutaHojaInstruccion = rutaHojaInstruccion;
     }
 
+    public InspeccionReciboM(int id, String fechaFactura, String calibre, String noRollo, String pzKg, String nombreHojaInstruccion, String nombreFact, String nombreCert, String rutaFactura, String rutaCertificado, String rutaHojaInstruccion) {
+        this.id = id;
+        this.fechaFactura = fechaFactura;
+        this.calibre = calibre;
+        this.noRollo = noRollo;
+        this.pzKg = pzKg;
+        this.nombreHojaInstruccion = nombreHojaInstruccion;
+        this.nombreFact = nombreFact;
+        this.nombreCert = nombreCert;
+        this.rutaFactura = rutaFactura;
+        this.rutaCertificado = rutaCertificado;
+        this.rutaHojaInstruccion = rutaHojaInstruccion;
+    }
+
     public int getId() {
         return id;
     }

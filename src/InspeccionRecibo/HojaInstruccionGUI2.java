@@ -424,7 +424,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         for (int i = 0; i < 10; i++) {
             Row filaAnchoLargo = hoja1.getRow(numFila);
             Cell cellAnchoLargo = filaAnchoLargo.getCell(2);
-            tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 0); // Asume 2 columnas
+            tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 0); 
             tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 1);
             numFila++;
         }
@@ -476,17 +476,14 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     }
 
     private void validarEstadoAceptacionRechazo() {
-        // Determinar valores según el estado del checkbox
         String valorAceptacion = chkAceptacion.isSelected() ? "√" : "";
         String valorRechazo = chkAceptacion.isSelected() ? "" : "√";
-
-        // Actualizar celdas de aceptación y rechazo
         excel.setDatosCeldas(hoja1, FILA_ESTADO, COLUMNA_ACEPTACION, valorAceptacion);
         excel.setDatosCeldas(hoja1, FILA_ESTADO, COLUMNA_RECHAZO, valorRechazo);
     }
 
     private void obtenerDatosTblAnchoLargo(int idHojaInstruccion) {
-        List anchoLargo = als.capturarValores(idHojaInstruccion, dirm.getAnchoLargo());
+        List<AnchoLargoM> anchoLargo = als.capturarValores(idHojaInstruccion, dirm.getAnchoLargo());
 
         int numeroFila = INDICE_TBL_ANCHOLARGO;
         for (AnchoLargoM medida : anchoLargo) {
@@ -548,6 +545,10 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private void cerrarVentana() {
         HojaInstruccionGUI2.this.dispose();
         Conexion.getInstance().desconectar(conexion);
+    }
+    
+    public String getRutaArchivo() {
+        return rutaArchivo;
     }
 
     /**

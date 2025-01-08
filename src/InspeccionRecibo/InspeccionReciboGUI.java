@@ -32,8 +32,8 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private Usuarios usuario;// Usuario
     private Connection conexion; // Conexión a la base de datos
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
-    private InspeccionReciboServicio irs = new InspeccionReciboServicio(); // Servicios y Utilidades
-    private GeneradorExcel excel = new GeneradorExcel(); // Servicio para trabajar con archivos excel    
+    private InspeccionReciboServicio irs; // Servicios y Utilidades
+    private GeneradorExcel excel; // Servicio para trabajar con archivos excel    
     private List<InspeccionReciboM> listaInspeccionRecibo; // Lista de registros de Inspección Recibo
     private TableRowSorter<DefaultTableModel> trs; // filtrado de los campos de la tabla
 
@@ -283,7 +283,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
         String filtro = txtBuscador.getText(); // Captura el texto actual del buscador
-        RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter(filtro, COLUMNA_PROVEEDOR, COLUMNA_NO_FACTURA, COLUMNA_CALIBRE, COLUMNA_NO_ROLLO); // Columnas donde se aplica el filtro
+        RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter("(?i)"+filtro, COLUMNA_NO_HOJA, COLUMNA_PROVEEDOR, COLUMNA_NO_FACTURA, COLUMNA_CALIBRE, COLUMNA_NO_ROLLO); // Columnas donde se aplica el filtro
         trs.setRowFilter(filtroFila);
     }//GEN-LAST:event_txtBuscadorKeyTyped
 
@@ -318,7 +318,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void inicializarServicios() {
         this.irs = new InspeccionReciboServicio();
-        this.excel = new GeneradorExcel();
+        this.excel = new GeneradorExcel(irs);
     }
 
     private void configurarPaginacion() {
@@ -351,10 +351,11 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     private void mostrarDatosTabla(int pagina) throws SQLException, ClassNotFoundException {
         limpiarTabla();
         ajustarColumnas();
+        String filtro = txtBuscador.getText();
         int limiteFilas = 7; // Cantidad de Filas por página
-        int cantidad = irs.contarRegistros(conexion); // Obtener la cantidad total de registros
+        int cantidad = irs.contarRegistros(conexion, filtro); // Obtener la cantidad total de registros
         int paginasTotales = (int) Math.ceil(cantidad / limiteFilas);
-        cargarDatosTabla(pagina, limiteFilas);
+        cargarDatosTabla(pagina, limiteFilas, filtro);
         llenarTabla();
         paginacion1.setPagegination(pagina, paginasTotales);
     }
@@ -373,8 +374,8 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_ESTATUS).setMaxWidth(80);
     }
 
-    private void cargarDatosTabla(int pagina, int limiteFilas) throws SQLException {
-        this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion, pagina, limiteFilas);
+    private void cargarDatosTabla(int pagina, int limiteFilas, String filtro) throws SQLException {
+        this.listaInspeccionRecibo = irs.obtenerTodasInspecciones(conexion, pagina, limiteFilas, filtro);
     }
 
     private void llenarTabla() {
