@@ -214,12 +214,14 @@ public class EspecificacionesGUI extends JFrame {
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         try {
-            int idIR = irs.getIdHI(conexion, inspeccionRecibo);
-            List ald = als.capturarValores(idIR, datosIR.getAnchoLargo());
-            List rdd = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
+            List ald = als.capturarValores(inspeccionRecibo.getId(), datosIR.getAnchoLargo());
+            List rdd = rds.recuperarTodas(inspeccionRecibo.getId(), datosIR.getAnchoLargo());
 
             String HojaIns = xls.generarHojaInstruccion(conexion, datosIR, inspeccionRecibo, tblAnchoLargo, tablaEspecificacion, ald, rdd);
+            inspeccionRecibo.setNombreHojaInstruccion(HojaIns);
             inspeccionRecibo.setRutaHojaInstruccion("archivos\\InspeccionRecibo\\HojasInstruccion\\" + HojaIns);
+            
+            irs.subirHI(conexion, inspeccionRecibo);
             cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);
         } catch (SQLException | ClassNotFoundException ex) {
@@ -417,9 +419,9 @@ public class EspecificacionesGUI extends JFrame {
 
     private List recuperarDatosInspeccionRecibo(InspeccionReciboM inspeccionRecibo) throws SQLException {
         int idIR = irs.getIdHI(conexion, inspeccionRecibo);
-        List anchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
-        List rugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
-        return Arrays.asList(anchoLargo, rugosidadDureza);
+        listaAnchoLargo = als.capturarValores(idIR, datosIR.getAnchoLargo());
+        listaRugosidadDureza = rds.recuperarTodas(idIR, datosIR.getAnchoLargo());
+        return Arrays.asList(listaAnchoLargo, listaRugosidadDureza);
     }
 
     /**

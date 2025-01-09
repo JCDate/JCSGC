@@ -21,7 +21,6 @@ import java.sql.Connection;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import Paginacion.estilo.PaginationItemRenderStyle1;
@@ -282,9 +281,11 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnToExcelActionPerformed
 
     private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
-        String filtro = txtBuscador.getText(); // Captura el texto actual del buscador
-        RowFilter<DefaultTableModel, Object> filtroFila = RowFilter.regexFilter("(?i)"+filtro, COLUMNA_NO_HOJA, COLUMNA_PROVEEDOR, COLUMNA_NO_FACTURA, COLUMNA_CALIBRE, COLUMNA_NO_ROLLO); // Columnas donde se aplica el filtro
-        trs.setRowFilter(filtroFila);
+        try {
+            mostrarDatosTabla(1);
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_txtBuscadorKeyTyped
 
     private void btnAgregarCalibreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarCalibreActionPerformed
@@ -404,8 +405,8 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void configurarAccionesTabla() {
         TableActionEventIR event = crearTableActionEventIR();
-        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellRenderer(new TableActionCellRenderIR());
-        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellEditor(new TableActionCellEditorIR(event));
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellRenderer(new TableActionCellRenderIR(listaInspeccionRecibo));
+        tblInspeccionRecibo.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellEditor(new TableActionCellEditorIR(event, listaInspeccionRecibo));
     }
 
     private TableActionEventIR crearTableActionEventIR() {
@@ -427,6 +428,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             @Override
             public void onHojaInstruccion(int fila) {
                 if (!verificarYAbrirArchivo(listaInspeccionRecibo.get(fila).getRutaHojaInstruccion())) {
+
                     cerrarVentana();
                     irs.abrirHojaInstruccionGUI(usuario, listaInspeccionRecibo.get(fila));
                 }
@@ -435,7 +437,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
     }
 
     private boolean verificarYAbrirArchivo(String rutaArchivo) {
-        if (rutaArchivo != null && rutaArchivo.isEmpty()) {
+        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
             Utilidades.abrirDocumento(rutaArchivo);
             return true;
         }

@@ -251,20 +251,22 @@ public class GeneradorExcel {
         if (inputStream != null) {
             XSSFWorkbook workbook = null;
             try {
+
                 workbook = new XSSFWorkbook(inputStream);  // Crear el workbook usando el inputStream
                 procesarPaginaUnoHJ(workbook, irm, dirm, listaAL, listaRD);
                 procesarPaginaDosHJ(workbook, conexion, dirm, tabla);
 
+                String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
+                numeroStr = partes[1];
+                int numero = Integer.parseInt(numeroStr);
                 // Crear un nuevo archivo de Excel para guardar los cambios
-                nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(dirm.getFechaInspeccion()) + ".xlsx ";  // Ruta del nuevo archivo de Excel
-                FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo);
-                workbook.write(fos);
+                nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(dirm.getFechaInspeccion()) + ".xlsx";  // Ruta del nuevo archivo de Excel
 
                 // Crear un nuevo archivo Excel para guardar los cambios
                 String newFilePath = "\\\\" + Utilidades.SERVIDOR + "\\" + "archivos\\InspeccionRecibo\\HojasInstruccion\\" + nuevaRutaArchivo;
-//                try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
-//                    workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
-//                }
+                try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
+                    workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
+                }
             } catch (IOException e) {
                 Utilidades.manejarExcepcion("Error al procesar el archivo Excel: ", e);
             } finally {
@@ -289,6 +291,7 @@ public class GeneradorExcel {
         if (numero < 10) { // Eliminar ceros a la izquierda
             numeroStr = String.valueOf(numero);
         }
+
         workbook.setSheetName(workbook.getSheetIndex(sheet), numeroStr); // Cambiar el nombre de la Hoja con el número previamente obtenido
 
         // Se imprime la información referente

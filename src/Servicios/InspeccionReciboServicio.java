@@ -64,7 +64,7 @@ public class InspeccionReciboServicio {
     final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id FROM inspeccionrecibo WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
     final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM inspeccionrecibo WHERE noHoja = ?";
     final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM inspeccionrecibo WHERE noHoja = ?";
-    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ? OR LIMIT ?, ?";
+    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo WHERE noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ? LIMIT ?, ?";
     final String INSERT_INTO_INSPECCION_RECIBO = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, nombreHJ, nombreFact, NombreCert, rutaFactura, rutaCertificado, rutaHojaInstruccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM inspeccionrecibo WHERE id = ?";
     final String SELECT_COUNT_INSPECCION_RECIBO = "SELECT COUNT(*) FROM inspeccionrecibo WHERE noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ?";
@@ -90,6 +90,22 @@ public class InspeccionReciboServicio {
         }
     }
 
+     public void subirHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
+        String sqlInsertIr = "UPDATE inspeccionrecibo SET nombreHJ = ?, rutaHojaInstruccion = ? WHERE id = ?";
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
+            sqlInsert.setString(1, irm.getNombreHojaInstruccion());
+            sqlInsert.setString(2, irm.getRutaHojaInstruccion());
+            sqlInsert.setInt(3, irm.getId());
+            sqlInsert.executeUpdate();
+            JOptionPane.showMessageDialog(null, "El Archivo se genero y se guardo Correctamente");
+        } catch (SQLException ex) {
+            System.out.println(ex);
+            JOptionPane.showMessageDialog(null, "Error al ejecutar la consulta SQL de inserción Y NO SE SUBIO NADA: " + ex.getMessage());
+
+        }
+    }
+    
+    
     public List<CalibreIRM> recuperarTodasMedidasCalibre(Connection conexion) throws SQLException {
         List<CalibreIRM> listaCalibreIRM = new ArrayList<>();
         try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_INSPECCION_RECIBO);
@@ -208,16 +224,30 @@ public class InspeccionReciboServicio {
     }
 
     public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion, int page, int limit, String filtro) throws SQLException {
+        String sql;
         List<InspeccionReciboM> listaIr = new ArrayList<>();
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+
+        if (filtrar) {
+            sql = SELECT_INSPECCION_RECIBO_SQL;
+        } else {
+            sql = "SELECT * FROM inspeccionrecibo LIMIT ?, ?";
+        }
+
         int limite = (page - 1) * limit;
-        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_INSPECCION_RECIBO_SQL)) {
-            consulta.setString(1, "%" + filtro + "%");
-            consulta.setString(2, "%" + filtro + "%");
-            consulta.setString(3, "%" + filtro + "%");
-            consulta.setString(4, "%" + filtro + "%");
-            consulta.setString(5, "%" + filtro + "%");
-            consulta.setInt(6, limite);
-            consulta.setInt(7, limit);
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            if (filtrar) {
+                consulta.setString(1, "%" + filtro + "%");
+                consulta.setString(2, "%" + filtro + "%");
+                consulta.setString(3, "%" + filtro + "%");
+                consulta.setString(4, "%" + filtro + "%");
+                consulta.setString(5, "%" + filtro + "%");
+                consulta.setInt(6, limite);
+                consulta.setInt(7, limit);
+            } else {
+                consulta.setInt(1, limite);
+                consulta.setInt(2, limit);
+            }
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(
@@ -255,7 +285,7 @@ public class InspeccionReciboServicio {
                 InspeccionReciboM ir = new InspeccionReciboM(
                         resultado.getInt("id"),
                         resultado.getString("fechaFactura"),
-                        resultado.getString("Proveedor"),
+                        resultado.getString("proveedor"),
                         resultado.getString("noFactura"),
                         resultado.getString("noPedido"),
                         resultado.getString("calibre"),
@@ -264,12 +294,12 @@ public class InspeccionReciboServicio {
                         resultado.getString("pzKg"),
                         resultado.getString("estatus"),
                         resultado.getString("noHoja"),
-                        null,
-                        null,
-                        null,
                         resultado.getString("nombreHJ"),
                         resultado.getString("nombreFact"),
-                        resultado.getString("nombreCert")
+                        resultado.getString("nombreCert"),
+                        resultado.getString("rutaFactura"),
+                        resultado.getString("rutaCertificado"),
+                        resultado.getString("rutaHojaInstruccion")
                 );
                 listaIr.add(ir);
             }
@@ -764,19 +794,22 @@ public class InspeccionReciboServicio {
 
     public int contarRegistros(Connection conexion, String filtro) {
         String sql;
-        boolean filtrar = filtro != null && !filtro.trim().isEmpty(); 
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
         if (filtrar) {
             sql = SELECT_COUNT_INSPECCION_RECIBO;
         } else {
-            sql = "SELECT COUNT(*) FROM inspeccionRecibo";
+            sql = "SELECT COUNT(*) FROM inspeccionrecibo";
         }
-        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COUNT_INSPECCION_RECIBO)) {
-            String filtroLike = "%" + filtro + "%";
-            consulta.setString(1, filtroLike); // Para número de hoja
-            consulta.setString(2, filtroLike); // Para proveedor
-            consulta.setString(3, filtroLike); // Para factura
-            consulta.setString(4, filtroLike); // Para calibre
-            consulta.setString(5, filtroLike); // Para número de rollo
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+
+            if (filtrar) {
+                String filtroLike = "%" + filtro + "%";
+                consulta.setString(1, filtroLike); // Para número de hoja
+                consulta.setString(2, filtroLike); // Para proveedor
+                consulta.setString(3, filtroLike); // Para factura
+                consulta.setString(4, filtroLike); // Para calibre
+                consulta.setString(5, filtroLike); // Para número de rollo
+            }
 
             // Ejecutar la consulta y obtener el resultado
             try (ResultSet resultado = consulta.executeQuery()) {
@@ -790,28 +823,4 @@ public class InspeccionReciboServicio {
         }
         return 0;
     }
-
-    /*
-    
-    public int contarRegistros(Connection conexion, String filtro) {
-    String sql = "SELECT COUNT(*) FROM tabla WHERE columna1 LIKE ? OR columna2 LIKE ?";
-    try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
-        // Establecer los valores del filtro
-        String filtroLike = "%" + filtro + "%";
-        consulta.setString(1, filtroLike); // Para columna1
-        consulta.setString(2, filtroLike); // Para columna2
-
-        // Ejecutar la consulta y obtener el resultado
-        try (ResultSet resultado = consulta.executeQuery()) {
-            if (resultado.first()) {
-                return resultado.getInt(1); // Retorna la cantidad de registros
-            }
-        }
-    } catch (SQLException ex) {
-        Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
-    }
-    return 0; // Si hay un error, retorna 0
-}
-    
-     */
 }

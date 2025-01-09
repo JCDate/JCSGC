@@ -1,6 +1,8 @@
 package BotonesAccion;
 
 import java.awt.event.ActionEvent;
+import java.net.URL;
+import javax.swing.ImageIcon;
 
 public class PanelActionIR extends javax.swing.JPanel {
 
@@ -20,6 +22,11 @@ public class PanelActionIR extends javax.swing.JPanel {
         btnHojaInstruccion.addActionListener((ActionEvent ae) -> {
             event.onHojaInstruccion(row);
         });
+    }
+
+    public void setBtnHojaInstruccionIcon(String rutaIcon) {
+        URL iconURL = getClass().getResource(rutaIcon);
+        btnHojaInstruccion.setIcon(new ImageIcon(iconURL));
     }
 
     /**
