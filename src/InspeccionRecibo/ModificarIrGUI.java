@@ -385,8 +385,6 @@ public class ModificarIrGUI extends javax.swing.JFrame {
         Conexion.getInstance().desconectar(conexion);
     }
 
-    
-
     private void actualizarInspeccionRecibo(String fechaFactura, String proveedor, String noFactura, String noPedido, String calibre, String pLamina, String noRollo, String pzKg, String estatus, String noHoja, String nombreHJ, String nombreFact, String nombreCert) {
         inspeccionRecibo.setFechaFactura(fechaFactura);
         inspeccionRecibo.setProveedor(proveedor);
@@ -426,6 +424,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
                 Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 textField.setText(nombreArchivo);
+                rutaArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
             } catch (IOException ex) {
                 Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
                 Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -434,8 +433,6 @@ public class ModificarIrGUI extends javax.swing.JFrame {
 
         return rutaArchivo;
     }
-
-    
 
     /**
      * @param args the command line arguments

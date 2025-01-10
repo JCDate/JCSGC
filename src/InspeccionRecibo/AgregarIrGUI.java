@@ -258,7 +258,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
 
     private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
-        irs.abrirAgregarIrGUI(usuario);
+        irs.abrirInspeccionReciboGUI(usuario);
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
@@ -428,6 +428,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
                 Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 textField.setText(nombreArchivo);
+                rutaArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
             } catch (IOException ex) {
                 Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
                 Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);

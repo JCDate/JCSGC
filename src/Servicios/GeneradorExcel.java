@@ -9,6 +9,8 @@ import Modelos.DatosIRM;
 import Modelos.InspeccionReciboM;
 import Modelos.RugosidadDurezaM;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -258,7 +260,6 @@ public class GeneradorExcel {
 
                 String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
                 numeroStr = partes[1];
-                int numero = Integer.parseInt(numeroStr);
                 // Crear un nuevo archivo de Excel para guardar los cambios
                 nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(dirm.getFechaInspeccion()) + ".xlsx";  // Ruta del nuevo archivo de Excel
 
@@ -456,6 +457,69 @@ public class GeneradorExcel {
         }
     }
 
+    public String editarHojaInstruccion(String rutaHojaInstruccion, InspeccionReciboM irm) {
+        FileInputStream fis = null;
+        String nuevoArchivo = "";
+        try {
+            fis = new FileInputStream("\\\\" + Utilidades.SERVIDOR + "\\" + rutaHojaInstruccion);
+            XSSFWorkbook workbook;
+            String numeroStr;
+            try {
+                workbook = new XSSFWorkbook(fis);
+                Sheet hoja1 = workbook.getSheetAt(0);
+
+                // Número de Hoja
+                String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
+                numeroStr = partes[1];
+                int numero = Integer.parseInt(numeroStr);
+                if (numero < 10) { // Eliminar ceros a la izquierda
+                    numeroStr = String.valueOf(numero);
+                }
+                workbook.setSheetName(workbook.getSheetIndex(hoja1), numeroStr); // Cambiar el nombre de la Hoja con el número previamente obtenido
+
+                // Modifica los campos con la información del nuevo registro
+                setDatosCeldas(hoja1, 5, 2, numeroStr); // Número de Hoja
+                setDatosCeldas(hoja1, 9, 8, irm.getFechaFactura()); // Fecha Factura
+                setDatosCeldas(hoja1, 9, 6, irm.getNoFactura()); // No. Factura
+                setDatosCeldas(hoja1, 13, 7, irm.getPzKg()); // Pz/Kg
+
+                // Descripción
+                Row fila3 = hoja1.getRow(9); // Obtén la fila
+                Cell celda3 = fila3.getCell(1); // Obtén la celda en la fila
+                String txtTexto = celda3.getStringCellValue();
+                if (txtTexto.contains("HOJA") && irm.getpLamina().equals("CINTA")) {
+                    txtTexto = txtTexto.replace("HOJA", "CINTA");
+                } else if (txtTexto.contains("CINTA") && irm.getpLamina().equals("HOJA")) {
+                    txtTexto = txtTexto.replace("CINTA", "HOJA");
+                }
+                celda3.setCellValue(txtTexto);
+
+                nuevoArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\HojasInstruccion\\HI-" + numeroStr + "-" + formato.eliminarSeparadores(irm.getFechaFactura());
+
+                // Crear un nuevo archivo con los cambios
+                try (FileOutputStream fos = new FileOutputStream(nuevoArchivo)) {
+                    workbook.write(fos); // Escribir los cambios en el nuevo archivo
+                }
+
+            } catch (IOException ex) {
+                Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return nuevoArchivo;
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                fis.close();
+            } catch (IOException ex) {
+                Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return nuevoArchivo;
+    }
+    
+    
+    
     public String generarArchivoRetencionDimensional(Connection conexion, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("jc/doctos/RETENCION-DIMENSIONAL.xlsx");
 

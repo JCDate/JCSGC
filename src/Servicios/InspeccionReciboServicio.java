@@ -68,7 +68,7 @@ public class InspeccionReciboServicio {
     final String INSERT_INTO_INSPECCION_RECIBO = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, nombreHJ, nombreFact, NombreCert, rutaFactura, rutaCertificado, rutaHojaInstruccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM inspeccionrecibo WHERE id = ?";
     final String SELECT_COUNT_INSPECCION_RECIBO = "SELECT COUNT(*) FROM inspeccionrecibo WHERE noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ?";
-    final String SELECT_HOJA_INSTRUCCION_BY_NO_ROLLO = "SELECT hojaInstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
+    final String SELECT_HOJA_INSTRUCCION_BY_NO_ROLLO = "SELECT rutaHojaInstruccion FROM inspeccionrecibo WHERE noRollo = ? LIMIT 1";
     final String UPDATE_INSPECCION_RECIBO_SQL = "UPDATE inspeccionrecibo SET fechaFactura=?, proveedor=?, noFactura=?, noPedido=?, calibre=?, pLamina=?, noRollo=?, pzKg=?, estatus=?, noHoja=?, nombreHJ = ?, nombreFact = ?, nombreCert = ?, rutaFactura = ?, rutaCertificado = ?, rutaHojaInstruccion = ? WHERE id=?";
 
     public String direcciomImg = "img\\jc.png";
@@ -90,7 +90,7 @@ public class InspeccionReciboServicio {
         }
     }
 
-     public void subirHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
+    public void subirHI(Connection conexion, InspeccionReciboM irm) throws SQLException {
         String sqlInsertIr = "UPDATE inspeccionrecibo SET nombreHJ = ?, rutaHojaInstruccion = ? WHERE id = ?";
         try (PreparedStatement sqlInsert = conexion.prepareStatement(sqlInsertIr)) {
             sqlInsert.setString(1, irm.getNombreHojaInstruccion());
@@ -104,8 +104,7 @@ public class InspeccionReciboServicio {
 
         }
     }
-    
-    
+
     public List<CalibreIRM> recuperarTodasMedidasCalibre(Connection conexion) throws SQLException {
         List<CalibreIRM> listaCalibreIRM = new ArrayList<>();
         try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_INSPECCION_RECIBO);
@@ -144,7 +143,7 @@ public class InspeccionReciboServicio {
                 if (rs.next()) { // Obtiene la hoja de instrucción si existe
                     String hojaInstruccion = rs.getString("rutaHojaInstruccion");
                     if (hojaInstruccion != null && !hojaInstruccion.isEmpty()) {
-                        nuevaRutaHJ = editarHojaInstruccion(hojaInstruccion, irm);
+                        nuevaRutaHJ = excel.editarHojaInstruccion(hojaInstruccion, irm);
                     }
                 }
 
@@ -515,66 +514,7 @@ public class InspeccionReciboServicio {
         frame.setLocationRelativeTo(null);
     }
 
-    private String editarHojaInstruccion(String rutaHojaInstruccion, InspeccionReciboM irm) {
-        FileInputStream fis = null;
-        String nuevoArchivo = "";
-        try {
-            fis = new FileInputStream("\\\\" + Utilidades.SERVIDOR + "\\" + rutaHojaInstruccion);
-            XSSFWorkbook workbook;
-            String numeroStr;
-            try {
-                workbook = new XSSFWorkbook(fis);
-                Sheet hoja1 = workbook.getSheetAt(0);
-
-                // Número de Hoja
-                String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
-                numeroStr = partes[1];
-                int numero = Integer.parseInt(numeroStr);
-                if (numero < 10) { // Eliminar ceros a la izquierda
-                    numeroStr = String.valueOf(numero);
-                }
-                workbook.setSheetName(workbook.getSheetIndex(hoja1), numeroStr); // Cambiar el nombre de la Hoja con el número previamente obtenido
-
-                // Modifica los campos con la información del nuevo registro
-                excel.setDatosCeldas(hoja1, 5, 2, numeroStr); // Número de Hoja
-                excel.setDatosCeldas(hoja1, 9, 8, irm.getFechaFactura()); // Fecha Factura
-                excel.setDatosCeldas(hoja1, 9, 6, irm.getNoFactura()); // No. Factura
-                excel.setDatosCeldas(hoja1, 13, 7, irm.getPzKg()); // Pz/Kg
-
-                // Descripción
-                Row fila3 = hoja1.getRow(9); // Obtén la fila
-                Cell celda3 = fila3.getCell(1); // Obtén la celda en la fila
-                String txtTexto = celda3.getStringCellValue();
-                if (txtTexto.contains("HOJA") && irm.getpLamina().equals("CINTA")) {
-                    txtTexto = txtTexto.replace("HOJA", "CINTA");
-                } else if (txtTexto.contains("CINTA") && irm.getpLamina().equals("HOJA")) {
-                    txtTexto = txtTexto.replace("CINTA", "HOJA");
-                }
-                celda3.setCellValue(txtTexto);
-
-                nuevoArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\HojasInstruccion\\HI-" + workbook.getSheetIndex(hoja1) + "-" + irm.getFechaFactura();
-
-                // Crear un nuevo archivo con los cambios
-                try (FileOutputStream fos = new FileOutputStream(nuevoArchivo)) {
-                    workbook.write(fos); // Escribir los cambios en el nuevo archivo
-                }
-
-            } catch (IOException ex) {
-                Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            return nuevoArchivo;
-
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                fis.close();
-            } catch (IOException ex) {
-                Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        return nuevoArchivo;
-    }
+    
 
     public String obtenerValorComboBox(JComboBox<String> comboBox) {
         return comboBox.getSelectedItem() != null ? comboBox.getSelectedItem().toString() : "";

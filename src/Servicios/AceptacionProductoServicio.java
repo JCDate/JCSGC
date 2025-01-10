@@ -427,11 +427,10 @@ public class AceptacionProductoServicio {
                 }
             }
 
-            
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
-        } 
+        }
     }
 
     public byte[] leerArchivo(String rutaArchivo) throws IOException {
@@ -754,7 +753,7 @@ public class AceptacionProductoServicio {
             }
 
             String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo; // Ruta de red
-            System.out.println(urlArchivo);
+
             File archivo = new File(urlArchivo);
             if (!archivo.exists()) {
                 Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);

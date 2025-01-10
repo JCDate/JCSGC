@@ -35,6 +35,10 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private TableRowSorter<DefaultTableModel> filtroTabla; // Permite filtraer y ordenar la tabla de acuerdo a los criterios definidos
     private List<AceptacionProductoM> listaAceptacionProducto; // Listas de información para la gestión de los archivos de aceptación de productos
 
+    // Columnas de la tabla
+    private static final int COLUMNA_COMPONENTE = 0;
+    private static final int COLUMNA_OPERACIONES = 1;
+
     public AceptacionProductoGUI() {
         initComponents();
     }
@@ -197,8 +201,8 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
     private void configurarAccionesTabla() {
         TableActionEvent event = crearTableActionEvent();
-        tblAceptacionProducto.getColumnModel().getColumn(1).setCellRenderer(new TableActionCellRender(true, true, true, false, false, false));
-        tblAceptacionProducto.getColumnModel().getColumn(1).setCellEditor(new TableActionCellEditor(event, true, true, true, false, false, false));
+        tblAceptacionProducto.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellRenderer(new TableActionCellRender(true, true, true, false, false, false));
+        tblAceptacionProducto.getColumnModel().getColumn(COLUMNA_OPERACIONES).setCellEditor(new TableActionCellEditor(event, true, true, true, false, false, false));
     }
 
     private TableActionEvent crearTableActionEvent() {
@@ -258,8 +262,8 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
     private Object[] crearFila(AceptacionProductoM aceptacionProducto) {
         Object[] fila = new Object[2];
-        fila[0] = aceptacionProducto.getComponente();
-        fila[1] = "OPERACIONES";
+        fila[COLUMNA_COMPONENTE] = aceptacionProducto.getComponente();
+        fila[COLUMNA_OPERACIONES] = "OPERACIONES";
         return fila;
     }
 

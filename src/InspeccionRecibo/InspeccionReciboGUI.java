@@ -77,7 +77,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         btnActualizarRegistros = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnAgregarRegistro = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnEliminarRegistro = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
-        btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
         lblJCIcono = new javax.swing.JLabel();
         btnAgregarCalibre = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -88,6 +87,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         paginacion1 = new Paginacion.Pagination();
         lblReporteInspeccionRecibo = new javax.swing.JLabel();
+        btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -147,18 +147,6 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         });
         getContentPane().add(btnEliminarRegistro, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 370, 130, 40));
 
-        btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
-        btnCerrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/cancelar.png"))); // NOI18N
-        btnCerrar.setText("CERRAR");
-        btnCerrar.setBorderPainted(false);
-        btnCerrar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCerrarActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 510, 120, 50));
-
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         getContentPane().add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
 
@@ -178,7 +166,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
             },
             new String [] {
-                "No.", "FECHA DE FACTURA", "PROVEEDOR", "NO. FACTURA", "NO. PEDIDO", "CALIBRE", "PRESENTACIÓN DE LAMINA", "NO. ROLLO", "PZ/Kg", "ESTATUS", "VER FACTURA"
+                "No.", "FECHA DE FACTURA", "PROVEEDOR", "NO. FACTURA", "NO. PEDIDO", "CALIBRE", "PRESENTACIÓN DE LAMINA", "NO. ROLLO", "PZ/Kg", "ESTATUS", "OPERACIONES"
             }
         ));
         tblInspeccionRecibo.setAutoscrolls(false);
@@ -198,7 +186,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 txtBuscadorKeyTyped(evt);
             }
         });
-        getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 95, 260, 40));
+        getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 95, 260, 40));
 
         btnToExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excel.png"))); // NOI18N
         btnToExcel.addActionListener(new java.awt.event.ActionListener() {
@@ -206,7 +194,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
                 btnToExcelActionPerformed(evt);
             }
         });
-        getContentPane().add(btnToExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1210, 10, 80, 80));
+        getContentPane().add(btnToExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1240, 10, 80, 80));
 
         jPanel1.setBackground(new java.awt.Color(251, 251, 251));
         jPanel1.setForeground(new java.awt.Color(242, 242, 242));
@@ -221,13 +209,25 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         paginacion1.setOpaque(false);
         jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 10, -1, -1));
 
-        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 530, 1180, 50));
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 530, 1160, 50));
 
         lblReporteInspeccionRecibo.setBackground(new java.awt.Color(255, 255, 255));
         lblReporteInspeccionRecibo.setFont(new java.awt.Font("Wide Latin", 1, 18)); // NOI18N
         lblReporteInspeccionRecibo.setForeground(new java.awt.Color(10, 110, 255));
         lblReporteInspeccionRecibo.setText("REPORTE DE INSPECCIÓN/RECIBO");
         jPanel1.add(lblReporteInspeccionRecibo, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 30, 660, 50));
+
+        btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
+        btnCerrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/cancelar.png"))); // NOI18N
+        btnCerrar.setText("CERRAR");
+        btnCerrar.setBorderPainted(false);
+        btnCerrar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCerrarActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 550, 120, 50));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1330, 610));
 
@@ -355,7 +355,8 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         String filtro = txtBuscador.getText();
         int limiteFilas = 7; // Cantidad de Filas por página
         int cantidad = irs.contarRegistros(conexion, filtro); // Obtener la cantidad total de registros
-        int paginasTotales = (int) Math.ceil(cantidad / limiteFilas);
+        int paginasTotales = (int) Math.ceil((double) cantidad / limiteFilas);
+
         cargarDatosTabla(pagina, limiteFilas, filtro);
         llenarTabla();
         paginacion1.setPagegination(pagina, paginasTotales);
@@ -414,21 +415,22 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
             @Override
             public void onViewFactura(int fila) {
                 if (!verificarYAbrirArchivo(listaInspeccionRecibo.get(fila).getRutaFactura())) {
-                    JOptionPane.showMessageDialog(null, "No hay archivo");
+                    cerrarVentana();
+                    irs.abrirModificarIrGUI(listaInspeccionRecibo.get(fila), usuario);
                 }
             }
 
             @Override
             public void onViewCertificado(int fila) {
                 if (!verificarYAbrirArchivo(listaInspeccionRecibo.get(fila).getRutaCertificado())) {
-                    JOptionPane.showMessageDialog(null, "No hay archivo");
+                    cerrarVentana();
+                    irs.abrirModificarIrGUI(listaInspeccionRecibo.get(fila), usuario);
                 }
             }
 
             @Override
             public void onHojaInstruccion(int fila) {
                 if (!verificarYAbrirArchivo(listaInspeccionRecibo.get(fila).getRutaHojaInstruccion())) {
-
                     cerrarVentana();
                     irs.abrirHojaInstruccionGUI(usuario, listaInspeccionRecibo.get(fila));
                 }

@@ -11,6 +11,7 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -183,6 +184,7 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         try {
             configurarVentana();
             inicializarAtributos();
+            inicializarListeners();
             definirValoresComponentes();
             actualizarDatosTabla();
             mostrarDatosTabla();
@@ -205,6 +207,12 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         this.modeloTabla = (DefaultTableModel) tblAceptacionPc2.getModel();
         this.listaDatosRD = new ArrayList<>();
         this.listaFechas = aps.obtenerFechasRetencionDimensional(conexion, aceptacionProducto.getComponente());
+    }
+
+    private void inicializarListeners() {
+        cbxFecha.addActionListener((ActionEvent ae) -> {
+            actualizarDatosTabla();
+        });
     }
 
     private void definirValoresComponentes() {

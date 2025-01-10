@@ -12,10 +12,10 @@
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/InspeccionReciboServicio.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/Utilidades.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/AceptacionProductoServicio.java</file>
             <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/InspeccionRecibo/InspeccionReciboGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/GeneradorExcel.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/AceptacionProducto/AceptacionProductoGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/AceptacionProducto/ModificarAPGUI.java</file>
             <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/AceptacionProducto/RetencionDimensionalGUI.java</file>
         </group>
     </open-files>

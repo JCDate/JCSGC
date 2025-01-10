@@ -28,6 +28,16 @@ public class PanelActionIR extends javax.swing.JPanel {
         URL iconURL = getClass().getResource(rutaIcon);
         btnHojaInstruccion.setIcon(new ImageIcon(iconURL));
     }
+    
+    public void setBtnFacturaIcon(String rutaIcon) {
+        URL iconURL = getClass().getResource(rutaIcon);
+        btnVerFactura.setIcon(new ImageIcon(iconURL));
+    }
+    
+    public void setBtnCertificadoIcon(String rutaIcon) {
+        URL iconURL = getClass().getResource(rutaIcon);
+        btnVerCertificado.setIcon(new ImageIcon(iconURL));
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
