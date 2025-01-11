@@ -3,8 +3,10 @@ package AceptacionProducto;
 import BotonesAccion.TableActionCellEditor;
 import BotonesAccion.TableActionCellRender;
 import BotonesAccion.TableActionEvent;
+import InspeccionRecibo.InspeccionReciboGUI;
 import Modelos.AceptacionProductoM;
 import Modelos.Usuarios;
+import Paginacion.estilo.PaginationItemRenderStyle1;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
 import Servicios.Utilidades;
@@ -32,6 +34,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private Connection conexion; // Conexión a la Base de Datos
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
+    private TableRowSorter<DefaultTableModel> trs; // filtrado de los campos de la tabla
     private TableRowSorter<DefaultTableModel> filtroTabla; // Permite filtraer y ordenar la tabla de acuerdo a los criterios definidos
     private List<AceptacionProductoM> listaAceptacionProducto; // Listas de información para la gestión de los archivos de aceptación de productos
 
@@ -67,6 +70,8 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         tblAceptacionProducto = new javax.swing.JTable();
         btnActualizar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnCrear = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        jPanel2 = new javax.swing.JPanel();
+        paginacion1 = new Paginacion.Pagination();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -105,10 +110,11 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
                 "COMPONENTE", "OPERACIONES"
             }
         ));
+        tblAceptacionProducto.setPreferredSize(new java.awt.Dimension(150, 350));
         tblAceptacionProducto.setRowHeight(50);
         jScrollPane1.setViewportView(tblAceptacionProducto);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 100, 710, -1));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 100, 710, 380));
 
         btnActualizar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnActualizar.setForeground(new java.awt.Color(255, 255, 255));
@@ -131,6 +137,13 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
             }
         });
         jPanel1.add(btnCrear, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, 210, 50));
+
+        jPanel2.setBackground(new java.awt.Color(32, 163, 211));
+
+        paginacion1.setOpaque(false);
+        jPanel2.add(paginacion1);
+
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 490, 690, 40));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1120, 540));
 
@@ -157,7 +170,8 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
             configurarVentana();
             inicializarAtributos();
             configurarBuscador();
-            inicializarTabla();
+            inicializarTabla(1);
+            configurarPaginacion();
             inicializarListeners();
             inicializarFiltroTabla();
         } catch (SQLException ex) {
@@ -184,19 +198,42 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         txtBuscador.setHint("Buscar...");
     }
 
-    private void inicializarTabla() {
+    private void inicializarTabla(int page) {
         try {
-            cargarDatosTabla();
+            configurarModeloYFiltro();
+            mostrarDatosTabla(page);
             configurarAccionesTabla();
-            mostrarDatosTabla();
         } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
-            Logger.getLogger(AceptacionProductoGUI.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void cargarDatosTabla() {
-        this.listaAceptacionProducto = aps.obtenerAceptacionProducto(conexion);
+    private void configurarModeloYFiltro() {
+        this.modeloTabla = (DefaultTableModel) tblAceptacionProducto.getModel();
+        this.trs = new TableRowSorter(tblAceptacionProducto.getModel());
+        tblAceptacionProducto.setRowSorter(trs);
+    }
+
+    private void mostrarDatosTabla(int pagina) throws SQLException, ClassNotFoundException {
+        limpiarTabla();
+        String filtro = txtBuscador.getText();
+        int limiteFilas = 7; // Cantidad de Filas por página
+        int cantidad = aps.contarRegistros(conexion, filtro); // Obtener la cantidad total de registros
+        int paginasTotales = (int) Math.ceil((double) cantidad / limiteFilas);
+
+        cargarDatosTabla(pagina, limiteFilas, filtro);
+        llenarTabla();
+        paginacion1.setPagegination(pagina, paginasTotales);
+    }
+
+    private void cargarDatosTabla(int pagina, int limiteFilas, String filtro) throws SQLException {
+        this.listaAceptacionProducto = aps.obtenerAceptacionProducto(conexion, pagina, limiteFilas, filtro);
+    }
+
+    private void configurarPaginacion() {
+        paginacion1.addEventPagination(pagina -> inicializarTabla(pagina));
+        paginacion1.setPaginationItemRender(new PaginationItemRenderStyle1());
     }
 
     private void configurarAccionesTabla() {
@@ -240,11 +277,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
                 // Nada...
             }
         };
-    }
-
-    private void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
-        limpiarTabla();
-        llenarTabla();
     }
 
     private void limpiarTabla() {
@@ -338,8 +370,10 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
     private javax.swing.JButton btnCrear;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblJCIcono;
+    private Paginacion.Pagination paginacion1;
     private javax.swing.JTable tblAceptacionProducto;
     private swing.TextField txtBuscador;
     // End of variables declaration//GEN-END:variables

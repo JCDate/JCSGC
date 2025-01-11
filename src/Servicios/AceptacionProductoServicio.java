@@ -70,7 +70,7 @@ public class AceptacionProductoServicio {
     final String UPDATE_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ?, tamLote = ?, tamMta = ?, inspector = ?, turno = ?, disp = ? WHERE id = ?";
     final String UPDATE_NO_ORDEN_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ? WHERE componente = ? AND fecha = ?";
     final String UPDATE_NO_OPS_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noOps = ? WHERE componente = ? ";
-    final String DELETE_ACEPTACION_PC3 = "DELETE FROM aceptacionpc3 WHERE fecha = ? AND noOp = ? AND variable = ? AND especificacion = ? AND valor = ?";
+    final String DELETE_ACEPTACION_PC3 = "DELETE FROM aceptacionpc3 WHERE fecha = ? AND noOp = ? AND noTroquel = ? AND variable = ? AND especificacion = ? AND valor = ?";
     final String SELECT_COMPONENTE_FROM_ANTECEDENTES_FAMILIA = "SELECT TRIM(componente) AS componente FROM antecedentesfamilia";
     final String DELETE_ACEPTACION_PRODUCTO = "DELETE FROM aceptacionproducto WHERE componente = ?";
     final String DELETE_ACEPTACION_PC1 = "DELETE FROM aceptacionpc1 WHERE componente = ?";
@@ -254,9 +254,10 @@ public class AceptacionProductoServicio {
             PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC3);
             ps.setString(1, apc3.getFecha());
             ps.setString(2, apc3.getNoOp());
-            ps.setString(3, apc3.getVariable());
-            ps.setString(4, apc3.getEspecificacion());
-            ps.setString(5, apc3.getValor());
+            ps.setString(3, apc3.getNoTroquel());
+            ps.setString(4, apc3.getVariable());
+            ps.setString(5, apc3.getEspecificacion());
+            ps.setString(6, apc3.getValor());
             ps.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al eliminar la información: ", ex);
@@ -600,6 +601,45 @@ public class AceptacionProductoServicio {
         return lista;
     }
 
+    public List<AceptacionProductoM> obtenerAceptacionProducto(Connection conexion, int page, int limit, String filtro) {
+        String sql;
+        List<AceptacionProductoM> lista = new ArrayList<>();
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+
+        if (filtrar) {
+            sql = "SELECT * FROM aceptacionProducto WHERE componente = ? ORDER BY componente LIMIT ?, ?";
+        } else {
+            sql = "SELECT * FROM aceptacionProducto ORDER BY componente LIMIT ?, ?";
+        }
+
+        int limite = (page - 1) * limit;
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+
+            if (filtrar) {
+                consulta.setString(1, "%" + filtro + "%");
+                consulta.setInt(2, limite);
+                consulta.setInt(3, limit);
+            } else {
+                consulta.setInt(1, limite);
+                consulta.setInt(2, limit);
+            }
+
+            ResultSet resultado = consulta.executeQuery();
+            while (resultado.next()) {
+                AceptacionProductoM ir = new AceptacionProductoM(
+                        resultado.getInt("id"),
+                        resultado.getString("componente"),
+                        resultado.getString("rutaArchivo")
+                );
+                lista.add(ir);
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al recuperar la información", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return lista;
+    }
+
     public List<String> obtenerDatos(PreparedStatement consulta, String columna) throws SQLException {
         List<String> listaDatos = new ArrayList<>();
 
@@ -770,4 +810,30 @@ public class AceptacionProductoServicio {
         desktop.open(archivo);
     }
 
+    public int contarRegistros(Connection conexion, String filtro) {
+        String sql;
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+        if (filtrar) {
+            sql = "SELECT COUNT(*) FROM aceptacionproducto WHERE componente = ?";
+        } else {
+            sql = "SELECT COUNT(*) FROM aceptacionproducto";
+        }
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            if (filtrar) {
+                String filtroLike = "%" + filtro + "%";
+                consulta.setString(1, filtroLike); // Para número de hoja
+            }
+
+            // Ejecutar la consulta y obtener el resultado
+            try (ResultSet resultado = consulta.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
+                }
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
 }

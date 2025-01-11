@@ -5,6 +5,7 @@ import Modelos.AceptacionPc2;
 import Modelos.AceptacionPc3;
 import Modelos.AceptacionProductoM;
 import Modelos.Usuarios;
+import Paginacion.estilo.PaginationItemRenderStyle1;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
 import Servicios.GeneradorExcel;
@@ -45,6 +46,14 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
     private List<AceptacionPc3> listaNuevosDatos; // lista de nuevos datos de información de aceptacion de producto
     private List<AceptacionPc3> listaAceptacionPc3; // lista de datos de información de aceptacion de producto
+
+    // Columnas de la tabla
+    private static final int COLUMNA_FECHA = 0;
+    private static final int COLUMNA_NO_OP = 1;
+    private static final int COLUMNA_NO_TROQUEL = 2;
+    private static final int COLUMNA_ESPECIFICACION = 3;
+    private static final int COLUMNA_VARIABLE = 4;
+    private static final int COLUMNA_VALOR = 5;
 
     public RetencionDimensionalGUI() {
         initComponents();
@@ -140,6 +149,8 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         btnActualizar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnModificar = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnArchivoExcel = new swing.Button(new Color(118, 223, 135),new Color(45, 220, 75));
+        jPanel2 = new javax.swing.JPanel();
+        paginacion1 = new Paginacion.Pagination();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -166,7 +177,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnPlanControlActionPerformed(evt);
             }
         });
-        jPanel1.add(btnPlanControl, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 610, 200, 40));
+        jPanel1.add(btnPlanControl, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 610, 200, 40));
 
         tblRetencionDimensional.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -176,10 +187,10 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 "FECHA", "NO. OP.", "NO. TROQUEL", "VARIABLE", "ESPECIFICACIÓN", "VALOR"
             }
         ));
-        tblRetencionDimensional.setRowHeight(30);
+        tblRetencionDimensional.setRowHeight(50);
         jScrollPane1.setViewportView(tblRetencionDimensional);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 120, 850, 490));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 120, 850, 430));
 
         jPanel3.setBackground(new java.awt.Color(32, 163, 211));
         jPanel3.setForeground(new java.awt.Color(95, 158, 180));
@@ -341,7 +352,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnEliminarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(830, 610, 80, 40));
+        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 610, 80, 40));
 
         btnActualizar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/actualizar.png"))); // NOI18N
         btnActualizar.addActionListener(new java.awt.event.ActionListener() {
@@ -349,7 +360,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnActualizarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnActualizar, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 610, 80, 40));
+        jPanel1.add(btnActualizar, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 610, 80, 40));
 
         btnModificar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/modificar.png"))); // NOI18N
         btnModificar.setToolTipText("");
@@ -358,7 +369,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnModificarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 610, 80, 40));
+        jPanel1.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 610, 80, 40));
 
         btnArchivoExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excelC.png"))); // NOI18N
         btnArchivoExcel.addActionListener(new java.awt.event.ActionListener() {
@@ -366,7 +377,15 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnArchivoExcelActionPerformed(evt);
             }
         });
-        jPanel1.add(btnArchivoExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 610, 80, 40));
+        jPanel1.add(btnArchivoExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 610, 80, 40));
+
+        jPanel2.setBackground(new java.awt.Color(32, 163, 211));
+        jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        paginacion1.setOpaque(false);
+        jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 10, -1, -1));
+
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 560, 830, 50));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1250, 700));
 
@@ -441,7 +460,6 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
 
     private void btnArchivoExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnArchivoExcelActionPerformed
         try {
-            listaAceptacionPc3 = aps.obtenerAceptacionPc3(conexion, aceptacionPc1.getComponente());
             String retencionDimensional = excel.generarArchivoRetencionDimensional(conexion, listaAceptacionPc3, aceptacionPc2);
             aceptacionProducto.setComponente(txtComponente.getText());
             aceptacionProducto.setRutaArchivo(retencionDimensional);
@@ -465,6 +483,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
             configurarVentana();
             inicializarAtributos();
             inicializarDatos();
+            configurarPaginacion();
             inicializarComponentes();
             inicializarListeners();
         } catch (SQLException ex) {
@@ -494,7 +513,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         try {
             cbxVariable.removeAllItems();
             cargarDatos(aceptacionPc1.getComponente());
-            mostrarDatosTabla();
+            mostrarDatosTabla(1);
         } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Surgio un Error al inicializar los componentes: ", ex);
             Logger.getLogger(RetencionDimensionalGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -509,9 +528,26 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         configurarCampos(variablesPlanControl, variablesLista);
     }
 
-    private void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
+    private void mostrarDatosTabla(int pagina) throws SQLException, ClassNotFoundException {
         limpiarTabla();
+        int limiteFilas = 8; // Cantidad de Filas por página
+        listaAceptacionPc3 = aps.obtenerAceptacionPc3(conexion, aceptacionPc1.getComponente());
+        int cantidad = listaAceptacionPc3.size();
+        int paginasTotales = (int) Math.ceil((double) cantidad / limiteFilas);
         llenarTabla();
+        paginacion1.setPagegination(pagina, paginasTotales);
+    }
+    
+    private void configurarPaginacion() {
+        paginacion1.addEventPagination(pagina -> {
+            try {
+                mostrarDatosTabla(pagina);
+            } catch (SQLException | ClassNotFoundException ex) {
+                Utilidades.manejarExcepcion("ERROR al configurar la paginación: ", ex);
+                Logger.getLogger(RetencionDimensionalGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        paginacion1.setPaginationItemRender(new PaginationItemRenderStyle1());
     }
 
     private void limpiarTabla() {
@@ -524,19 +560,17 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 Object[] fila = crearFila(aceptacionPc3);
                 modeloTabla.addRow(fila);
             });
-        } else {
-            JOptionPane.showMessageDialog(this, "La Lista AceptacionPc3 esta vacía");
         }
     }
 
     private Object[] crearFila(AceptacionPc3 aceptacionPc3) {
         Object fila[] = new Object[6];
-        fila[0] = aceptacionPc3.getFecha();
-        fila[1] = aceptacionPc3.getNoOp();
-        fila[2] = aceptacionPc3.getNoTroquel();
-        fila[3] = aceptacionPc3.getVariable();
-        fila[4] = aceptacionPc3.getEspecificacion();
-        fila[5] = aceptacionPc3.getValor();
+        fila[COLUMNA_FECHA] = aceptacionPc3.getFecha();
+        fila[COLUMNA_NO_OP] = aceptacionPc3.getNoOp();
+        fila[COLUMNA_NO_TROQUEL] = aceptacionPc3.getNoTroquel();
+        fila[COLUMNA_VARIABLE] = aceptacionPc3.getVariable();
+        fila[COLUMNA_ESPECIFICACION] = aceptacionPc3.getEspecificacion();
+        fila[COLUMNA_VALOR] = aceptacionPc3.getValor();
         return fila;
     }
 
@@ -672,6 +706,11 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
             return false;
         }
 
+        if (txtNoOperaciones.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El campo Componente está vacío");
+            return false;
+        }
+
         return true;
     }
 
@@ -754,13 +793,15 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
     private AceptacionPc3 obtenerDatosDeFila(int filaSeleccionada) {
         String fecha = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 0);
         String noOp = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 1);
-        String variable = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 2);
-        String especificacion = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 3);
-        String valor = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 4);
+        String noTroquel = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 2);
+        String variable = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 3);
+        String especificacion = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 4);
+        String valor = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 5);
 
         AceptacionPc3 aceptacionPc3 = new AceptacionPc3();
         aceptacionPc3.setFecha(fecha);
         aceptacionPc3.setNoOp(noOp);
+        aceptacionPc3.setNoTroquel(noTroquel);
         aceptacionPc3.setVariable(variable);
         aceptacionPc3.setEspecificacion(especificacion);
         aceptacionPc3.setValor(valor);
@@ -837,6 +878,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
     private javax.swing.JCheckBox cbxProcesoCritico;
     private javax.swing.JComboBox<String> cbxVariable;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
@@ -858,6 +900,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
     private javax.swing.JLabel lblTurno;
     private javax.swing.JLabel lblValor;
     private javax.swing.JLabel lblVariable;
+    private Paginacion.Pagination paginacion1;
     private javax.swing.JPanel pnlPC;
     private javax.swing.JTable tblRetencionDimensional;
     private javax.swing.JTextField txtComponente;

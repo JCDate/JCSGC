@@ -203,7 +203,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
         jPanel1.setPreferredSize(new java.awt.Dimension(130, 350));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel2.setBackground(new java.awt.Color(84, 139, 249));
+        jPanel2.setBackground(new java.awt.Color(32, 163, 211));
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         paginacion1.setOpaque(false);
