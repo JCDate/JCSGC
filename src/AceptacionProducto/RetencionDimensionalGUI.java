@@ -285,7 +285,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         lblValor.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblValor.setForeground(new java.awt.Color(255, 255, 255));
         lblValor.setText("VALOR:");
-        pnlPC.add(lblValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, -1, -1));
+        pnlPC.add(lblValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 270, -1, -1));
         pnlPC.add(txtFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 90, 280, -1));
 
         pnlPC.add(cbxVariable, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 170, 260, 35));
@@ -295,7 +295,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 txtValorActionPerformed(evt);
             }
         });
-        pnlPC.add(txtValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 250, 290, -1));
+        pnlPC.add(txtValor, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 260, 290, -1));
 
         lblEspecificacion.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblEspecificacion.setForeground(new java.awt.Color(255, 255, 255));
@@ -303,7 +303,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         pnlPC.add(lblEspecificacion, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 220, -1, -1));
 
         pnlPC.add(cbxEspecificacionPLG, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 210, 180, 35));
-        pnlPC.add(txtEspecificacionPLG, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 210, 180, 30));
+        pnlPC.add(txtEspecificacionPLG, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 210, 180, 40));
 
         lblProcesoCritico.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblProcesoCritico.setForeground(new java.awt.Color(255, 255, 255));
@@ -482,10 +482,11 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         try {
             configurarVentana();
             inicializarAtributos();
-            inicializarDatos();
+            inicializarTabla(1);
             configurarPaginacion();
             inicializarComponentes();
             inicializarListeners();
+            inicializarDatos();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir RetencionDimensionalGUI: ", ex);
             Logger.getLogger(RetencionDimensionalGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -499,11 +500,39 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void inicializarTabla(int page) {
+        try {
+            configurarModelo();
+            mostrarDatosTabla(page);
+        } catch (SQLException ex) {
+            Logger.getLogger(RetencionDimensionalGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void configurarModelo() {
+        this.modeloTabla = (DefaultTableModel) tblRetencionDimensional.getModel();
+    }
+
+    private void mostrarDatosTabla(int pagina) throws SQLException {
+        limpiarTabla();
+        int limiteFilas = 7;
+        int cantidad = aps.contarRegistrosAceptacionPc3(conexion, aceptacionPc1.getComponente());
+        int paginasTotales = (int) Math.ceil((double) cantidad / limiteFilas);
+
+        cargarDatosTabla(pagina, limiteFilas);
+        llenarTabla();
+        paginacion1.setPagegination(pagina, paginasTotales);
+
+    }
+
+    private void cargarDatosTabla(int pagina, int limiteFilas) throws SQLException {
+        this.listaAceptacionPc3 = aps.obtenerAceptacionPc3(conexion, aceptacionPc1.getComponente(), pagina, limiteFilas);
+    }
+
     private void inicializarAtributos() throws SQLException {
         this.excel = new GeneradorExcel();
         this.aps = new AceptacionProductoServicio();
         this.conexion = Conexion.getInstance().conectar();
-        this.modeloTabla = (DefaultTableModel) tblRetencionDimensional.getModel();
         this.listaNuevosDatos = new ArrayList<>();
         this.listaAceptacionPc3 = new ArrayList<>();
         this.aceptacionProducto = new AceptacionProductoM();
@@ -513,8 +542,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         try {
             cbxVariable.removeAllItems();
             cargarDatos(aceptacionPc1.getComponente());
-            mostrarDatosTabla(1);
-        } catch (SQLException | ClassNotFoundException ex) {
+        } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Surgio un Error al inicializar los componentes: ", ex);
             Logger.getLogger(RetencionDimensionalGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -528,25 +556,8 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         configurarCampos(variablesPlanControl, variablesLista);
     }
 
-    private void mostrarDatosTabla(int pagina) throws SQLException, ClassNotFoundException {
-        limpiarTabla();
-        int limiteFilas = 8; // Cantidad de Filas por página
-        listaAceptacionPc3 = aps.obtenerAceptacionPc3(conexion, aceptacionPc1.getComponente());
-        int cantidad = listaAceptacionPc3.size();
-        int paginasTotales = (int) Math.ceil((double) cantidad / limiteFilas);
-        llenarTabla();
-        paginacion1.setPagegination(pagina, paginasTotales);
-    }
-    
     private void configurarPaginacion() {
-        paginacion1.addEventPagination(pagina -> {
-            try {
-                mostrarDatosTabla(pagina);
-            } catch (SQLException | ClassNotFoundException ex) {
-                Utilidades.manejarExcepcion("ERROR al configurar la paginación: ", ex);
-                Logger.getLogger(RetencionDimensionalGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
+        paginacion1.addEventPagination(pagina -> inicializarTabla(pagina));
         paginacion1.setPaginationItemRender(new PaginationItemRenderStyle1());
     }
 
@@ -707,7 +718,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         }
 
         if (txtNoOperaciones.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El campo Componente está vacío");
+            JOptionPane.showMessageDialog(this, "El campo No. Operaciones está vacío");
             return false;
         }
 

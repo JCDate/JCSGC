@@ -47,7 +47,9 @@ public class AceptacionProductoServicio {
     final String SELECT_NO_ROLLO_SQL = "SELECT noRollo FROM inspeccionRecibo";
     final String SELECT_ACEPTACION_PC1_BY_COMPONENTE = "SELECT * FROM aceptacionpc1 WHERE componente = ?";
     final String SELECT_ACEPTACION_PC2_BY_COMPONENTE = "SELECT * FROM aceptacionpc2 WHERE componente = ?";
+    final String SELECT_COUNT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp, STR_TO_DATE(fecha, '%d/%m/%Y')";
     final String SELECT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp, STR_TO_DATE(fecha, '%d/%m/%Y')";
+    final String SELECT_ACEPTACION_PC3_BY_COMPONENTE_LIMIT = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp ASC, STR_TO_DATE(fecha, '%d/%m/%Y') LIMIT ?, ?";
     final String SELECT_ACEPTACION_PRODUCTO_ORDER_BY_COMPONENTE = "SELECT * FROM aceptacionProducto ORDER BY componente";
     final String SELECT_ID_FROM_ACEPTACION_PC3 = "SELECT id FROM aceptacionpc3 WHERE noOp = ? AND fecha = ? AND variable = ? AND especificacion = ? AND valor = ?";
     final String SELECT_NOMBRE_PRODUCTO = "SELECT nombreProducto FROM productosactividadespc";
@@ -559,8 +561,24 @@ public class AceptacionProductoServicio {
         return listaAp2;
     }
 
+    public int contarRegistrosAceptacionPc3(Connection conexion, String componente) throws SQLException {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COUNT_ACEPTACION_PC3_BY_COMPONENTE)) {
+            consulta.setString(1, componente);
+            try (ResultSet resultado = consulta.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
+                }
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
     public List<AceptacionPc3> obtenerAceptacionPc3(Connection conexion, String componente) throws SQLException {
         List<AceptacionPc3> listaAp3 = new ArrayList<>();
+        
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ACEPTACION_PC3_BY_COMPONENTE)) {
             consulta.setString(1, componente);
             ResultSet resultado = consulta.executeQuery();
@@ -580,6 +598,33 @@ public class AceptacionProductoServicio {
             }
         }
         return listaAp3;
+    }
+    
+    public List<AceptacionPc3> obtenerAceptacionPc3(Connection conexion, String componente, int page, int limit) throws SQLException {
+        List<AceptacionPc3> listaAp3 = new ArrayList<>();
+        int limite = (page - 1) * limit;
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ACEPTACION_PC3_BY_COMPONENTE_LIMIT)) {
+            consulta.setString(1, componente);
+            consulta.setInt(2, limite);
+            consulta.setInt(3, limit);
+            ResultSet resultado = consulta.executeQuery();
+            while (resultado.next()) {
+                AceptacionPc3 ap3 = new AceptacionPc3(
+                        resultado.getString("id"),
+                        resultado.getString("componente"),
+                        resultado.getString("noOp"),
+                        resultado.getString("noTroquel"),
+                        resultado.getString("fecha"),
+                        resultado.getString("variable"),
+                        resultado.getString("especificacion"),
+                        resultado.getString("valor"),
+                        resultado.getInt("procesoCritico")
+                );
+                listaAp3.add(ap3);
+            }
+        }
+        return listaAp3;
+
     }
 
     public List<AceptacionProductoM> obtenerAceptacionProducto(Connection conexion) {
@@ -639,6 +684,8 @@ public class AceptacionProductoServicio {
         }
         return lista;
     }
+    
+    
 
     public List<String> obtenerDatos(PreparedStatement consulta, String columna) throws SQLException {
         List<String> listaDatos = new ArrayList<>();
