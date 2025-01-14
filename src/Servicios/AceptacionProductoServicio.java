@@ -65,6 +65,7 @@ public class AceptacionProductoServicio {
     final String SELECT_COUNT_FROM_ACEPTACION_PC3 = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? AND noOp = ? AND fecha = ? AND variable = ? AND valor = ?";
     final String SELECT_FECHA_ACEPTACION_PC1 = "SELECT fecha FROM aceptacionpc1 WHERE componente = ?";
     final String SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT a1.id AS id_pc1, a2.id AS id_pc2, a1.*, a2.* FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
+    final String SELECT_COUNT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT COUNT(*) AS total_registros FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
     final String SELECT_NO_ORDEN_FROM_ACEPTACION_PC2 = "SELECT noOrden FROM aceptacionpc2 WHERE componente = ? AND fecha = ?";
     final String UPDATE_ACEPTACION_PC3 = "UPDATE aceptacionpc3 SET noOp = ?, fecha = ?, variable = ?, especificacion = ?, valor = ? WHERE id = ?";
     final String UPDATE_ACEPTACION_PRODUCTO = "UPDATE aceptacionproducto SET rutaArchivo = ? WHERE componente = ?";
@@ -72,7 +73,7 @@ public class AceptacionProductoServicio {
     final String UPDATE_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ?, tamLote = ?, tamMta = ?, inspector = ?, turno = ?, disp = ? WHERE id = ?";
     final String UPDATE_NO_ORDEN_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ? WHERE componente = ? AND fecha = ?";
     final String UPDATE_NO_OPS_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noOps = ? WHERE componente = ? ";
-    final String DELETE_ACEPTACION_PC3 = "DELETE FROM aceptacionpc3 WHERE fecha = ? AND noOp = ? AND noTroquel = ? AND variable = ? AND especificacion = ? AND valor = ?";
+    final String DELETE_ACEPTACION_PC3 = "DELETE FROM aceptacionpc3 WHERE id = ?";
     final String SELECT_COMPONENTE_FROM_ANTECEDENTES_FAMILIA = "SELECT TRIM(componente) AS componente FROM antecedentesfamilia";
     final String DELETE_ACEPTACION_PRODUCTO = "DELETE FROM aceptacionproducto WHERE componente = ?";
     final String DELETE_ACEPTACION_PC1 = "DELETE FROM aceptacionpc1 WHERE componente = ?";
@@ -254,12 +255,8 @@ public class AceptacionProductoServicio {
     public void eliminarAceptacionPc3(Connection conexion, AceptacionPc3 apc3) {
         try {
             PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC3);
-            ps.setString(1, apc3.getFecha());
-            ps.setString(2, apc3.getNoOp());
-            ps.setString(3, apc3.getNoTroquel());
-            ps.setString(4, apc3.getVariable());
-            ps.setString(5, apc3.getEspecificacion());
-            ps.setString(6, apc3.getValor());
+            ps.setInt(1, apc3.getId());
+
             ps.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al eliminar la información: ", ex);
@@ -578,13 +575,13 @@ public class AceptacionProductoServicio {
 
     public List<AceptacionPc3> obtenerAceptacionPc3(Connection conexion, String componente) throws SQLException {
         List<AceptacionPc3> listaAp3 = new ArrayList<>();
-        
+
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ACEPTACION_PC3_BY_COMPONENTE)) {
             consulta.setString(1, componente);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
                 AceptacionPc3 ap3 = new AceptacionPc3(
-                        resultado.getString("id"),
+                        resultado.getInt("id"),
                         resultado.getString("componente"),
                         resultado.getString("noOp"),
                         resultado.getString("noTroquel"),
@@ -599,7 +596,7 @@ public class AceptacionProductoServicio {
         }
         return listaAp3;
     }
-    
+
     public List<AceptacionPc3> obtenerAceptacionPc3(Connection conexion, String componente, int page, int limit) throws SQLException {
         List<AceptacionPc3> listaAp3 = new ArrayList<>();
         int limite = (page - 1) * limit;
@@ -610,7 +607,7 @@ public class AceptacionProductoServicio {
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
                 AceptacionPc3 ap3 = new AceptacionPc3(
-                        resultado.getString("id"),
+                        resultado.getInt("id"),
                         resultado.getString("componente"),
                         resultado.getString("noOp"),
                         resultado.getString("noTroquel"),
@@ -684,8 +681,6 @@ public class AceptacionProductoServicio {
         }
         return lista;
     }
-    
-    
 
     public List<String> obtenerDatos(PreparedStatement consulta, String columna) throws SQLException {
         List<String> listaDatos = new ArrayList<>();
@@ -779,6 +774,38 @@ public class AceptacionProductoServicio {
                         resultado.getString("disp")
                 );
                 datosFilaRD.add(datoRD);
+            }
+        }
+        return datosFilaRD;
+    }
+
+    public List<DatosFilaRD> obtenerInfoRetencionDimensional(Connection conexion, int pagina, int limit, String componente, String fecha) throws SQLException {
+        List<DatosFilaRD> datosFilaRD = new ArrayList<>();
+        int limite = (pagina - 1) * limit;
+        boolean filtrar = componente != null && !componente.trim().isEmpty() && fecha != null && !fecha.trim().isEmpty();
+        try (PreparedStatement ps = conexion.prepareStatement("SELECT a1.id AS id_pc1, a2.id AS id_pc2, a1.*, a2.* FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ? LIMIT ?, ?")) {
+            if (filtrar) {
+                ps.setString(1, componente);
+                ps.setString(2, fecha);
+                ps.setInt(3, limite);
+                ps.setInt(4, limit);
+                ResultSet resultado = ps.executeQuery();
+                while (resultado.next()) {
+                    DatosFilaRD datoRD = new DatosFilaRD(
+                            resultado.getInt("id_pc1"),
+                            resultado.getInt("id_pc2"),
+                            resultado.getString("noRollo"),
+                            resultado.getString("inspVisual"),
+                            resultado.getString("observacion"),
+                            resultado.getString("noOrden"),
+                            resultado.getString("inspector"),
+                            resultado.getString("tamLote"),
+                            resultado.getString("turno"),
+                            resultado.getString("tamMta"),
+                            resultado.getString("disp")
+                    );
+                    datosFilaRD.add(datoRD);
+                }
             }
         }
         return datosFilaRD;
@@ -880,6 +907,20 @@ public class AceptacionProductoServicio {
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
             Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
+    public int contarRegistrosAceptacionPc2(Connection conexion, String componenteSeleccionado, String fechaSeleccionada) throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement(SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2)) {
+            ps.setString(1, componenteSeleccionado);
+            ps.setString(2, fechaSeleccionada);
+            // Ejecutar la consulta y obtener el resultado
+            try (ResultSet resultado = ps.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
+                }
+            }
         }
         return 0;
     }

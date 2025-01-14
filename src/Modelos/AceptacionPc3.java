@@ -2,7 +2,7 @@ package Modelos;
 
 public class AceptacionPc3 {
 
-    private String id;
+    private int id;
     private String componente;
     private String noOp;
     private String noTroquel;
@@ -13,18 +13,9 @@ public class AceptacionPc3 {
     int procesoCritico;
 
     public AceptacionPc3() {
-        this.id = "";
-        this.componente = "";
-        this.noOp = "";
-        this.noTroquel = "";
-        this.fecha = "";
-        this.variable = "";
-        this.especificacion = "";
-        this.valor = "";
-        this.procesoCritico = 0;
     }
 
-    public AceptacionPc3(String id, String componente, String noOp, String noTroquel, String fecha, String variable, String especificacion, String valor, int procesoCritico) {
+    public AceptacionPc3(int id, String componente, String noOp, String noTroquel, String fecha, String variable, String especificacion, String valor, int procesoCritico) {
         this.id = id;
         this.componente = componente;
         this.noOp = noOp;
@@ -36,11 +27,11 @@ public class AceptacionPc3 {
         this.procesoCritico = procesoCritico;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -107,4 +98,4 @@ public class AceptacionPc3 {
     public void setNoTroquel(String noTroquel) {
         this.noTroquel = noTroquel;
     }
-    }
+}

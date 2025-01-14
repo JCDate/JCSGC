@@ -264,7 +264,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
             @Override
             public void onOpenRecords(int row) {
-                // nada...
+                // Nada...
             }
 
             @Override

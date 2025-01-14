@@ -405,7 +405,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
             return;
         }
 
-        String rutaPHP = "http://192.168.1.75/produccion/php/PlanDeControlCuadro.php?componente=" + componenteCodificado;
+        String rutaPHP = "http://" + Utilidades.SERVIDOR + "/produccion/php/PlanDeControlCuadro.php?componente=" + componenteCodificado;
 
         try {
             aps.abrirUrlEnNavegador(rutaPHP);
@@ -437,7 +437,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         }
 
         if (Utilidades.confirmarEliminacion()) {
-            eliminarRegistro(obtenerDatosDeFila(filaSeleccionada));
+            eliminarRegistro(listaAceptacionPc3.get(filaSeleccionada));
         }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
@@ -508,6 +508,15 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
             Logger.getLogger(RetencionDimensionalGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    private void inicializarAtributos() throws SQLException {
+        this.excel = new GeneradorExcel();
+        this.aps = new AceptacionProductoServicio();
+        this.conexion = Conexion.getInstance().conectar();
+        this.listaNuevosDatos = new ArrayList<>();
+        this.listaAceptacionPc3 = new ArrayList<>();
+        this.aceptacionProducto = new AceptacionProductoM();
+    }
 
     private void configurarModelo() {
         this.modeloTabla = (DefaultTableModel) tblRetencionDimensional.getModel();
@@ -527,15 +536,6 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
 
     private void cargarDatosTabla(int pagina, int limiteFilas) throws SQLException {
         this.listaAceptacionPc3 = aps.obtenerAceptacionPc3(conexion, aceptacionPc1.getComponente(), pagina, limiteFilas);
-    }
-
-    private void inicializarAtributos() throws SQLException {
-        this.excel = new GeneradorExcel();
-        this.aps = new AceptacionProductoServicio();
-        this.conexion = Conexion.getInstance().conectar();
-        this.listaNuevosDatos = new ArrayList<>();
-        this.listaAceptacionPc3 = new ArrayList<>();
-        this.aceptacionProducto = new AceptacionProductoM();
     }
 
     private void inicializarComponentes() {
@@ -694,7 +694,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         String valor = txtValor.getText();
         int procesoCritico = cbxProcesoCritico.isSelected() ? 1 : 0;
 
-        nuevosDatos = new AceptacionPc3("", componente, noOp, noTroquel, fecha, variable, especificacionPLG, valor, procesoCritico);
+        nuevosDatos = new AceptacionPc3(0, componente, noOp, noTroquel, fecha, variable, especificacionPLG, valor, procesoCritico);
 
         listaNuevosDatos.add(nuevosDatos);
         modeloTabla.addRow(new Object[]{fecha, noOp, noTroquel, variable, especificacionPLG, valor});
@@ -799,25 +799,6 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS");
             aps.abrirRetencionDimensionalGUI(usuario, aceptacionPc1, aceptacionPc2);
         }
-    }
-
-    private AceptacionPc3 obtenerDatosDeFila(int filaSeleccionada) {
-        String fecha = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 0);
-        String noOp = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 1);
-        String noTroquel = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 2);
-        String variable = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 3);
-        String especificacion = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 4);
-        String valor = (String) tblRetencionDimensional.getValueAt(filaSeleccionada, 5);
-
-        AceptacionPc3 aceptacionPc3 = new AceptacionPc3();
-        aceptacionPc3.setFecha(fecha);
-        aceptacionPc3.setNoOp(noOp);
-        aceptacionPc3.setNoTroquel(noTroquel);
-        aceptacionPc3.setVariable(variable);
-        aceptacionPc3.setEspecificacion(especificacion);
-        aceptacionPc3.setValor(valor);
-
-        return aceptacionPc3;
     }
 
     private boolean elminarAceptacion(AceptacionPc3 aceptacionPc3) {

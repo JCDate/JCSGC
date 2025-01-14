@@ -1,10 +1,9 @@
 package AceptacionProducto;
 
-import Modelos.AceptacionPc1;
-import Modelos.AceptacionPc2;
 import Modelos.AceptacionProductoM;
 import Modelos.DatosFilaRD;
 import Modelos.Usuarios;
+import Paginacion.estilo.PaginationItemRenderStyle1;
 import Servicios.AceptacionProductoServicio;
 import Servicios.Conexion;
 import Servicios.Utilidades;
@@ -31,14 +30,22 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
     private List<String> listaFechas; // Almacena las fechas de registros de los componentes
-    private String componenteAnterior; // Valida que el componente no haya cambiado
-    private AceptacionPc1 aceptacionPc1; // Objeto para el manejo de información del componente
-    private AceptacionPc2 aceptacionPc2; // Objeto para el manejo de información del componente
     private DefaultTableModel modeloTabla; // Define de la estructura de la tabla
     private AceptacionProductoServicio aps; // Servicio para manejar la aceptación de productos
     private List<DatosFilaRD> listaDatosRD; // Objeto para el manejo de la información de los registros de retención Dimensional del componente
     private AceptacionProductoM aceptacionProducto; // Instacia de los datos del componente seleccionado
     private Set<Integer> filasModificadas = new HashSet<>(); // Almacena información evitando duplicidad
+
+    // Columnas de la tabla 
+    private static final int COLUMNA_INSP_VISUAL = 0;
+    private static final int COLUMNA_NO_ROLLO = 1;
+    private static final int COLUMNA_OBSERVACIONES = 2;
+    private static final int COLUMNA_NO_ORDEN = 3;
+    private static final int COLUMNA_TAM_LOTE = 4;
+    private static final int COLUMNA_TAM_MUESTRA = 5;
+    private static final int COLUMNA_INSPECTOR = 6;
+    private static final int COLUMNA_TURNO = 7;
+    private static final int COLUMNA_DISP = 8;
 
     public ModificarAPGUI() {
         initComponents();
@@ -47,8 +54,6 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     public ModificarAPGUI(Usuarios usuario, AceptacionProductoM aceptacionProducto) {
         this.usuario = usuario;
         this.aceptacionProducto = aceptacionProducto;
-        this.aceptacionPc1 = new AceptacionPc1();
-        this.aceptacionPc2 = new AceptacionPc2();
         inicializarVentanaYComponentes();
     }
 
@@ -78,6 +83,9 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblAceptacionPc2 = new javax.swing.JTable();
         txtComponente = new swing.TextField();
+        jPanel2 = new javax.swing.JPanel();
+        paginacion1 = new Paginacion.Pagination();
+        btnEliminar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -105,7 +113,7 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 480, 140, 50));
 
-        jPanel1.add(cbxFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(780, 100, 220, 30));
+        jPanel1.add(cbxFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 100, 220, 30));
 
         lblComponente.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblComponente.setForeground(new java.awt.Color(10, 110, 255));
@@ -115,7 +123,7 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         lblFecha.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         lblFecha.setForeground(new java.awt.Color(10, 110, 255));
         lblFecha.setText("FECHA:");
-        jPanel1.add(lblFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 110, -1, -1));
+        jPanel1.add(lblFecha, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 110, -1, -1));
 
         btnGuardar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnGuardar.setForeground(new java.awt.Color(255, 255, 255));
@@ -142,12 +150,22 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         tblAceptacionPc2.setRowHeight(30);
         jScrollPane1.setViewportView(tblAceptacionPc2);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1130, 330));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1130, 230));
 
         txtComponente.setEditable(false);
         txtComponente.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         txtComponente.setToolTipText("");
         jPanel1.add(txtComponente, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 100, 230, -1));
+
+        jPanel2.setBackground(new java.awt.Color(32, 163, 211));
+
+        paginacion1.setOpaque(false);
+        jPanel2.add(paginacion1);
+
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, 1110, 50));
+
+        btnEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Eliminar.png"))); // NOI18N
+        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 90, 80, 40));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1150, 540));
 
@@ -186,9 +204,9 @@ public class ModificarAPGUI extends javax.swing.JFrame {
             inicializarAtributos();
             inicializarListeners();
             definirValoresComponentes();
-            actualizarDatosTabla();
-            mostrarDatosTabla();
-        } catch (SQLException | ClassNotFoundException ex) {
+            inicializarTabla(1);
+            configurarPaginacion();
+        } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al Abrir ModificarAPGUI: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -215,6 +233,11 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         });
     }
 
+    private void configurarPaginacion() {
+        paginacion1.addEventPagination(pagina -> inicializarTabla(pagina));
+        paginacion1.setPaginationItemRender(new PaginationItemRenderStyle1());
+    }
+    
     private void definirValoresComponentes() {
         txtComponente.setText(aceptacionProducto.getComponente());
         listaFechas.forEach(cbxFecha::addItem);
@@ -228,11 +251,10 @@ public class ModificarAPGUI extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Por favor, seleccione una fecha válida.");
                 return;
             }
-
             listaDatosRD = aps.obtenerInfoRetencionDimensional(conexion, componenteSeleccionado, cbxFecha.getSelectedItem().toString());
-            mostrarDatosTabla();
+            llenarTabla();
             inicializarListener();
-        } catch (SQLException | ClassNotFoundException ex) {
+        } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al recuperar la información: ", ex);
             Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -243,9 +265,28 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         return seleccionado != null && !seleccionado.toString().isEmpty();
     }
 
-    private void mostrarDatosTabla() throws SQLException, ClassNotFoundException {
+    private void mostrarDatosTabla(int pagina) throws SQLException, ClassNotFoundException {
         limpiarTabla();
+        String componenteSeleccionado = txtComponente.getText();
+        String fechaSeleccionada = cbxFecha.getSelectedItem().toString();
+        int limiteFilas = 7;
+        int cantidad = aps.contarRegistrosAceptacionPc2(conexion, componenteSeleccionado, fechaSeleccionada);
+        int paginasTotales = (int) Math.ceil((double) cantidad / limiteFilas);
+        cargarDatosTabla(pagina, limiteFilas, componenteSeleccionado, fechaSeleccionada);
         llenarTabla();
+    }
+
+    private void cargarDatosTabla(int pagina, int limiteFilas, String componenteSeleccionado, String fecha) throws SQLException {
+        this.listaDatosRD = aps.obtenerInfoRetencionDimensional(conexion, pagina, limiteFilas, componenteSeleccionado, fecha);
+    }
+
+    private void inicializarTabla(int page) {
+        try {
+            mostrarDatosTabla(page);
+        } catch (SQLException | ClassNotFoundException ex) {
+            Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
+            Logger.getLogger(ModificarAPGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void limpiarTabla() {
@@ -265,15 +306,15 @@ public class ModificarAPGUI extends javax.swing.JFrame {
 
     private Object[] crearFila(DatosFilaRD datoRD) {
         Object fila[] = new Object[9];
-        fila[0] = datoRD.getInspVisual();
-        fila[1] = datoRD.getNoRollo();
-        fila[2] = datoRD.getObservaciones();
-        fila[3] = datoRD.getNoOrden();
-        fila[4] = datoRD.getTamLote();
-        fila[5] = datoRD.getTamMta();
-        fila[6] = datoRD.getInsp();
-        fila[7] = datoRD.getTurno();
-        fila[8] = datoRD.getDisp();
+        fila[COLUMNA_INSP_VISUAL] = datoRD.getInspVisual();
+        fila[COLUMNA_NO_ROLLO] = datoRD.getNoRollo();
+        fila[COLUMNA_OBSERVACIONES] = datoRD.getObservaciones();
+        fila[COLUMNA_NO_ORDEN] = datoRD.getNoOrden();
+        fila[COLUMNA_TAM_LOTE] = datoRD.getTamLote();
+        fila[COLUMNA_TAM_MUESTRA] = datoRD.getTamMta();
+        fila[COLUMNA_INSPECTOR] = datoRD.getInsp();
+        fila[COLUMNA_TURNO] = datoRD.getTurno();
+        fila[COLUMNA_DISP] = datoRD.getDisp();
         return fila;
     }
 
@@ -287,15 +328,15 @@ public class ModificarAPGUI extends javax.swing.JFrame {
     }
 
     private void capturarInformacion(int fila) {
-        listaDatosRD.get(fila).setInspVisual((String) modeloTabla.getValueAt(fila, 0));
-        listaDatosRD.get(fila).setNoRollo((String) modeloTabla.getValueAt(fila, 1));
-        listaDatosRD.get(fila).setObservaciones((String) modeloTabla.getValueAt(fila, 2));
-        listaDatosRD.get(fila).setNoOrden((String) modeloTabla.getValueAt(fila, 3));
-        listaDatosRD.get(fila).setTamLote((String) modeloTabla.getValueAt(fila, 4));
-        listaDatosRD.get(fila).setTamMta((String) modeloTabla.getValueAt(fila, 5));
-        listaDatosRD.get(fila).setInsp((String) modeloTabla.getValueAt(fila, 6));
-        listaDatosRD.get(fila).setTurno((String) modeloTabla.getValueAt(fila, 7));
-        listaDatosRD.get(fila).setDisp((String) modeloTabla.getValueAt(fila, 8));
+        listaDatosRD.get(fila).setInspVisual((String) modeloTabla.getValueAt(fila, COLUMNA_INSP_VISUAL));
+        listaDatosRD.get(fila).setNoRollo((String) modeloTabla.getValueAt(fila, COLUMNA_NO_ROLLO));
+        listaDatosRD.get(fila).setObservaciones((String) modeloTabla.getValueAt(fila, COLUMNA_OBSERVACIONES));
+        listaDatosRD.get(fila).setNoOrden((String) modeloTabla.getValueAt(fila, COLUMNA_NO_ORDEN));
+        listaDatosRD.get(fila).setTamLote((String) modeloTabla.getValueAt(fila, COLUMNA_TAM_LOTE));
+        listaDatosRD.get(fila).setTamMta((String) modeloTabla.getValueAt(fila, COLUMNA_TAM_MUESTRA));
+        listaDatosRD.get(fila).setInsp((String) modeloTabla.getValueAt(fila, COLUMNA_INSPECTOR));
+        listaDatosRD.get(fila).setTurno((String) modeloTabla.getValueAt(fila, COLUMNA_TURNO));
+        listaDatosRD.get(fila).setDisp((String) modeloTabla.getValueAt(fila, COLUMNA_DISP));
     }
 
     private void cerrarVentana() {
@@ -332,14 +373,17 @@ public class ModificarAPGUI extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCerrar;
+    private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JComboBox<String> cbxFecha;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblComponente;
     private javax.swing.JLabel lblFecha;
     private javax.swing.JLabel lblTitulo;
+    private Paginacion.Pagination paginacion1;
     private javax.swing.JTable tblAceptacionPc2;
     private javax.swing.JTextField txtComponente;
     // End of variables declaration//GEN-END:variables
