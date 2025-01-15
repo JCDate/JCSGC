@@ -77,8 +77,11 @@ public class AceptacionProductoServicio {
     final String SELECT_COMPONENTE_FROM_ANTECEDENTES_FAMILIA = "SELECT TRIM(componente) AS componente FROM antecedentesfamilia";
     final String DELETE_ACEPTACION_PRODUCTO = "DELETE FROM aceptacionproducto WHERE componente = ?";
     final String DELETE_ACEPTACION_PC1 = "DELETE FROM aceptacionpc1 WHERE componente = ?";
+    final String DELETE_ACEPTACION_PC1_WHERE_FECHA = "DELETE FROM aceptacionpc1 WHERE componente = ? AND fecha = ?";
     final String DELETE_ACEPTACION_PC2 = "DELETE FROM aceptacionpc2 WHERE componente = ?";
+    final String DELETE_ACEPTACION_PC2_WHERE_FECHA = "DELETE FROM aceptacionpc2 WHERE componente = ? AND fecha = ?";
     final String DELETE_ACEPTACION_PC3_WHERE_COMPONENTE = "DELETE FROM aceptacionpc3 WHERE componente = ?";
+    final String DELETE_ACEPTACION_PC3_WHERE_COMPONENTE_AND_FECHA = "DELETE FROM aceptacionpc3 WHERE componente = ? AND fecha = ?";
 
     public void abrirAceptacionProductoGUI(Usuarios usr) {
         AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr);
@@ -295,6 +298,38 @@ public class AceptacionProductoServicio {
         try {
             PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC3_WHERE_COMPONENTE);
             ps.setString(1, aceptacionProducto.getComponente());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionPc3: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void eliminarRegistro(Connection conexion, String componente, String fecha) {
+        try {
+            PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC1_WHERE_FECHA);
+            ps.setString(1, componente);
+            ps.setString(2, fecha);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionPc1: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC2_WHERE_FECHA);
+            ps.setString(1, componente);
+            ps.setString(2, fecha);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionPc2: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            PreparedStatement ps = conexion.prepareStatement(DELETE_ACEPTACION_PC3_WHERE_COMPONENTE_AND_FECHA);
+            ps.setString(1, componente);
+            ps.setString(2, fecha);
             ps.executeUpdate();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al eliminar la información de aceptacionPc3: ", ex);

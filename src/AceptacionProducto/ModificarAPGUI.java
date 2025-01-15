@@ -165,6 +165,11 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, 1110, 50));
 
         btnEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/Eliminar.png"))); // NOI18N
+        btnEliminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarActionPerformed(evt);
+            }
+        });
         jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 90, 80, 40));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1150, 540));
@@ -197,6 +202,12 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         cerrarVentana();
         aps.abrirAceptacionProductoGUI(usuario);
     }//GEN-LAST:event_btnCerrarActionPerformed
+
+    private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
+        if (Utilidades.confirmarEliminacion()) {
+            eliminarRegistro();
+        }
+    }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void inicializarVentanaYComponentes() {
         try {
@@ -337,6 +348,15 @@ public class ModificarAPGUI extends javax.swing.JFrame {
         listaDatosRD.get(fila).setInsp((String) modeloTabla.getValueAt(fila, COLUMNA_INSPECTOR));
         listaDatosRD.get(fila).setTurno((String) modeloTabla.getValueAt(fila, COLUMNA_TURNO));
         listaDatosRD.get(fila).setDisp((String) modeloTabla.getValueAt(fila, COLUMNA_DISP));
+    }
+    
+    private void eliminarRegistro() {
+        String componente = txtComponente.getText();
+        String fecha = cbxFecha.getSelectedItem().toString();
+        aps.eliminarRegistro(conexion, componente, fecha);
+        cerrarVentana();
+        JOptionPane.showMessageDialog(this, "DATOS ELIMINADOS CORRECTAMENTE");
+        aps.abrirAceptacionProductoGUI(usuario);
     }
 
     private void cerrarVentana() {

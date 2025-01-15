@@ -298,6 +298,9 @@
               <Image iconType="3" name="/jc/img/Eliminar.png"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnEliminarActionPerformed"/>
+          </Events>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50))"/>
           </AuxValues>

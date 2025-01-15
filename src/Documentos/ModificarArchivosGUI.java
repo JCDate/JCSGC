@@ -262,8 +262,6 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         cds.abrirDocumentacionGUI(usuario, proceso.getId());
     }
 
-    
-
     private void notificarActualizacion() {
         cerrarVentana();
         JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");

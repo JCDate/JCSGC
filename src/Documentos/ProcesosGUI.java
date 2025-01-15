@@ -194,6 +194,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         configurarVentana();
         inicializarAtributos();
         configurarVisibilidadBoton();
+        System.out.println("id" + usuario.getId());
         lblTitulo.setText("PROCESO: " + proceso.getProceso());
         inicializarTabla();
     }
