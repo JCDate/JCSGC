@@ -216,7 +216,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
             @Override
             public void onView(int row) {
-                cerrarVentana();
+         
                 cds.abrirDocumento(listaDocumentos.get(row).getRutaArchivo());
             }
 

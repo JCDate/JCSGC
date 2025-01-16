@@ -23,8 +23,8 @@ public class TableActionCellEditor extends DefaultCellEditor {
         this.showDelete = showDelete;
         this.showView = showView;
         this.showOpenRecords = showOpenRecords;
-        this.showOpenRecords = showAccept;
-        this.showOpenRecords = showReject;
+        this.showAccept = showAccept;
+        this.showReject = showReject;
     }
 
     @Override

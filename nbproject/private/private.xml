@@ -12,11 +12,12 @@
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/APQP/DocumentosApqpGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/APQP/ApqpGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/APQP/ModificarApqpGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/AceptacionProducto/ModificarAPGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/AceptacionProducto/RetencionDimensionalGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Documentos/ProcedimientosGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Documentos/ProcesosGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/APQP/AgregarDoctoApqpGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/InspeccionRecibo/AgregarIrGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Documentos/AgregarDocumentosGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/ControlDocumentacionServicio.java</file>
         </group>
     </open-files>
 </project-private>

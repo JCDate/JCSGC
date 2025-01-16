@@ -139,6 +139,7 @@ public class AgregarDoctoApqpGUI extends javax.swing.JFrame {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
                 Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\"+Utilidades.SERVIDOR+"\\archivos\\Apqp\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 txtNombreArchivo.setText(nombreArchivo);
+                
             } catch (IOException ex) {
                 Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
                 Logger.getLogger(AgregarDoctoApqpGUI.class.getName()).log(Level.SEVERE, null, ex);

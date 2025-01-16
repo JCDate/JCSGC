@@ -194,7 +194,6 @@ public class ProcesosGUI extends javax.swing.JFrame {
         configurarVentana();
         inicializarAtributos();
         configurarVisibilidadBoton();
-        System.out.println("id" + usuario.getId());
         lblTitulo.setText("PROCESO: " + proceso.getProceso());
         inicializarTabla();
     }
@@ -222,7 +221,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
     private void inicializarTabla() {
         try {
             cargarDatosTabla();
-            configurarAccionesTabla(true, true, false, true, false, false);
+            configurarAccionesTabla(false, true, false, true, false, false);
             mostrarDatosTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);

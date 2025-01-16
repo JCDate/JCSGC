@@ -149,8 +149,9 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
             try {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
                 String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
-                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\192.168.1.75\\archivos\\ControlDocumentos\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\"+Utilidades.SERVIDOR+"\\archivos\\ControlDocumentos\\documentos\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 txtNombreArchivo.setText(nombreArchivo);
+                rutaArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\ControlDocumentos\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
             } catch (IOException ex) {
                 Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
                 Logger.getLogger(AgregarDocumentosGUI.class.getName()).log(Level.SEVERE, null, ex);

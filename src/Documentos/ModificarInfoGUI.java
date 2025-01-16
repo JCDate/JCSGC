@@ -167,6 +167,7 @@ public class ModificarInfoGUI extends javax.swing.JFrame {
             cds.agregarProcedimiento(conexion, procedimiento);
             cerrarVentana();
             JOptionPane.showMessageDialog(this, "DATOS GUARDADOS");
+            cds.abrirDocumentacionGUI(usuario, procedimiento.getIdp());
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
