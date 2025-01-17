@@ -700,37 +700,7 @@ public class InspeccionReciboServicio {
         return Calendar.getInstance().get(Calendar.YEAR);
     }
 
-    public void migrarArchivos(Connection conexion) {
-        String carpetaDestino = "C:/xampp/htdocs/archivos/InspeccionRecibo/HojasInstruccion/";
-        File carpeta = new File(carpetaDestino);
-        if (!carpeta.exists()) {
-            carpeta.mkdirs();
-        }
-
-        try {
-            PreparedStatement ps = conexion.prepareStatement("SELECT id, nombreHJ, hojaInstruccion FROM inspeccionrecibo WHERE hojaInstruccion IS NOT NULL AND hojaInstruccion != '' ");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                int idp = rs.getInt("id");
-                byte[] documento = rs.getBytes("hojaInstruccion");
-
-                // Guarda el archivo en el sistema de archivos
-                String nombreArchivo = rs.getString("nombreHJ"); // Usa un formato adecuado
-                File archivoDestino = new File(carpetaDestino + nombreArchivo);
-                Files.write(archivoDestino.toPath(), documento);
-
-                // Actualiza la ruta en la base de datos
-                PreparedStatement psUpdate = conexion.prepareStatement("UPDATE inspeccionrecibo SET rutaHojaInstruccion = ? WHERE id = ?");
-                psUpdate.setString(1, "archivos/InspeccionRecibo/HojasInstruccion/" + nombreArchivo);
-                psUpdate.setInt(2, idp);
-                psUpdate.executeUpdate();
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } catch (IOException ex) {
-            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    
 
     public int contarRegistros(Connection conexion, String filtro) {
         String sql;

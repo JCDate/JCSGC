@@ -84,15 +84,13 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
         tblSolicitudes.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null}
+
             },
             new String [] {
-                "CÓDIGO", "PROCESO", "PROCEDIMIENTO", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO", "ACCION", "TIPO DE ARCHIVO", "NOMBRE", "ARCHIVO", "APROBAR", "RECHAZAR"
+                "CÓDIGO", "PROCESO", "PROCEDIMIENTO", "REV. ANTERIOR", "REV. NUEVA", "ENCARGADO", "ACCION", "TIPO DE ARCHIVO", "NOMBRE", "OPERACIONES"
             }
         ));
+        tblSolicitudes.setRowHeight(50);
         jScrollPane1.setViewportView(tblSolicitudes);
         if (tblSolicitudes.getColumnModel().getColumnCount() > 0) {
             tblSolicitudes.getColumnModel().getColumn(4).setResizable(false);
@@ -181,7 +179,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
             @Override
             public void onView(int row) {
-                cerrarVentana();
+                
                 cds.abrirDocumento(listaSolicitudes.get(row).getRutaArchivo());
             }
 

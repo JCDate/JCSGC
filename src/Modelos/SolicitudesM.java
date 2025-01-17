@@ -15,6 +15,9 @@ public class SolicitudesM {
     private String nombre;
     private String rutaArchivo;
 
+    public SolicitudesM() {
+    }
+
     public SolicitudesM(int id, String codigo, String proceso, String procedimiento, String revAnterior, String revNueva, String encargado, String accion, String tipoArchivo, String nombreD, String nombre, String rutaArchivo) {
         this.id = id;
         this.codigo = codigo;

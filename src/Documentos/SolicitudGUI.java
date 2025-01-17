@@ -183,6 +183,11 @@ public class SolicitudGUI extends javax.swing.JFrame {
         jPanel1.add(lblTipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 210, -1, -1));
 
         cbxTipoArchivo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MANUAL", "DIAGRAMA DE FLUJO", "DIAGRAMA DE TORTUGA", "INSTRUCTIVO", "FORMATO" }));
+        cbxTipoArchivo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxTipoArchivoActionPerformed(evt);
+            }
+        });
         jPanel1.add(cbxTipoArchivo, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 200, 270, -1));
 
         lblProcedimiento.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
@@ -217,7 +222,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private void btnSolicitudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudActionPerformed
         JOptionPane.showMessageDialog(this, "SE HA REALIZADO LA SOLICITUD DE CAMBIO");
         SolicitudesM solicitudCambio = crearSolicitudCambio();
-        solicitudCambio.setRutaArchivo("archivos/ControlDocumentos/Solicitudes/"+txtNombreArchivo.getText());
+        solicitudCambio.setRutaArchivo("archivos/ControlDocumentos/Solicitudes/" + txtNombreArchivo.getText());
         cds.agregarSolicitud(conexion, solicitudCambio);
         cerrarVentana();
         cds.abrirControlDocumentosGUI(usuario);
@@ -254,6 +259,11 @@ public class SolicitudGUI extends javax.swing.JFrame {
                 break;
         }
     }//GEN-LAST:event_cbxProcedimientosActionPerformed
+
+    private void cbxTipoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTipoArchivoActionPerformed
+        String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
+        actualizarVisibilidadComponentes(tipoArchivo);
+    }//GEN-LAST:event_cbxTipoArchivoActionPerformed
 
     private void inicializarVentanaYComponentes() {
         try {
@@ -310,7 +320,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
                     mostrarComponentesManualesDiagramas();
                     break;
                 case "INSTRUCTIVO":
-                    actualizarDoctos("instructivos", indexSeleccionado);
+                    actualizarDoctos("INSTRUCTIVO", indexSeleccionado);
                     mostrarComponentesInstructivosFormatos();
                     break;
                 case "FORMATO":
@@ -426,7 +436,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         cbxDocumentos.setVisible(true);
         cbxDocumentos.removeAllItems();
 
-        if (tipoDocumento.equals("instructivos")) {
+        if (tipoDocumento.equals("INSTRUCTIVO")) {
             cargarInstructivos(index);
         } else {
             cargarFormatos(index);
@@ -439,7 +449,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
             boolean tieneInstructivos = false;
 
             for (DocumentosM documento : listaInstructivos) {
-                if (documento.getTipo().equalsIgnoreCase("instructivo")) {
+                if (documento.getTipo().equalsIgnoreCase("INSTRUCTIVO")) {
                     cbxDocumentos.addItem(documento.getNombre());
                     tieneInstructivos = true;
                 }

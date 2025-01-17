@@ -61,6 +61,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         this.procedimiento = procedimiento;
         this.carpeta = carpeta;
         this.tipoOperacion = "procedimiento";
+        System.out.println(procedimiento.getProcedimiento());
         inicializarVentanaYComponentes();
     }
 
@@ -246,7 +247,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     private void agregarFormato() {
         FormatosM formato = new FormatosM();
         formato.setNombre(txtNombreArchivo.getText());
-        formato.setIdP(procedimiento.getIdp());
+        formato.setIdP(procedimiento.getId());
         formato.setRutaArchivo("archivos/ControlDocumentos/Formatos/" + txtNombreArchivo.getText());
         cds.agregarFormatoNuevo(conexion, formato);
         notificarActualizacion();

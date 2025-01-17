@@ -221,7 +221,6 @@ public class ProcesosGUI extends javax.swing.JFrame {
     private void inicializarTabla() {
         try {
             cargarDatosTabla();
-            configurarAccionesTabla(false, true, false, true, false, false);
             mostrarDatosTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
@@ -267,7 +266,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         fila[5] = "OPERACIONES";
 
         if (cds.esUsuarioAutorizado(usuario)) {
-            configurarAccionesTabla(true, false, true, true, false, false);
+            configurarAccionesTabla(true, true, true, true, false, false);
         } else {
             configurarAccionesTabla(false, false, true, true, false, false); // Editar, Eliminar, Ver, Registros, Aceptar, Rechazar
         }
@@ -284,7 +283,11 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
             @Override
             public void onDelete(int row) {
-                // Nada ...
+                if (Utilidades.confirmarEliminacion()) {
+                    cds.eliminarProcedimiento(conexion,listaProcedimientos.get(row));
+                    cerrarVentana();
+                    cds.abrirDocumentacionGUI(usuario, proceso.getId());
+                }
             }
 
             @Override

@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,17 +44,17 @@ public class ControlDocumentacionServicio {
 
     final String UPDATE_REVISION_FROM_DOCPROCEDIMIENTOS = "UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?";
     final String UPDATE_PROCEDIMIENTOS_BY_ID = "UPDATE docprocedimientos SET no = ?, codigo = ?, revision = ?, procedimiento = ?, encargado = ? WHERE id = ?";
-    final String UPDATE_MANUAL_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo = 'MANUAL' AND idProcedimiento = ?";
-    final String UPDATE_DIAGRAMA_FLUJO_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, contenido = ? WHERE tipo = 'DIAGRAMA DE FLUJO' AND idProcedimiento = ?";
-    final String UPDATE_DIAGRAMA_TORTUGA_BY_PROCESO = "UPDATE docprocesos SET nombreDt = ?, diagramaTortuga = ? WHERE proceso = ?";
-    final String UPDATE_FORMATO = "UPDATE formatos SET nombre = ?, contenido = ? WHERE idProcedimiento = ? AND nombre = ?";
+    final String UPDATE_MANUAL_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE tipo = 'MANUAL' AND idProcedimiento = ?";
+    final String UPDATE_DIAGRAMA_FLUJO_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE tipo = 'DIAGRAMA DE FLUJO' AND idProcedimiento = ?";
+    final String UPDATE_DIAGRAMA_TORTUGA_BY_PROCESO = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE proceso = ?";
+    final String UPDATE_FORMATO = "UPDATE formatos SET nombre = ?, rutaArchivo = ? WHERE idProcedimiento = ? AND nombre = ?";
     final String UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS = "UPDATE documentos SET nombre = ?, contenido = ? WHERE idProceso = ? AND tipo_archivo = 'INSTRUCTIVO' AND nombre = ?";
     final String UPDATE_DIAGRAMA_TORTUGA_BY_ID = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE id = ?";
     final String UPDATE_DOCUMENTO = "UPDATE documentos SET fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE id = ?";
     final String INSERT_INTO_DOCUMENTOS_WITH_SUBQUERY = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES((SELECT idProceso FROM docProcesos WHERE nombreProceso = ?), ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_DOCUMENTOS = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, rutaArchivo) VALUES (?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_FORMATOS = "INSERT INTO formatos(idProcedimiento, nombre, rutaArchivo) VALUES(?, ?, ?)";
-    final String INSERT_INTO_SOLICITUDES_CAMBIO = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, archivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    final String INSERT_INTO_SOLICITUDES_CAMBIO = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, rutaArchivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_PROCEDIMIENTOS = "INSERT INTO docprocedimientos(idp, no, codigo, revision, proceso, procedimiento, encargado) VALUES (?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_REGISTROS = "INSERT INTO docregistros(idp, fechaModificacion, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombre) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String DELETE_FROM_DOCUMENTOS = "DELETE FROM documentos WHERE idProcedimiento = ? AND tipo = ? AND nombre = ?";
@@ -145,6 +146,7 @@ public class ControlDocumentacionServicio {
         switch (solicitud.getAccion()) {
             case "ACTUALIZAR":
                 if (solicitud.getTipoArchivo().equals("MANUAL")) {
+                    eliminarManualAnterior(conexion, solicitud.getId(), "MANUAL");
                     PreparedStatement ps = conexion.prepareStatement(UPDATE_REVISION_FROM_DOCPROCEDIMIENTOS);
                     ps.setString(1, solicitud.getRevNueva());
                     ps.setString(2, solicitud.getProcedimiento());
@@ -160,6 +162,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("DIAGRAMA DE FLUJO")) {
+                    eliminarManualAnterior(conexion, solicitud.getId(), "DIAGRAMA DE FLUJO");
                     PreparedStatement ps = conexion.prepareStatement(UPDATE_REVISION_FROM_DOCPROCEDIMIENTOS);
                     ps.setString(1, solicitud.getRevNueva());
                     ps.setString(2, solicitud.getProcedimiento());
@@ -183,6 +186,8 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("FORMATO")) {
+                    eliminarManualAnterior(conexion, solicitud.getId(), "FORMATO");
+
                     PreparedStatement ps = conexion.prepareStatement(UPDATE_FORMATO);
                     ps.setString(1, solicitud.getNombre());
                     ps.setString(2, solicitud.getRutaArchivo());
@@ -192,6 +197,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("INSTRUCTIVO")) {
+                    eliminarManualAnterior(conexion, solicitud.getId(), "INSTRUCTIVO");
                     PreparedStatement ps = conexion.prepareStatement(UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS);
                     ps.setString(1, solicitud.getNombre());
                     ps.setString(2, solicitud.getRutaArchivo());
@@ -345,6 +351,18 @@ public class ControlDocumentacionServicio {
         }
     }
 
+    public void eliminarManualAnterior(Connection conexion, int id, String tipoArchivo) {
+        try {
+            PreparedStatement ps = conexion.prepareStatement("DELETE FROM documentos WHERE id = ? AND tipo = ?");
+            ps.setInt(1, id);
+            ps.setString(2, tipoArchivo);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al eliminar el documento seleccionado: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     public void eliminarFormato(Connection conexion, FormatosM formato) {
         try {
             PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_FORMATOS_BY_ID);
@@ -419,6 +437,7 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setString(11, solicitud.getNombre());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al registrar la solicitud", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -668,5 +687,56 @@ public class ControlDocumentacionServicio {
         if (!Utilidades.eliminarArchivo(urlArchivo)) {
             JOptionPane.showMessageDialog(null, "El archivo no se pudo eliminar o no existe.");
         }
+    }
+
+    public void migrarArchivos(Connection conexion) {
+        String carpetaDestino = "C:/xampp/htdocs/archivos/ControlDocumentos/Solicitudes/";
+        File carpeta = new File(carpetaDestino);
+        if (!carpeta.exists()) {
+            carpeta.mkdirs();
+        }
+
+        try {
+            PreparedStatement ps = conexion.prepareStatement("SELECT id, nombre, archivo FROM solicitudescambio WHERE archivo IS NOT NULL AND archivo != '' ");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                int idp = rs.getInt("id");
+                byte[] documento = rs.getBytes("archivo");
+
+                // Guarda el archivo en el sistema de archivos
+                String nombreArchivo = rs.getString("nombre"); // Usa un formato adecuado
+                File archivoDestino = new File(carpetaDestino + nombreArchivo);
+                Files.write(archivoDestino.toPath(), documento);
+
+                // Actualiza la ruta en la base de datos
+                PreparedStatement psUpdate = conexion.prepareStatement("UPDATE solicitudescambio SET rutaArchivo = ? WHERE id = ?");
+                psUpdate.setString(1, "archivos/ControlDocumentos/Solicitudes/" + nombreArchivo);
+                psUpdate.setInt(2, idp);
+                psUpdate.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void eliminarProcedimiento(Connection conexion, ProcedimientosM procedimiento) {
+        try {
+            PreparedStatement ps = conexion.prepareStatement("DELETE FROM docprocedimientos WHERE id = ?");
+            ps.setInt(1, procedimiento.getId());
+            ps.executeUpdate();
+
+            ps = conexion.prepareStatement("DELETE FROM documentos WHERE idProcedimiento = ?");
+            ps.setInt(1, procedimiento.getId());
+            ps.executeUpdate();
+
+            ps = conexion.prepareStatement("DELETE FROM formatos WHERE idProcedimiento = ?");
+            ps.setInt(1, procedimiento.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 }
