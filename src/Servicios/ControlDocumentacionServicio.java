@@ -479,6 +479,29 @@ public class ControlDocumentacionServicio {
         }
         return documentos;
     }
+    
+    public List<DocumentosM> obtenerInstructivos(Connection conexion, int id,String tipoArchivo) throws SQLException {
+        List<DocumentosM> documentos = new ArrayList<>();
+        try (PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM documentos WHERE idProcedimiento = ? AND tipo = ?")) {
+            consulta.setInt(1, id);
+            consulta.setString(2, tipoArchivo);
+            ResultSet resultado = consulta.executeQuery();
+            while (resultado.next()) {
+                DocumentosM documento = new DocumentosM(
+                        resultado.getInt("id"),
+                        resultado.getInt("idProceso"),
+                        resultado.getInt("idProcedimiento"),
+                        resultado.getString("revision"),
+                        resultado.getString("fechaActualizacion"),
+                        resultado.getString("tipo"),
+                        resultado.getString("nombre"),
+                        resultado.getString("rutaArchivo")
+                );
+                documentos.add(documento);
+            }
+        }
+        return documentos;
+    }
 
     public List<SolicitudesM> obtenerSolicitudes(Connection conexion) throws SQLException {
         List<SolicitudesM> listaSolicitudes = new ArrayList<>();
