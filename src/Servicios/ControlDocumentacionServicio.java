@@ -48,7 +48,7 @@ public class ControlDocumentacionServicio {
     final String UPDATE_DIAGRAMA_FLUJO_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE tipo = 'DIAGRAMA DE FLUJO' AND idProcedimiento = ?";
     final String UPDATE_DIAGRAMA_TORTUGA_BY_PROCESO = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE proceso = ?";
     final String UPDATE_FORMATO = "UPDATE formatos SET nombre = ?, rutaArchivo = ? WHERE idProcedimiento = ? AND nombre = ?";
-    final String UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS = "UPDATE documentos SET nombre = ?, contenido = ? WHERE idProceso = ? AND tipo_archivo = 'INSTRUCTIVO' AND nombre = ?";
+    final String UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS = "UPDATE documentos SET nombre = ?, rutaArchivo = ? WHERE idProcedimiento = ? AND tipo = 'INSTRUCTIVO' AND nombre = ?";
     final String UPDATE_DIAGRAMA_TORTUGA_BY_ID = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE id = ?";
     final String UPDATE_DOCUMENTO = "UPDATE documentos SET fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE id = ?";
     final String INSERT_INTO_DOCUMENTOS_WITH_SUBQUERY = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, contenido) VALUES((SELECT idProceso FROM docProcesos WHERE nombreProceso = ?), ?, ?, ?, ?, ?, ?)";
