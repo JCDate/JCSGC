@@ -225,12 +225,11 @@ public class SolicitudGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnSolicitudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudActionPerformed
-        JOptionPane.showMessageDialog(this, "SE HA REALIZADO LA SOLICITUD DE CAMBIO");
-        SolicitudesM solicitudCambio = crearSolicitudCambio();
-        solicitudCambio.setRutaArchivo("archivos/ControlDocumentos/Solicitudes/" + txtNombreArchivo.getText());
-        cds.agregarSolicitud(conexion, solicitudCambio);
-        cerrarVentana();
-        cds.abrirControlDocumentosGUI(usuario);
+        if (cbxAccion.getSelectedItem().toString().equals("AGREGAR")) {
+            gestionarInsercion();
+        } else {
+            realizarSolicitud();
+        }
     }//GEN-LAST:event_btnSolicitudActionPerformed
 
     private void btnNuevoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoArchivoActionPerformed
@@ -263,12 +262,11 @@ public class SolicitudGUI extends javax.swing.JFrame {
                 manejarTipoArchivo(tipoArchivo, indexSeleccionado);
                 break;
         }
-
-
     }//GEN-LAST:event_cbxProcedimientosActionPerformed
 
     private void cbxTipoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTipoArchivoActionPerformed
         configurarAccionComboBox();
+        String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
         if (cbxAccion.getSelectedItem().toString().equals("AGREGAR") || tipoArchivo.equals("FORMATO") || tipoArchivo.equals("INSTRUCTIVO")) {
             txtNuevaRevision.setVisible(false);
             lblRevNueva.setVisible(false);
@@ -278,6 +276,36 @@ public class SolicitudGUI extends javax.swing.JFrame {
     private void cbxAccionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxAccionActionPerformed
         configurarAccionComboBox();
     }//GEN-LAST:event_cbxAccionActionPerformed
+
+    private void gestionarInsercion() {
+        String archivo = cbxTipoArchivo.getSelectedItem().toString();
+        boolean existe = false;
+
+        switch (archivo) {
+            case "MANUAL":
+            case "DIAGRAMA DE FLUJO":
+                existe = cds.existeDocumento(conexion, proceso.getId(), archivo);
+                break;
+
+            case "DIAGRAMA DE TORTUGA":
+                existe = cds.existeDiagramaTortuga(conexion, proceso.getId());
+                break;
+
+            default:
+                // Si el archivo es un instructivo o formato, lo agrega sin condición
+                if (archivo.equals("INSTRUCTIVO") || archivo.equals("FORMATO")) {
+                    realizarSolicitud(); // Realiza la solicitud directamente
+                }
+                return; // Finaliza el método
+        }
+
+        // Si el tipo de archivo requiere validación y ya existe, muestra un mensaje
+        if (existe) {
+            JOptionPane.showMessageDialog(this, "Ya existe un documento tipo " + archivo + " para el procedimiento seleccionado", "DOCUMENTO EXISTENTE", JOptionPane.WARNING_MESSAGE);
+        } else if (!archivo.equals("INSTRUCTIVO") && !archivo.equals("FORMATO")) {
+            realizarSolicitud(); // Realiza la solicitud si no existe el documento
+        }
+    }
 
     private void inicializarVentanaYComponentes() {
         try {
@@ -290,6 +318,15 @@ public class SolicitudGUI extends javax.swing.JFrame {
             Utilidades.manejarExcepcion("ERROR al abrir SolicitudGUI: ", ex);
             Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    private void realizarSolicitud() {
+        JOptionPane.showMessageDialog(this, "SE HA REALIZADO LA SOLICITUD DE CAMBIO");
+        SolicitudesM solicitudCambio = crearSolicitudCambio();
+        solicitudCambio.setRutaArchivo("archivos/ControlDocumentos/Solicitudes/" + txtNombreArchivo.getText());
+        cds.agregarSolicitud(conexion, solicitudCambio);
+        cerrarVentana();
+        cds.abrirControlDocumentosGUI(usuario);
     }
 
     private void configurarVentana() {
@@ -401,7 +438,31 @@ public class SolicitudGUI extends javax.swing.JFrame {
     }
 
     private void eliminarElemento() {
-        System.out.println("Elemento eliminado");
+        txtRevAnterior.setVisible(false);
+        lblRevAnterior.setVisible(false);
+        txtNuevaRevision.setVisible(false);
+        lblRevNueva.setVisible(false);
+        btnNuevoArchivo.setVisible(false);
+        lblFormatoNuevo.setText("ARCHIVO: ");
+        txtNombreArchivo.setText(obtenerDocumento());
+    }
+
+    private String obtenerDocumento() {
+        String archivo = cbxTipoArchivo.getSelectedItem().toString();
+        if (archivo.equals("MANUAL") || archivo.equals("DIAGRAMA DE FLUJO")) {
+            return cds.obtenerNombreDocumento(conexion, proceso.getId(), archivo);
+        } else if (archivo.equals("INSTRUCTIVO") || archivo.equals("FORMATO")) {
+            try {
+                actualizarDoctos(archivo, indexSeleccionado);
+                txtNombreArchivo.setVisible(false);
+                lblFormatoNuevo.setVisible(false);
+            } catch (SQLException ex) {
+                Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else if (archivo.equals("DIAGRAMA DE TORTUGA")) {
+            return cds.obtenerNombreDiagramaTortuga(conexion, proceso.getId());
+        }
+        return null;
     }
 
     private void cerrarVentana() {
@@ -420,7 +481,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
         String accion = cbxAccion.getSelectedItem().toString();
         String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
         String nombreDocumento = cbxDocumentos.isVisible() ? cbxDocumentos.getSelectedItem().toString() : "";
-        String nombreArchivo = txtNombreArchivo.getText();
+        String nombreArchivo = txtNombreArchivo.getText().isEmpty() ? cbxDocumentos.getSelectedItem().toString() : txtNombreArchivo.getText();
 
         return new SolicitudesM(procedimientoSeleccionado.getId(), codigo, nombreProceso, nombreProcedimiento,
                 antiguaRev, nuevaRev, encargado, accion, tipoArchivo, nombreDocumento,
@@ -437,7 +498,7 @@ public class SolicitudGUI extends javax.swing.JFrame {
     }
 
     private void actualizarDoctos(String tipoDocumento, int index) throws SQLException {
-        if (cbxAccion.getSelectedItem().toString().equals("ACTUALIZAR")) {
+        if (cbxAccion.getSelectedItem().toString().equals("ACTUALIZAR") || cbxAccion.getSelectedItem().toString().equals("ELIMINAR")) {
             if (tipoDocumento.equals("INSTRUCTIVO")) {
                 cargarInstructivos(index);
             } else {

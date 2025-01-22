@@ -94,9 +94,11 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         jScrollPane1.setViewportView(tblSolicitudes);
         if (tblSolicitudes.getColumnModel().getColumnCount() > 0) {
             tblSolicitudes.getColumnModel().getColumn(4).setResizable(false);
+            tblSolicitudes.getColumnModel().getColumn(9).setMinWidth(160);
+            tblSolicitudes.getColumnModel().getColumn(9).setMaxWidth(160);
         }
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 1270, 330));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, 1290, 330));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -109,7 +111,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 470, 130, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, 540));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1320, 540));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -179,7 +181,6 @@ public class SolicitudesGUI extends javax.swing.JFrame {
 
             @Override
             public void onView(int row) {
-                
                 cds.abrirDocumento(listaSolicitudes.get(row).getRutaArchivo());
             }
 

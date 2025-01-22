@@ -7,6 +7,9 @@ import java.awt.Desktop;
 import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
@@ -53,9 +56,29 @@ public class Utilidades {
         JOptionPane.showMessageDialog(null, msg + ex, "ERROR", JOptionPane.ERROR_MESSAGE);
     }
 
+//    public static boolean eliminarArchivo(String ruta) {
+//        File archivo = new File(ruta);
+//        return archivo.exists() && archivo.delete();
+//    }
     public static boolean eliminarArchivo(String ruta) {
-        File archivo = new File(ruta);
-        return archivo.exists() && archivo.delete();
+        if (ruta == null || ruta.isEmpty()) {
+            System.err.println("La ruta proporcionada es nula o está vacía.");
+            return false;
+        }
+
+        Path archivo = Paths.get(ruta);
+
+        try {
+            if (Files.exists(archivo)) {
+                return Files.deleteIfExists(archivo);
+            } else {
+                System.err.println("El archivo no existe: " + ruta);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Utilidades.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return false;
     }
 
     public static void abrirDocumento(String rutaArchivo) {
