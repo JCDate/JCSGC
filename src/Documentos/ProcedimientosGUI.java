@@ -56,6 +56,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        txtBuscador = new swing.TextField();
         jPanel1 = new javax.swing.JPanel();
         lblJCIcono = new javax.swing.JLabel();
         lblProcedimiento = new javax.swing.JLabel();
@@ -65,10 +66,21 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         btnFormatos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnAgregarDocumentos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        jPanel2 = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        txtBuscador.setPrefixIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/find.png"))); // NOI18N
+        txtBuscador.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtBuscadorKeyTyped(evt);
+            }
+        });
+        getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 70, 260, 40));
+        txtBuscador.getAccessibleContext().setAccessibleDescription("");
+        txtBuscador.getAccessibleContext().setAccessibleParent(this);
 
         jPanel1.setBackground(new java.awt.Color(251, 251, 251));
         jPanel1.setForeground(new java.awt.Color(242, 242, 242));
@@ -93,7 +105,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         tblDocumentos.setRowHeight(50);
         jScrollPane1.setViewportView(tblDocumentos);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 140, 1170, 170));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 120, 960, 300));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -104,12 +116,12 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
                 btnCerrarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 390, 130, 50));
+        jPanel1.add(btnCerrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 440, 130, 50));
 
         jLabel1.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(10, 110, 255));
         jLabel1.setText("Documentos:");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, -1, -1));
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 100, -1, -1));
 
         btnFormatos.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnFormatos.setForeground(new java.awt.Color(255, 255, 255));
@@ -120,20 +132,21 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
                 btnFormatosActionPerformed(evt);
             }
         });
-        jPanel1.add(btnFormatos, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 320, 200, 50));
+        jPanel1.add(btnFormatos, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, 190, 50));
 
         btnAgregarDocumentos.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnAgregarDocumentos.setForeground(new java.awt.Color(255, 255, 255));
         btnAgregarDocumentos.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/1004733.png"))); // NOI18N
-        btnAgregarDocumentos.setText("AGREGAR DOCUMENTOS");
+        btnAgregarDocumentos.setText("<html><center>AGREGAR<br> DOCUMENTOS</center></html>");
         btnAgregarDocumentos.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAgregarDocumentosActionPerformed(evt);
             }
         });
-        jPanel1.add(btnAgregarDocumentos, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 310, 250, 50));
+        jPanel1.add(btnAgregarDocumentos, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, 190, 50));
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 420, 940, 50));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 480));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 500));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -152,6 +165,10 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         cerrarVentana();
         cds.abrirAgregarDocumentosGUI(usuario, procedimiento);
     }//GEN-LAST:event_btnAgregarDocumentosActionPerformed
+
+    private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
+ 
+    }//GEN-LAST:event_txtBuscadorKeyTyped
 
     private void inicializarVentanaYComponentes() {
         try {
@@ -216,7 +233,6 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
             @Override
             public void onView(int row) {
-         
                 cds.abrirDocumento(listaDocumentos.get(row).getRutaArchivo());
             }
 
@@ -315,9 +331,11 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private javax.swing.JButton btnFormatos;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblJCIcono;
     private javax.swing.JLabel lblProcedimiento;
     private javax.swing.JTable tblDocumentos;
+    private swing.TextField txtBuscador;
     // End of variables declaration//GEN-END:variables
 }

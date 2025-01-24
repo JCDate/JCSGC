@@ -321,12 +321,37 @@ public class SolicitudGUI extends javax.swing.JFrame {
     }
 
     private void realizarSolicitud() {
+        String accion = cbxAccion.getSelectedItem().toString();
+        String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
         JOptionPane.showMessageDialog(this, "SE HA REALIZADO LA SOLICITUD DE CAMBIO");
         SolicitudesM solicitudCambio = crearSolicitudCambio();
-        solicitudCambio.setRutaArchivo("archivos/ControlDocumentos/Solicitudes/" + txtNombreArchivo.getText());
+        String nombreArchivo = txtNombreArchivo.getText().isEmpty() ? cbxDocumentos.getSelectedItem().toString() : txtNombreArchivo.getText();
+
+        solicitudCambio.setRutaArchivo(generarRutaArchivo(accion, tipoArchivo, nombreArchivo));
+
         cds.agregarSolicitud(conexion, solicitudCambio);
         cerrarVentana();
         cds.abrirControlDocumentosGUI(usuario);
+    }
+
+    private String generarRutaArchivo(String accion, String tipoArchivo, String nombreArchivo) {
+        final String BASE_DOCUMENTOS = "archivos/ControlDocumentos/documentos/";
+        final String BASE_FORMATOS = "archivos/ControlDocumentos/Formatos/";
+        final String BASE_SOLICITUDES = "archivos/ControlDocumentos/Solicitudes/";
+
+        if ("ELIMINAR".equals(accion)) {
+            switch (tipoArchivo) {
+                case "MANUAL":
+                case "INSTRUCTIVO":
+                case "DIAGRAMA DE FLUJO":
+                    return BASE_DOCUMENTOS + nombreArchivo;
+                case "DIAGRAMA DE TORTUGA":
+                    return BASE_SOLICITUDES + nombreArchivo;
+                default:
+                    return BASE_FORMATOS + nombreArchivo;
+            }
+        }
+        return BASE_SOLICITUDES + nombreArchivo;
     }
 
     private void configurarVentana() {
@@ -386,6 +411,10 @@ public class SolicitudGUI extends javax.swing.JFrame {
         txtNuevaRevision.setVisible(true);
         lblRevNueva.setVisible(true);
         txtRevAnterior.setVisible(true);
+        btnNuevoArchivo.setVisible(true);
+        lblFormatoNuevo.setVisible(true);
+        txtNombreArchivo.setVisible(true);
+        txtNombreArchivo.setText("");
     }
 
     private void mostrarComponentesDiagramaTortuga() {
@@ -434,6 +463,10 @@ public class SolicitudGUI extends javax.swing.JFrame {
         lblRevAnterior.setVisible(false);
         cbxDocumentos.setVisible(false);
         lblDocumentos.setVisible(false);
+        btnNuevoArchivo.setVisible(true);
+        lblFormatoNuevo.setVisible(true);
+        txtNombreArchivo.setVisible(true);
+        txtNombreArchivo.setText("");
         lblRevNueva.setText("REVISIÓN: ");
     }
 
@@ -449,18 +482,24 @@ public class SolicitudGUI extends javax.swing.JFrame {
 
     private String obtenerDocumento() {
         String archivo = cbxTipoArchivo.getSelectedItem().toString();
-        if (archivo.equals("MANUAL") || archivo.equals("DIAGRAMA DE FLUJO")) {
-            return cds.obtenerNombreDocumento(conexion, proceso.getId(), archivo);
-        } else if (archivo.equals("INSTRUCTIVO") || archivo.equals("FORMATO")) {
-            try {
-                actualizarDoctos(archivo, indexSeleccionado);
-                txtNombreArchivo.setVisible(false);
-                lblFormatoNuevo.setVisible(false);
-            } catch (SQLException ex) {
-                Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } else if (archivo.equals("DIAGRAMA DE TORTUGA")) {
-            return cds.obtenerNombreDiagramaTortuga(conexion, proceso.getId());
+        switch (archivo) {
+            case "MANUAL":
+            case "DIAGRAMA DE FLUJO":
+                return cds.obtenerNombreDocumento(conexion, proceso.getId(), archivo);
+            case "INSTRUCTIVO":
+            case "FORMATO":
+                try {
+                    actualizarDoctos(archivo, indexSeleccionado);
+                    txtNombreArchivo.setVisible(false);
+                    lblFormatoNuevo.setVisible(false);
+                } catch (SQLException ex) {
+                    Logger.getLogger(SolicitudGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                break;
+            case "DIAGRAMA DE TORTUGA":
+                return cds.obtenerNombreDiagramaTortuga(conexion, proceso.getId());
+            default:
+                break;
         }
         return null;
     }
@@ -506,7 +545,6 @@ public class SolicitudGUI extends javax.swing.JFrame {
             }
         } else {
             visualizarCbxDocumentos(false);
-
         }
     }
 

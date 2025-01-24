@@ -79,6 +79,12 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         getContentPane().add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
+
+        txtBuscador.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtBuscadorActionPerformed(evt);
+            }
+        });
         getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(810, 50, 200, -1));
         txtBuscador.getAccessibleContext().setAccessibleParent(this);
 
@@ -150,9 +156,10 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
+    private void btnCrearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCrearActionPerformed
         cerrarVentana();
-    }//GEN-LAST:event_btnCerrarActionPerformed
+        aps.abrirAceptacionProductoGUI2(usuario);
+    }//GEN-LAST:event_btnCrearActionPerformed
 
     private void btnActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarActionPerformed
         cerrarVentana();
@@ -160,10 +167,13 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         aps.abrirAceptacionProductoGUI(usuario);
     }//GEN-LAST:event_btnActualizarActionPerformed
 
-    private void btnCrearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCrearActionPerformed
+    private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
         cerrarVentana();
-        aps.abrirAceptacionProductoGUI2(usuario);
-    }//GEN-LAST:event_btnCrearActionPerformed
+    }//GEN-LAST:event_btnCerrarActionPerformed
+
+    private void txtBuscadorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscadorActionPerformed
+        filtrarBusqueda();
+    }//GEN-LAST:event_txtBuscadorActionPerformed
 
     private void inicializarVentanaYComponentes() {
         try {
@@ -172,7 +182,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
             configurarBuscador();
             inicializarTabla(1);
             configurarPaginacion();
-            inicializarListeners();
+//            inicializarListeners();
             inicializarFiltroTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI: ", ex);
@@ -299,15 +309,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         return fila;
     }
 
-    private void inicializarListeners() {
-        txtBuscador.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(final KeyEvent ke) {
-                filtrarBusqueda();
-            }
-        });
-    }
-
+   
     private void filtrarBusqueda() {
         String textoBusqueda = txtBuscador.getText();
 

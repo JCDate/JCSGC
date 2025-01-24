@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 public class ProcesosGUI extends javax.swing.JFrame {
@@ -172,7 +173,11 @@ public class ProcesosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnDiagramaTortugaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDiagramaTortugaActionPerformed
-        cds.abrirDocumento(proceso.getRutaArchivo());
+        if (proceso.getRutaArchivo().isEmpty() || proceso.getRutaArchivo() == null) {
+            JOptionPane.showMessageDialog(this, "NO SE ENCONTRÓ EL ARCHIVO BUSCADO");
+        } else {
+            cds.abrirDocumento(proceso.getRutaArchivo());
+        }
     }//GEN-LAST:event_btnDiagramaTortugaActionPerformed
 
     private void btnSolicitudCambioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudCambioActionPerformed
@@ -181,8 +186,9 @@ public class ProcesosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSolicitudCambioActionPerformed
 
     private void btnNuevoProcesosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoProcesosActionPerformed
-        cerrarVentana();
-        cds.abrirModificarInfoGUI(usuario, proceso);
+//        cerrarVentana();
+//        cds.abrirModificarInfoGUI(usuario, proceso);
+        cds.migrarArchivos(conexion);
     }//GEN-LAST:event_btnNuevoProcesosActionPerformed
 
     private void btnModificarDTActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarDTActionPerformed
@@ -284,7 +290,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
             @Override
             public void onDelete(int row) {
                 if (Utilidades.confirmarEliminacion()) {
-                    cds.eliminarProcedimiento(conexion,listaProcedimientos.get(row));
+                    cds.eliminarProcedimiento(conexion, listaProcedimientos.get(row));
                     cerrarVentana();
                     cds.abrirDocumentacionGUI(usuario, proceso.getId());
                 }
