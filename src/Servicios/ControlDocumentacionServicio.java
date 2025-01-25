@@ -768,7 +768,7 @@ public class ControlDocumentacionServicio {
 
     public void abrirDocumento(String rutaArchivo) {
         if (rutaArchivo == null || rutaArchivo.isEmpty()) {
-            
+
             Utilidades.manejarExcepcion("La ruta del archivo no es válida.", null);
             return;
         }
@@ -837,27 +837,28 @@ public class ControlDocumentacionServicio {
     }
 
     public void migrarArchivos(Connection conexion) {
-        String carpetaDestino = "C:/xampp/htdocs/archivos/ControlDocumentos/Documentos/";
+        String carpetaDestino = "C:/xampp/htdocs/archivos/InspeccionRecibo/HojasInstruccion/";
         File carpeta = new File(carpetaDestino);
         if (!carpeta.exists()) {
             carpeta.mkdirs();
         }
 
         try {
-            PreparedStatement ps = conexion.prepareStatement("SELECT id, nombre, contenido FROM documentos WHERE contenido IS NOT NULL AND contenido != '' ");
+            PreparedStatement ps = conexion.prepareStatement("SELECT id, nombreHJ, hojaInstruccion FROM inspeccionrecibo WHERE hojaInstruccion IS NOT NULL AND hojaInstruccion != '' ");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int idp = rs.getInt("id");
-                byte[] documento = rs.getBytes("contenido");
+                byte[] documento = rs.getBytes("hojaInstruccion");
 
                 // Guarda el archivo en el sistema de archivos
-                String nombreArchivo = rs.getString("nombre"); // Usa un formato adecuado
+                String nombreArchivo = rs.getString("nombreHJ"); // Usa un formato adecuado
+                nombreArchivo = limpiarNombreArchivo(nombreArchivo);
                 File archivoDestino = new File(carpetaDestino + nombreArchivo);
                 Files.write(archivoDestino.toPath(), documento);
 
                 // Actualiza la ruta en la base de datos
-                PreparedStatement psUpdate = conexion.prepareStatement("UPDATE documentos SET rutaArchivo = ? WHERE id = ?");
-                psUpdate.setString(1, "archivos/ControlDocumentos/Documentos/" + nombreArchivo);
+                PreparedStatement psUpdate = conexion.prepareStatement("UPDATE inspeccionrecibo SET rutaHojaInstruccion = ? WHERE id = ?");
+                psUpdate.setString(1, "archivos/InspeccionRecibo/HojasInstruccion/" + nombreArchivo);
                 psUpdate.setInt(2, idp);
                 psUpdate.executeUpdate();
             }
