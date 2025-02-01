@@ -272,7 +272,7 @@ public class InspeccionReciboGUI extends javax.swing.JFrame {
 
     private void btnToExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnToExcelActionPerformed
         try {
-            excel.generarInspeccionReciboXLS();
+            excel.generarInspeccionReciboXLSX();
         } catch (SQLException | ParseException ex) {
             Utilidades.manejarExcepcion("Error al genear el archivo InspeccionRecibo.xlsx: ", ex);
             Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);

@@ -15,7 +15,7 @@ public class RugosidadDurezaServicio {
     }
 
     public RugosidadDurezaServicio(JTable tbl) {
-        this.tbl = tbl; 
+        this.tbl = tbl;
     }
 
     public JTable getTbl() {
@@ -27,15 +27,14 @@ public class RugosidadDurezaServicio {
     }
 
     public List<RugosidadDurezaM> recuperarTodas(int a, int b) {
-        List<RugosidadDurezaM> listaAnchoLargo = new ArrayList<>(); // La lista para almacenar los valores de ancho y largo
-        DefaultTableModel model = (DefaultTableModel) tbl.getModel(); // Se obtiene el modelo de la tabla
+        List<RugosidadDurezaM> listaAnchoLargo = new ArrayList<>();
+        DefaultTableModel model = (DefaultTableModel) tbl.getModel();
 
-        for (int i = 0; i < model.getRowCount(); i++) { // Recorrer los valores de la JTable y asignarlos a los parámetros de la consulta
-            // Obtener los valores de cada columna en la fila actual
+        for (int i = 0; i < model.getRowCount(); i++) {
             String rugosidad = Objects.toString(model.getValueAt(i, 0), "");
             String dureza = Objects.toString(model.getValueAt(i, 1), "");
 
-            RugosidadDurezaM medidas = new RugosidadDurezaM(a, rugosidad, dureza, b); // Crear una nueva instancia de la clase AnchoLargoM 
+            RugosidadDurezaM medidas = new RugosidadDurezaM(a, rugosidad, dureza, b);
             listaAnchoLargo.add(medidas);
         }
         return listaAnchoLargo;

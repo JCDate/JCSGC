@@ -99,7 +99,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
             },
             new String [] {
-                "TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "ARCHIVO", "REGISTROS"
+                "TIPO DE DOCUMENTO", "FECHA DE ACTUALIZACIÓN", "NOMBRE", "REGISTROS"
             }
         ));
         tblDocumentos.setRowHeight(50);
@@ -167,7 +167,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnAgregarDocumentosActionPerformed
 
     private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
- 
+
     }//GEN-LAST:event_txtBuscadorKeyTyped
 
     private void inicializarVentanaYComponentes() {
@@ -212,8 +212,8 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
     private void configurarAccionesTabla(boolean btnEditar, boolean btnEliminar, boolean btnVer, boolean btnRegistro, boolean btnAceptar, boolean btnRegistrar) {
         TableActionEvent event = crearTableActionEvent();
-        tblDocumentos.getColumnModel().getColumn(4).setCellRenderer(new TableActionCellRender(btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRegistrar));
-        tblDocumentos.getColumnModel().getColumn(4).setCellEditor(new TableActionCellEditor(event, btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRegistrar));
+        tblDocumentos.getColumnModel().getColumn(3).setCellRenderer(new TableActionCellRender(btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRegistrar));
+        tblDocumentos.getColumnModel().getColumn(3).setCellEditor(new TableActionCellEditor(event, btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRegistrar));
     }
 
     private TableActionEvent crearTableActionEvent() {
@@ -233,7 +233,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
 
             @Override
             public void onView(int row) {
-                cds.abrirDocumento(listaDocumentos.get(row).getRutaArchivo());
+                Utilidades.abrirDocumento(listaDocumentos.get(row).getRutaArchivo());
             }
 
             @Override

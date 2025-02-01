@@ -13,23 +13,14 @@ import Modelos.AceptacionProductoM;
 import Modelos.DatosFilaRD;
 import Modelos.Usuarios;
 import java.awt.Desktop;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,49 +30,54 @@ import javax.swing.JOptionPane;
 
 public class AceptacionProductoServicio {
 
-    final String INSERT_INTO_ACEPTACION_PC1 = "INSERT INTO aceptacionpc1(componente, fecha, noRollo, inspVisual, observacion, noParte, noOps) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    final String INSERT_INTO_ACEPTACION_PC2 = "INSERT INTO aceptacionpc2(componente, fecha, noOrden, tamLote, tamMta, inspector, turno, disp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    final String INSERT_INTO_ACEPTACION_PC3 = "INSERT INTO aceptacionpc3(componente, noOp, noTroquel, fecha, variable, especificacion, valor, procesoCritico) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    final String INSERT_INTO_PRODUCTOS_ACTIVIDADES_PC = "INSERT INTO productosactividadespc(nombreProducto) VALUES (?)";
-    final String INSERT_INTO_ACEPTACION_PRODUCTO = "INSERT INTO aceptacionproducto(componente, rutaArchivo) VALUES (?, ?)";
-    final String SELECT_NO_ROLLO_SQL = "SELECT noRollo FROM inspeccionRecibo";
-    final String SELECT_ACEPTACION_PC1_BY_COMPONENTE = "SELECT * FROM aceptacionpc1 WHERE componente = ?";
-    final String SELECT_ACEPTACION_PC2_BY_COMPONENTE = "SELECT * FROM aceptacionpc2 WHERE componente = ?";
-    final String SELECT_COUNT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp, STR_TO_DATE(fecha, '%d/%m/%Y')";
-    final String SELECT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp, STR_TO_DATE(fecha, '%d/%m/%Y')";
-    final String SELECT_ACEPTACION_PC3_BY_COMPONENTE_LIMIT = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp ASC, STR_TO_DATE(fecha, '%d/%m/%Y') LIMIT ?, ?";
-    final String SELECT_ACEPTACION_PRODUCTO_ORDER_BY_COMPONENTE = "SELECT * FROM aceptacionProducto ORDER BY componente";
-    final String SELECT_ID_FROM_ACEPTACION_PC3 = "SELECT id FROM aceptacionpc3 WHERE noOp = ? AND fecha = ? AND variable = ? AND especificacion = ? AND valor = ?";
-    final String SELECT_NOMBRE_PRODUCTO = "SELECT nombreProducto FROM productosactividadespc";
-    final String SELECT_ESPECIFICACION_FROM_DESCRIPCION_PC3 = "SELECT t1.especificacion FROM descripcion3pc AS t1 JOIN descripcion2pc AS t2 ON t1.componente = t2.componente AND t1.noPartesP = t2.noPartesP AND t1.no = t2.no WHERE t2.producto LIKE ? AND t1.componente = ? GROUP BY t1.especificacion, t2.producto";
-    final String SELECT_NOMBRE_PRODUCTO_JOIN_DECRIPCION_PC2 = "SELECT pa.nombreProducto FROM productosactividadespc AS pa JOIN descripcion2pc AS d2 ON pa.nombreProducto = d2.producto WHERE d2.componente = ?";
-    final String SELECT_ACEPTACION_PC2 = "SELECT noOrden, fecha, tamLote, tamMta, inspector, turno, disp FROM aceptacionpc2 WHERE fecha = ? AND componente = ? GROUP BY noOrden, fecha, tamLote, tamMta, inspector, turno, disp";
-    final String SELECT_ACEPTACION_PRODUCTO = "SELECT * FROM aceptacionproducto WHERE componente = ?";
-    final String SELECT_HOJA_INSTRUCCION_SQL = "SELECT retencionDimensionalpdf FROM aceptacionproducto WHERE componente = ?";
-    final String SELECT_ACEPTACION_PC1 = "SELECT * FROM aceptacionpc1 WHERE componente = ?";
-    final String SELECT_FILA_FROM_ESPECIFICACIONES_IR = "SELECT fila FROM especificacionesir WHERE especificacion = ?";
-    final String SELECT_COUNT_FROM_ACEPTACION_PC1 = "SELECT COUNT(*) FROM aceptacionpc1 WHERE componente = ? AND fecha = ?";
-    final String SELECT_COUNT_FROM_ACEPTACION_PC2 = "SELECT COUNT(*) FROM aceptacionpc2 WHERE componente = ? AND fecha = ? AND noOrden = ?";
-    final String SELECT_COUNT_FROM_ACEPTACION_PC3 = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? AND noOp = ? AND fecha = ? AND variable = ? AND valor = ?";
-    final String SELECT_FECHA_ACEPTACION_PC1 = "SELECT fecha FROM aceptacionpc1 WHERE componente = ?";
-    final String SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT a1.id AS id_pc1, a2.id AS id_pc2, a1.*, a2.* FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
-    final String SELECT_COUNT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT COUNT(*) AS total_registros FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
-    final String SELECT_NO_ORDEN_FROM_ACEPTACION_PC2 = "SELECT noOrden FROM aceptacionpc2 WHERE componente = ? AND fecha = ?";
-    final String UPDATE_ACEPTACION_PC3 = "UPDATE aceptacionpc3 SET noOp = ?, fecha = ?, variable = ?, especificacion = ?, valor = ? WHERE id = ?";
-    final String UPDATE_ACEPTACION_PRODUCTO = "UPDATE aceptacionproducto SET rutaArchivo = ? WHERE componente = ?";
-    final String UPDATE_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noRollo = ?, inspVisual = ?, observacion = ? WHERE id = ? ";
-    final String UPDATE_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ?, tamLote = ?, tamMta = ?, inspector = ?, turno = ?, disp = ? WHERE id = ?";
-    final String UPDATE_NO_ORDEN_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ? WHERE componente = ? AND fecha = ?";
-    final String UPDATE_NO_OPS_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noOps = ? WHERE componente = ? ";
-    final String DELETE_ACEPTACION_PC3 = "DELETE FROM aceptacionpc3 WHERE id = ?";
-    final String SELECT_COMPONENTE_FROM_ANTECEDENTES_FAMILIA = "SELECT TRIM(componente) AS componente FROM antecedentesfamilia";
-    final String DELETE_ACEPTACION_PRODUCTO = "DELETE FROM aceptacionproducto WHERE componente = ?";
     final String DELETE_ACEPTACION_PC1 = "DELETE FROM aceptacionpc1 WHERE componente = ?";
     final String DELETE_ACEPTACION_PC1_WHERE_FECHA = "DELETE FROM aceptacionpc1 WHERE componente = ? AND fecha = ?";
     final String DELETE_ACEPTACION_PC2 = "DELETE FROM aceptacionpc2 WHERE componente = ?";
     final String DELETE_ACEPTACION_PC2_WHERE_FECHA = "DELETE FROM aceptacionpc2 WHERE componente = ? AND fecha = ?";
+    final String DELETE_ACEPTACION_PC3 = "DELETE FROM aceptacionpc3 WHERE id = ?";
     final String DELETE_ACEPTACION_PC3_WHERE_COMPONENTE = "DELETE FROM aceptacionpc3 WHERE componente = ?";
     final String DELETE_ACEPTACION_PC3_WHERE_COMPONENTE_AND_FECHA = "DELETE FROM aceptacionpc3 WHERE componente = ? AND fecha = ?";
+    final String DELETE_ACEPTACION_PRODUCTO = "DELETE FROM aceptacionproducto WHERE componente = ?";
+    final String INSERT_INTO_ACEPTACION_PC1 = "INSERT INTO aceptacionpc1(componente, fecha, noRollo, inspVisual, observacion, noParte, noOps) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    final String INSERT_INTO_ACEPTACION_PC2 = "INSERT INTO aceptacionpc2(componente, fecha, noOrden, tamLote, tamMta, inspector, turno, disp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    final String INSERT_INTO_ACEPTACION_PC3 = "INSERT INTO aceptacionpc3(componente, noOp, noTroquel, fecha, variable, especificacion, valor, procesoCritico) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    final String INSERT_INTO_ACEPTACION_PRODUCTO = "INSERT INTO aceptacionproducto(componente, rutaArchivo) VALUES (?, ?)";
+    final String INSERT_INTO_PRODUCTOS_ACTIVIDADES_PC = "INSERT INTO productosactividadespc(nombreProducto) VALUES (?)";
+    final String SELECT_ACEPTACION_PC1 = "SELECT * FROM aceptacionpc1 WHERE componente = ?";
+    final String SELECT_ACEPTACION_PC1_BY_COMPONENTE = "SELECT * FROM aceptacionpc1 WHERE componente = ?";
+    final String SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT a1.id AS id_pc1, a2.id AS id_pc2, a1.*, a2.* FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
+    final String SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2_LIMIT = "SELECT a1.id AS id_pc1, a2.id AS id_pc2, a1.*, a2.* FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ? LIMIT ?, ?";
+    final String SELECT_ACEPTACION_PC2 = "SELECT noOrden, fecha, tamLote, tamMta, inspector, turno, disp FROM aceptacionpc2 WHERE fecha = ? AND componente = ? GROUP BY noOrden, fecha, tamLote, tamMta, inspector, turno, disp";
+    final String SELECT_ACEPTACION_PC2_BY_COMPONENTE = "SELECT * FROM aceptacionpc2 WHERE componente = ?";
+    final String SELECT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp, STR_TO_DATE(fecha, '%d/%m/%Y')";
+    final String SELECT_ACEPTACION_PC3_BY_COMPONENTE_LIMIT = "SELECT * FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp ASC, STR_TO_DATE(fecha, '%d/%m/%Y') LIMIT ?, ?";
+    final String SELECT_ACEPTACION_PRODUCTO = "SELECT * FROM aceptacionproducto WHERE componente = ?";
+    final String SELECT_ACEPTACION_PRODUCTO_ORDER_BY_COMPONENTE = "SELECT * FROM aceptacionProducto ORDER BY componente";
+    final String SELECT_COMPONENTE_FROM_ANTECEDENTES_FAMILIA = "SELECT TRIM(componente) AS componente FROM antecedentesfamilia";
+    final String SELECT_COUNT_FROM_ACEPTACION_PC1 = "SELECT COUNT(*) FROM aceptacionpc1 WHERE componente = ? AND fecha = ?";
+    final String SELECT_COUNT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2 = "SELECT COUNT(*) AS total_registros FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ?";
+    final String SELECT_COUNT_FROM_ACEPTACION_PC2 = "SELECT COUNT(*) FROM aceptacionpc2 WHERE componente = ? AND fecha = ? AND noOrden = ?";
+    final String SELECT_COUNT_ACEPTACION_PC3_BY_COMPONENTE = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? ORDER BY noOp, STR_TO_DATE(fecha, '%d/%m/%Y')";
+    final String SELECT_COUNT_FROM_ACEPTACION_PC3 = "SELECT COUNT(*) FROM aceptacionpc3 WHERE componente = ? AND noOp = ? AND fecha = ? AND variable = ? AND valor = ?";
+    final String SELECT_COUNT_FROM_ACEPTACION_PRODUCTO = "SELECT COUNT(*) FROM aceptacionproducto";
+    final String SELECT_COUNT_FROM_ACEPTACION_PRODUCTO_BY_COMPONENTE = "SELECT COUNT(*) FROM aceptacionproducto WHERE componente = ?";
+    final String SELECT_ESPECIFICACION_FROM_DESCRIPCION_PC3 = "SELECT t1.especificacion FROM descripcion3pc AS t1 JOIN descripcion2pc AS t2 ON t1.componente = t2.componente AND t1.noPartesP = t2.noPartesP AND t1.no = t2.no WHERE t2.producto LIKE ? AND t1.componente = ? GROUP BY t1.especificacion, t2.producto";
+    final String SELECT_NO_ROLLO_SQL = "SELECT noRollo FROM inspeccionRecibo";
+    final String SELECT_FECHA_ACEPTACION_PC1 = "SELECT fecha FROM aceptacionpc1 WHERE componente = ?";
+    final String SELECT_FILA_FROM_ESPECIFICACIONES_IR = "SELECT fila FROM especificacionesir WHERE especificacion = ?";
+    final String SELECT_FROM_ACEPTACION_PRODUCTO_LIMIT = "SELECT * FROM aceptacionProducto ORDER BY componente LIMIT ?, ?";
+    final String SELECT_FROM_ACEPTACION_PRODUCTO_WHERE_COMPONENTE_LIMIT = "SELECT * FROM aceptacionProducto WHERE componente = ? ORDER BY componente LIMIT ?, ?";
+    final String SELECT_HOJA_INSTRUCCION_SQL = "SELECT retencionDimensionalpdf FROM aceptacionproducto WHERE componente = ?";
+    final String SELECT_ID_FROM_ACEPTACION_PC3 = "SELECT id FROM aceptacionpc3 WHERE noOp = ? AND fecha = ? AND variable = ? AND especificacion = ? AND valor = ?";
+    final String SELECT_NOMBRE_PRODUCTO = "SELECT nombreProducto FROM productosactividadespc";
+    final String SELECT_NOMBRE_PRODUCTO_JOIN_DECRIPCION_PC2 = "SELECT pa.nombreProducto FROM productosactividadespc AS pa JOIN descripcion2pc AS d2 ON pa.nombreProducto = d2.producto WHERE d2.componente = ?";
+    final String SELECT_NO_ORDEN_FROM_ACEPTACION_PC2 = "SELECT noOrden FROM aceptacionpc2 WHERE componente = ? AND fecha = ?";
+    final String UPDATE_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noRollo = ?, inspVisual = ?, observacion = ? WHERE id = ? ";
+    final String UPDATE_NO_OPS_ACEPTACION_PC1 = "UPDATE aceptacionpc1 SET noOps = ? WHERE componente = ? ";
+    final String UPDATE_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ?, tamLote = ?, tamMta = ?, inspector = ?, turno = ?, disp = ? WHERE id = ?";
+    final String UPDATE_NO_ORDEN_ACEPTACION_PC2 = "UPDATE aceptacionpc2 SET noOrden = ? WHERE componente = ? AND fecha = ?";
+    final String UPDATE_ACEPTACION_PC3 = "UPDATE aceptacionpc3 SET noOp = ?, fecha = ?, variable = ?, especificacion = ?, valor = ? WHERE id = ?";
+    final String UPDATE_ACEPTACION_PRODUCTO = "UPDATE aceptacionproducto SET rutaArchivo = ? WHERE componente = ?";
 
     public void abrirAceptacionProductoGUI(Usuarios usr) {
         AceptacionProductoGUI apGUI = new AceptacionProductoGUI(usr);
@@ -133,6 +129,9 @@ public class AceptacionProductoServicio {
             ps.setString(1, apc1.getNoOps());
             ps.setString(2, apc1.getComponente());
             ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL de actualización: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -147,7 +146,7 @@ public class AceptacionProductoServicio {
             consulta.setString(7, ap1.getNoOps());
             consulta.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL de inserción: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -164,7 +163,7 @@ public class AceptacionProductoServicio {
             consulta.setString(8, ap2.getDisp());
             consulta.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL de inserción: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -182,7 +181,7 @@ public class AceptacionProductoServicio {
                 consulta.setInt(8, listaAceptacionPc3.get(i).getProcesoCritico());
                 consulta.executeUpdate();
             } catch (SQLException ex) {
-                Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
+                Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL de inserción: ", ex);
                 Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -193,7 +192,7 @@ public class AceptacionProductoServicio {
             consulta.setString(1, nuevaVariable);
             consulta.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL de inserción: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -211,6 +210,9 @@ public class AceptacionProductoServicio {
                         resultado.getString("tamMta"), resultado.getString("inspector"), resultado.getString("turno"), resultado.getString("disp"));
                 ap2c.add(apc2);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al obtener la información seleccionada: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ap2c;
     }
@@ -220,39 +222,49 @@ public class AceptacionProductoServicio {
             List<String> rollos = obtenerNoRollos(conexion);
             rollos.forEach(cbxNoRollo::addItem);
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Surgio un error al cargar los No's de Rollos: ", ex);
+            Utilidades.manejarExcepcion("ERROR al cargar los No's de Rollos: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void ejecutarArchivoXLSX(Connection conexion, String componente, int column) throws ClassNotFoundException, SQLException {
-        ResultSet rs;
-        byte[] b = null;
-        try {
-            PreparedStatement ps = conexion.prepareStatement(SELECT_HOJA_INSTRUCCION_SQL);
-            ps.setString(1, componente);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                b = rs.getBytes(1);
+    public int contarRegistros(Connection conexion, String filtro) {
+        String sql;
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+        if (filtrar) {
+            sql = SELECT_COUNT_FROM_ACEPTACION_PRODUCTO_BY_COMPONENTE;
+        } else {
+            sql = SELECT_COUNT_FROM_ACEPTACION_PRODUCTO;
+        }
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            if (filtrar) {
+                String filtroLike = "%" + filtro + "%";
+                consulta.setString(1, filtroLike); // Para número de hoja
             }
-            try (InputStream bos = new ByteArrayInputStream(b)) {
-                int tamanoInput = bos.available();
-                byte[] datosXLSX = new byte[tamanoInput];
-                bos.read(datosXLSX, 0, tamanoInput);
-                try (OutputStream out = new FileOutputStream("-" + componente + ".xlsx")) {
-                    out.write(datosXLSX);
-                    File archivoXLSX = new File("-" + componente + ".xlsx");
-                    if (Desktop.isDesktopSupported()) {
-                        Desktop.getDesktop().open(archivoXLSX);
-                    }
+
+            // Ejecutar la consulta y obtener el resultado
+            try (ResultSet resultado = consulta.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
                 }
             }
-            ps.close();
-            rs.close();
-        } catch (IOException | NumberFormatException | SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al ejecutar el archivo excel: ", ex);
-            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return 0;
+    }
+
+    public int contarRegistrosAceptacionPc2(Connection conexion, String componenteSeleccionado, String fechaSeleccionada) throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement(SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2)) {
+            ps.setString(1, componenteSeleccionado);
+            ps.setString(2, fechaSeleccionada);
+            try (ResultSet resultado = ps.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
+                }
+            }
+        }
+        return 0;
     }
 
     public void eliminarAceptacionPc3(Connection conexion, AceptacionPc3 apc3) {
@@ -375,6 +387,9 @@ public class AceptacionProductoServicio {
                     return rs.getInt(1) > 0;
                 }
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de aceptacionpc: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
     }
@@ -389,6 +404,9 @@ public class AceptacionProductoServicio {
                     return rs.getInt(1) > 0;
                 }
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de aceptacionpc2: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
     }
@@ -405,6 +423,9 @@ public class AceptacionProductoServicio {
                     return rs.getInt(1) > 0;
                 }
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de aceptacionpc3: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
     }
@@ -417,28 +438,6 @@ public class AceptacionProductoServicio {
             }
         }
         return nuevosDatos;
-    }
-
-    public Date formatearFecha(String fecha) {
-        try {
-            if (fecha == null) {
-                return null;
-            }
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            return dateFormat.parse(fecha);
-        } catch (ParseException ex) {
-            Utilidades.manejarExcepcion("Error al formatear la fecha: ", ex);
-            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-    }
-
-    public String formatearFecha(Date fecha) {
-        if (fecha == null) {
-            return "";
-        }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        return dateFormat.format(fecha);
     }
 
     public void guardarArchivoRetencionDimensional(Connection conexion, AceptacionProductoM ap) throws SQLException {
@@ -463,20 +462,9 @@ public class AceptacionProductoServicio {
             }
 
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL de inserción: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-
-    public byte[] leerArchivo(String rutaArchivo) throws IOException {
-        File archivo = new File(rutaArchivo);
-        byte[] pdf = new byte[(int) archivo.length()];
-        if (archivo.exists()) {
-            try (InputStream input = new FileInputStream(archivo)) {
-                input.read(pdf);
-            }
-        }
-        return pdf;
     }
 
     public void modificarAceptacionPc3(Connection conexion, AceptacionPc3 apc3, AceptacionPc3 apc32) throws SQLException {
@@ -498,11 +486,9 @@ public class AceptacionProductoServicio {
                 updateConsulta.setString(5, apc3.getValor());
                 updateConsulta.setInt(6, id);
                 updateConsulta.executeUpdate();
-            } else {
-                System.out.println("No se encontró el ID.");
             }
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL de inserción: ", ex);
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL de inserción: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -515,7 +501,7 @@ public class AceptacionProductoServicio {
             consulta.setInt(4, datosFila.getId_pc1());
             consulta.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al modificar los datos: ", ex);
+            Utilidades.manejarExcepcion("ERROR al modificar los datos: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -529,7 +515,7 @@ public class AceptacionProductoServicio {
             consulta.setInt(7, datosFila.getId_pc2());
             consulta.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al modificar los datos: ", ex);
+            Utilidades.manejarExcepcion("ERROR al modificar los datos: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -540,6 +526,9 @@ public class AceptacionProductoServicio {
             ps.setString(2, apc2.getComponente());
             ps.setString(3, apc2.getFecha());
             ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al actualizar el no. de orden aceptacionpc2: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -566,6 +555,9 @@ public class AceptacionProductoServicio {
                 );
                 listaAp1.add(ap1);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información del componente (apc1): ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return listaAp1;
     }
@@ -589,6 +581,9 @@ public class AceptacionProductoServicio {
                 );
                 listaAp2.add(ap2);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de aceptacionpc2 (apc2): ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return listaAp2;
     }
@@ -602,7 +597,7 @@ public class AceptacionProductoServicio {
                 }
             }
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL: ", ex);
             Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 0;
@@ -628,6 +623,9 @@ public class AceptacionProductoServicio {
                 );
                 listaAp3.add(ap3);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información del componente (apc3): ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return listaAp3;
     }
@@ -654,6 +652,9 @@ public class AceptacionProductoServicio {
                 );
                 listaAp3.add(ap3);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información del componente (apc3): ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return listaAp3;
 
@@ -672,7 +673,7 @@ public class AceptacionProductoServicio {
                 lista.add(ir);
             }
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al recuperar la información", ex);
+            Utilidades.manejarExcepcion("ERROR al recuperar la información", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return lista;
@@ -684,9 +685,9 @@ public class AceptacionProductoServicio {
         boolean filtrar = filtro != null && !filtro.trim().isEmpty();
 
         if (filtrar) {
-            sql = "SELECT * FROM aceptacionProducto WHERE componente = ? ORDER BY componente LIMIT ?, ?";
+            sql = SELECT_FROM_ACEPTACION_PRODUCTO_WHERE_COMPONENTE_LIMIT;
         } else {
-            sql = "SELECT * FROM aceptacionProducto ORDER BY componente LIMIT ?, ?";
+            sql = SELECT_FROM_ACEPTACION_PRODUCTO_LIMIT;
         }
 
         int limite = (page - 1) * limit;
@@ -711,7 +712,7 @@ public class AceptacionProductoServicio {
                 lista.add(ir);
             }
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al recuperar la información", ex);
+            Utilidades.manejarExcepcion("ERROR al recuperar la información: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return lista;
@@ -724,6 +725,9 @@ public class AceptacionProductoServicio {
             while (resultado.next()) {
                 listaDatos.add(resultado.getString(columna));
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al obtener los datos: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return listaDatos;
@@ -742,7 +746,7 @@ public class AceptacionProductoServicio {
 
     public List<String> obtenerEspecificaciones(Connection conexion, String variable, String componente) throws SQLException {
         List<String> listaEspecificaciones = new ArrayList<>();
-        String producto = variable + "%"; // Agregar el comodín % al final para buscar palabras que comiencen con la variable
+        String producto = variable + "%";
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_ESPECIFICACION_FROM_DESCRIPCION_PC3)) {
             consulta.setString(1, producto);
             consulta.setString(2, componente);
@@ -762,6 +766,9 @@ public class AceptacionProductoServicio {
             while (resultado.next()) {
                 nuevosDatos.add(resultado.getString("fecha"));
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la fecha del componente: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return nuevosDatos;
     }
@@ -784,6 +791,9 @@ public class AceptacionProductoServicio {
                 );
                 ap1 = ap;
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al seleccionar la información del componente (apc1): ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ap1;
     }
@@ -810,6 +820,9 @@ public class AceptacionProductoServicio {
                 );
                 datosFilaRD.add(datoRD);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de la retención dimensional: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return datosFilaRD;
     }
@@ -818,7 +831,7 @@ public class AceptacionProductoServicio {
         List<DatosFilaRD> datosFilaRD = new ArrayList<>();
         int limite = (pagina - 1) * limit;
         boolean filtrar = componente != null && !componente.trim().isEmpty() && fecha != null && !fecha.trim().isEmpty();
-        try (PreparedStatement ps = conexion.prepareStatement("SELECT a1.id AS id_pc1, a2.id AS id_pc2, a1.*, a2.* FROM aceptacionpc1 a1 INNER JOIN aceptacionpc2 a2 ON a1.fecha = a2.fecha AND a1.componente = a2.componente WHERE a1.componente = ? AND a1.fecha = ? LIMIT ?, ?")) {
+        try (PreparedStatement ps = conexion.prepareStatement(SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2_LIMIT)) {
             if (filtrar) {
                 ps.setString(1, componente);
                 ps.setString(2, fecha);
@@ -842,6 +855,9 @@ public class AceptacionProductoServicio {
                     datosFilaRD.add(datoRD);
                 }
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al obtener la información requerida: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return datosFilaRD;
     }
@@ -859,6 +875,9 @@ public class AceptacionProductoServicio {
             while (resultado.next()) {
                 listaNoRollos.add(resultado.getString("noRollo"));
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información del rollo: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return listaNoRollos;
     }
@@ -877,6 +896,9 @@ public class AceptacionProductoServicio {
                     apc2.setNoOrden(resultado.getString(""));
                 }
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consulta el no. de orden: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return apc2;
     }
@@ -892,71 +914,5 @@ public class AceptacionProductoServicio {
             consulta.setString(1, variable);
             return obtenerDatos(consulta, "nombreProducto");
         }
-    }
-
-    public void abrirDocumento(String rutaArchivo) {
-        try {
-            if (rutaArchivo == null || rutaArchivo.isEmpty()) {
-                Utilidades.manejarExcepcion("La ruta del archivo no es válida.", null);
-                return;
-            }
-
-            String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo; // Ruta de red
-
-            File archivo = new File(urlArchivo);
-            if (!archivo.exists()) {
-                Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);
-                return;
-            }
-            abrirArchivoLocal(archivo);
-        } catch (IOException ex) {
-            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private void abrirArchivoLocal(File archivo) throws IOException {
-        Desktop desktop = Desktop.getDesktop();
-        desktop.open(archivo);
-    }
-
-    public int contarRegistros(Connection conexion, String filtro) {
-        String sql;
-        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
-        if (filtrar) {
-            sql = "SELECT COUNT(*) FROM aceptacionproducto WHERE componente = ?";
-        } else {
-            sql = "SELECT COUNT(*) FROM aceptacionproducto";
-        }
-        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
-            if (filtrar) {
-                String filtroLike = "%" + filtro + "%";
-                consulta.setString(1, filtroLike); // Para número de hoja
-            }
-
-            // Ejecutar la consulta y obtener el resultado
-            try (ResultSet resultado = consulta.executeQuery()) {
-                if (resultado.first()) {
-                    return resultado.getInt(1); // Retorna la cantidad de registros
-                }
-            }
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al ejecutar la consulta SQL: ", ex);
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return 0;
-    }
-
-    public int contarRegistrosAceptacionPc2(Connection conexion, String componenteSeleccionado, String fechaSeleccionada) throws SQLException {
-        try (PreparedStatement ps = conexion.prepareStatement(SELECT_ACEPTACION_PC1_JOIN_ACEPTACION_PC2)) {
-            ps.setString(1, componenteSeleccionado);
-            ps.setString(2, fechaSeleccionada);
-            // Ejecutar la consulta y obtener el resultado
-            try (ResultSet resultado = ps.executeQuery()) {
-                if (resultado.first()) {
-                    return resultado.getInt(1); // Retorna la cantidad de registros
-                }
-            }
-        }
-        return 0;
     }
 }

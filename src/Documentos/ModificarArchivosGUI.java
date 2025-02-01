@@ -165,7 +165,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnNuevoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoArchivoActionPerformed
-        File archivoSeleccionado = cds.seleccionarArchivo(this);
+        File archivoSeleccionado = Utilidades.seleccionarArchivo(this);
         if (archivoSeleccionado != null) {
             try {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo

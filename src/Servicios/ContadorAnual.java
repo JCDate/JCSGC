@@ -4,11 +4,9 @@ import java.time.LocalDate;
 
 public class ContadorAnual {
 
-    private int contador;
     private LocalDate fechaActual;
 
     public ContadorAnual() {
-        this.contador = 0;
         fechaActual = LocalDate.now();
     }
 

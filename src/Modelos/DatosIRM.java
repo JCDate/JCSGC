@@ -15,16 +15,6 @@ public class DatosIRM {
     private int idIr;
 
     public DatosIRM() {
-        this.idDatosIR = 0;
-        this.fechaInspeccion = null;
-        this.noHoja = null;
-        this.anchoLargo = 0;
-        this.descripcionMP = null;
-        this.calibreLamina = null;
-        this.observacionesRD = null;
-        this.obsMP = null;
-        this.idIr = 0;
-        this.aceptacion = 0;
     }
 
     public DatosIRM(int idDatosIR, String fechaInspeccion, String inspector, String noHoja, int anchoLargo, String descripcionMP, String calibreLamina, String observacionesRD, String obsMP, int aceptacion, int idIr) {

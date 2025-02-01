@@ -247,7 +247,7 @@ public class DocumentosApqpGUI extends javax.swing.JFrame {
     }
 
     private void abrirDocumento(DoctosApqpM documento) {
-        apqps.abrirDocumento(documento.getRutaArchivo());
+        Utilidades.abrirDocumento(documento.getRutaArchivo());
     }
 
     private void eliminarDocumento(DoctosApqpM documento) {

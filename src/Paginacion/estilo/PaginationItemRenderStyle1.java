@@ -14,11 +14,11 @@ public class PaginationItemRenderStyle1 extends DefaultPaginationItemRender {
 
     @Override
     public Object createPreviousIcon() {
-        return "Previous";
+        return "Anterior";
     }
 
     @Override
     public Object createNextIcon() {
-        return "Next";
+        return "Siguiente";
     }
 }

@@ -1,4 +1,4 @@
-package Modelos;
+package BotonesAccion;
 
 import java.awt.Color;
 import java.awt.Component;

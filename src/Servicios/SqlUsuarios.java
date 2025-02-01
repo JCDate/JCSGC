@@ -1,28 +1,20 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Servicios;
 
 import Modelos.Usuarios;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 
 public class SqlUsuarios {
 
     // CONSULTAS SQL
-    public final String SELECT_DATOS_USUARIOS_SQL = "SELECT u.id, u.usuario,u.password, u.nombre, u.id_tipo, t.nombre FROM usuarios AS u INNER JOIN tipo_usuario AS t ON u.id_tipo=t.id_tipo WHERE usuario=?";
-    public final String UPDATE_ULTIMA_SESION_SQL = "UPDATE usuarios SET last_session=? WHERE id= ?";
-    public final String INSERT_DATOS_USUARIO_SQL = "INSERT INTO usuarios (usuario, password, nombre, id_tipo) VALUES(?,?,?,?)";
-    public final String SELECT_COUNT_ID_USUARIO_SQL = "SELECT COUNT(id) FROM usuarios WHERE usuario=?";
-
-    Conexion conexion;
+    final String SELECT_DATOS_USUARIOS_SQL = "SELECT u.id, u.usuario,u.password, u.nombre, u.id_tipo, t.nombre FROM usuarios AS u INNER JOIN tipo_usuario AS t ON u.id_tipo=t.id_tipo WHERE usuario=?";
+    final String UPDATE_ULTIMA_SESION_SQL = "UPDATE usuarios SET last_session=? WHERE id= ?";
+    final String INSERT_DATOS_USUARIO_SQL = "INSERT INTO usuarios (usuario, password, nombre, id_tipo) VALUES(?,?,?,?)";
+    final String SELECT_COUNT_ID_USUARIO_SQL = "SELECT COUNT(id) FROM usuarios WHERE usuario=?";
+    private Conexion conexion;
 
     public SqlUsuarios() {
         this.conexion = Conexion.getInstance(); // Obtener la conexión a la base de datos usando el Singleton
@@ -53,7 +45,7 @@ public class SqlUsuarios {
             }
             return false;
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "ERROR TIPO: " + ex);
+            Utilidades.manejarExcepcion("ERROR al iniciar sesión: ", ex);
             Logger.getLogger(SqlUsuarios.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
@@ -70,6 +62,7 @@ public class SqlUsuarios {
             ps.execute();
             return true;
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al registrar usuario nuevo: ", ex);
             Logger.getLogger(SqlUsuarios.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
@@ -87,6 +80,7 @@ public class SqlUsuarios {
             }
             return 1;
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar el id del usuario: ", ex);
             Logger.getLogger(SqlUsuarios.class.getName()).log(Level.SEVERE, null, ex);
             return 0;
         }

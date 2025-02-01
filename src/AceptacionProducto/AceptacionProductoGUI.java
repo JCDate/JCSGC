@@ -13,8 +13,6 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -182,7 +180,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
             configurarBuscador();
             inicializarTabla(1);
             configurarPaginacion();
-//            inicializarListeners();
             inicializarFiltroTabla();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al Abrir AceptacionProductoGUI: ", ex);
@@ -269,7 +266,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
 
             @Override
             public void onView(int row) {
-                aps.abrirDocumento(listaAceptacionProducto.get(row).getRutaArchivo());
+                Utilidades.abrirDocumento(listaAceptacionProducto.get(row).getRutaArchivo());
             }
 
             @Override
@@ -309,7 +306,6 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
         return fila;
     }
 
-   
     private void filtrarBusqueda() {
         String textoBusqueda = txtBuscador.getText();
 

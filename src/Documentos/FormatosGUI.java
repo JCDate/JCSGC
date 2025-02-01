@@ -204,7 +204,7 @@ public class FormatosGUI extends javax.swing.JFrame {
             @Override
             public void onView(int row) {
                 cerrarVentana();
-                cds.abrirDocumento(listaFormatos.get(row).getRutaArchivo());
+                Utilidades.abrirDocumento(listaFormatos.get(row).getRutaArchivo());
             }
 
             @Override

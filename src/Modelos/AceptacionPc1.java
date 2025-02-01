@@ -12,14 +12,7 @@ public class AceptacionPc1 {
     private String noOps;
 
     public AceptacionPc1() {
-        this.id = "";
-        this.componente = "";
-        this.fecha = "";
-        this.noRollo = "";
-        this.inspVisual = "";
-        this.observacion = "";
-        this.noParte = "";
-        this.noOps = "";
+
     }
 
     public AceptacionPc1(String id, String componente, String fecha, String noRollo, String inspVisual, String observacion, String noParte, String noOps) {

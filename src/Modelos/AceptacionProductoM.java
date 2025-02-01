@@ -7,9 +7,6 @@ public class AceptacionProductoM {
     private String rutaArchivo;
 
     public AceptacionProductoM() {
-        this.id = 0;
-        this.componente = "";
-        this.rutaArchivo = "";
     }
 
     public AceptacionProductoM(int id, String componente, String rutaArchivo) {

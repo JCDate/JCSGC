@@ -54,8 +54,8 @@ public class ModificarIrGUI extends javax.swing.JFrame {
 
     public ModificarIrGUI(InspeccionReciboM inspeccionRecibo, Usuarios usuario, String rutaArchivoHojaInstruccion) throws ClassNotFoundException {
         this(inspeccionRecibo, usuario);
-        this.rutaArchivoHojaInstruccion = rutaArchivoHojaInstruccion;
-        txtNombreHojaInstruccion.setText(this.rutaArchivoHojaInstruccion);
+        this.rutaArchivoHojaInstruccion = "archivos/InspeccionRecibo/HojasInstruccion/" + rutaArchivoHojaInstruccion;
+        txtNombreHojaInstruccion.setText(rutaArchivoHojaInstruccion);
     }
 
     @Override
@@ -402,6 +402,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
     }
 
     private void cargarArchivos() {
+
         irs.validarArchivos(rutaArchivoCertificado, rutaArchivoFactura, rutaArchivoHojaInstruccion, inspeccionRecibo);
     }
 
@@ -424,7 +425,7 @@ public class ModificarIrGUI extends javax.swing.JFrame {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
                 Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 textField.setText(nombreArchivo);
-                rutaArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
+                rutaArchivo = "archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
             } catch (IOException ex) {
                 Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
                 Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);

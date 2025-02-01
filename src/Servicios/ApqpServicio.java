@@ -8,11 +8,6 @@ import APQP.ModificarApqpGUI;
 import Modelos.ApqpM;
 import Modelos.DoctosApqpM;
 import Modelos.Usuarios;
-import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.Window;
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,11 +17,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
-import jnafilechooser.api.JnaFileChooser;
+import javax.swing.JFrame;
 
 public class ApqpServicio {
 
-    // Consultas a la Base de Datos
     final String DELETE_FROM_DOCTOSAQPQ_BY_ID = "DELETE FROM doctosapqp WHERE id = ?";
     final String DELETE_FROM_DOCUMENTOS_BY_IDP = "DELETE FROM doctosapqp WHERE idp = ?";
     final String DELETE_FROM_APQP_BY_ID = "DELETE FROM apqp WHERE id = ?";
@@ -41,63 +35,37 @@ public class ApqpServicio {
 
     public void abrirAgregarDoctoApqpGUI(Usuarios usuario, ApqpM actividad, int operacion) {
         AgregarDoctoApqpGUI apqpGUI = new AgregarDoctoApqpGUI(usuario, actividad, operacion);
-        apqpGUI.setVisible(true);
+        mostrarVentana(apqpGUI);
     }
 
     public void abrirAgregarDoctoApqpGUI(Usuarios usuario, DoctosApqpM documento, int operacion) {
         AgregarDoctoApqpGUI apqpGUI = new AgregarDoctoApqpGUI(usuario, documento, operacion);
-        apqpGUI.setVisible(true);
-    }
-
-    public void abrirApqpGUI(Usuarios usuario) {
-        ApqpGUI apqpGUI = new ApqpGUI(usuario);
-        apqpGUI.setVisible(true);
-    }
-
-    private void abrirArchivoLocal(File archivo) throws IOException {
-        Desktop desktop = Desktop.getDesktop();
-        desktop.open(archivo);
-    }
-
-    public void abrirDocumento(String rutaArchivo) {
-        if (rutaArchivo == null || rutaArchivo.isEmpty()) {
-            Utilidades.manejarExcepcion("La ruta del archivo no es válida.", null);
-            return;
-        }
-
-        String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\Apqp\\" + rutaArchivo; // Ruta de red
-
-        try {
-            File archivo = new File(urlArchivo);
-            if (!archivo.exists()) {
-                Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);
-                return;
-            }
-
-            abrirArchivoLocal(archivo);
-        } catch (IOException ex) {
-            Utilidades.manejarExcepcion("Error al abrir el archivo local: ", ex);
-        }
-    }
-
-    public void abrirDocumentosApqpGUI(Usuarios usuario, ApqpM actividad) {
-        DocumentosApqpGUI apqpGUI = new DocumentosApqpGUI(usuario, actividad);
-        apqpGUI.setVisible(true);
-    }
-
-    public void abrirDocumentosApqpGUI(Usuarios usuario, DoctosApqpM documento) {
-        DocumentosApqpGUI apqpGUI = new DocumentosApqpGUI(usuario, documento);
-        apqpGUI.setVisible(true);
+        mostrarVentana(apqpGUI);
     }
 
     public void abrirAgregarEtapaGUI(Usuarios usuario) {
         AgregarActividadGUI apqpGUI = new AgregarActividadGUI(usuario);
-        apqpGUI.setVisible(true);
+        mostrarVentana(apqpGUI);
+    }
+
+    public void abrirApqpGUI(Usuarios usuario) {
+        ApqpGUI apqpGUI = new ApqpGUI(usuario);
+        mostrarVentana(apqpGUI);
+    }
+
+    public void abrirDocumentosApqpGUI(Usuarios usuario, ApqpM actividad) {
+        DocumentosApqpGUI apqpGUI = new DocumentosApqpGUI(usuario, actividad);
+        mostrarVentana(apqpGUI);
+    }
+
+    public void abrirDocumentosApqpGUI(Usuarios usuario, DoctosApqpM documento) {
+        DocumentosApqpGUI apqpGUI = new DocumentosApqpGUI(usuario, documento);
+        mostrarVentana(apqpGUI);
     }
 
     public void abrirModificarApqpGUI(Usuarios usuario, ApqpM actividad) {
-        ModificarApqpGUI modificar = new ModificarApqpGUI(usuario, actividad);
-        modificar.setVisible(true);
+        ModificarApqpGUI apqpGUI = new ModificarApqpGUI(usuario, actividad);
+        mostrarVentana(apqpGUI);
     }
 
     public void actualizarDocumento(Connection conexion, DoctosApqpM documento) {
@@ -108,7 +76,7 @@ public class ApqpServicio {
             ps.setInt(3, documento.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Errror al Actualizar el documento: ", ex);
+            Utilidades.manejarExcepcion("ERROR al Actualizar el documento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -120,6 +88,9 @@ public class ApqpServicio {
             while (resultado.next()) {
                 listaNoRollos.add(resultado.getString("FAM"));
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de las familias: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return listaNoRollos;
     }
@@ -130,7 +101,7 @@ public class ApqpServicio {
             ps.setInt(1, documento.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Errror al Actualizar el documento: ", ex);
+            Utilidades.manejarExcepcion("ERROR al Actualizar el documento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -141,7 +112,7 @@ public class ApqpServicio {
             ps.setInt(1, actividad.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Errror al Actualizar el documento: ", ex);
+            Utilidades.manejarExcepcion("ERROR al Actualizar el documento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -152,7 +123,7 @@ public class ApqpServicio {
             ps.setInt(1, actividad.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Errror al Actualizar el documento: ", ex);
+            Utilidades.manejarExcepcion("ERROR al Actualizar el documento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -183,7 +154,7 @@ public class ApqpServicio {
             ps.setString(6, actividad.getEquipo());
             ps.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Errror al Actualizar el documento: ", ex);
+            Utilidades.manejarExcepcion("ERROR al Actualizar el documento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -196,9 +167,14 @@ public class ApqpServicio {
             ps.setString(3, documento.getRutaArchivo());
             ps.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Errror al Actualizar el documento: ", ex);
+            Utilidades.manejarExcepcion("ERROR al Actualizar el documento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    public void mostrarVentana(JFrame frame) {
+        frame.setVisible(true);
+        frame.setLocationRelativeTo(null);
     }
 
     public void obtenerFamilias(Connection conexion, JComboBox cbxFamilia) {
@@ -245,6 +221,9 @@ public class ApqpServicio {
                 );
                 actividades.add(actividad);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información del Apqp: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return actividades;
     }
@@ -263,18 +242,10 @@ public class ApqpServicio {
                 );
                 actividades.add(documento);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar los documentos del Apqp: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return actividades;
-    }
-
-    public File seleccionarArchivo(Component parentComponent) {
-        JnaFileChooser jfc = new JnaFileChooser();
-        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx", "doc", "docx", "png", "jpg", "jpeg", "png");
-        boolean action = jfc.showOpenDialog((Window) parentComponent);
-        if (action) {
-            return jfc.getSelectedFile();
-        }
-
-        return null;
     }
 }

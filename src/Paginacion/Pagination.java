@@ -59,7 +59,7 @@ public class Pagination extends JPanel {
         page = paginate(current, totalPage);
         removeAll();
         refresh();
-        JButton cmdPrev = paginationItemRender.createPaginationItem("Previous", true, false, page.isPrevious());
+        JButton cmdPrev = paginationItemRender.createPaginationItem("Anterior", true, false, page.isPrevious());
         cmdPrev.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -93,7 +93,7 @@ public class Pagination extends JPanel {
             });
             add(cmd);
         }
-        JButton cmdNext = paginationItemRender.createPaginationItem("Next", false, true, page.isNext());
+        JButton cmdNext = paginationItemRender.createPaginationItem("Siguiente", false, true, page.isNext());
         cmdNext.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

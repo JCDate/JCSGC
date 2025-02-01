@@ -2,9 +2,9 @@ package InspeccionRecibo;
 
 import Modelos.AnchoLargoM;
 import Modelos.ComposicionQuimicaM;
-import Modelos.CustomTableCellRenderer;
-import Servicios.CheckBoxEditor;
-import Servicios.CheckBoxRenderer;
+import BotonesAccion.CustomTableCellRenderer;
+import BotonesAccion.CheckBoxEditor;
+import BotonesAccion.CheckBoxRenderer;
 import Servicios.GeneradorExcel;
 import Modelos.DatosIRM;
 import Modelos.EspecificacionM;
@@ -14,7 +14,6 @@ import Modelos.RugosidadDurezaM;
 import Modelos.Usuarios;
 import Servicios.AnchoLargoServicio;
 import Servicios.Conexion;
-import Servicios.EspecificacionesServicio;
 import Servicios.InspeccionReciboServicio;
 import Servicios.RugosidadDurezaServicio;
 import Servicios.Utilidades;
@@ -48,7 +47,6 @@ public class EspecificacionesGUI extends JFrame {
     private InspeccionReciboServicio irs; // Servicios y Utilidades
     private AnchoLargoServicio als; // Servicios y Utilidades de la tabla ancho/largo
     private RugosidadDurezaServicio rds; // Servicios y Utilidades de la tabla rugosidad/Dureza
-    private EspecificacionesServicio es; // // Servicios y Utilidades para gestionar las especificaciones
     private GeneradorExcel xls; // Maneja el archivo de la hoja de instrucción
     private JTable tblRugosidadDureza;  // Contiene la información de la tabla Rugosidad/Dureza del apartado Anterior
     private JTable tblAnchoLargo; // Contiene la información de la tabla Ancho/Largo del apartado Anterior
@@ -260,7 +258,6 @@ public class EspecificacionesGUI extends JFrame {
         this.irs = new InspeccionReciboServicio();
         this.als = new AnchoLargoServicio();
         this.rds = new RugosidadDurezaServicio();
-        this.es = new EspecificacionesServicio();
         this.xls = new GeneradorExcel();
     }
 
@@ -310,8 +307,8 @@ public class EspecificacionesGUI extends JFrame {
 
     private DefaultTableModel crearTablaModelo(String especificacionTecnica, String calibres) throws SQLException, ClassNotFoundException {
         // Obtener datos
-        List<PropiedadMecanicaM> propiedadesMecanicas = es.obtenerPropiedadesMecanicas(conexion, especificacionTecnica);
-        List<ComposicionQuimicaM> composicionQuimica = es.obtenerCM(conexion, especificacionTecnica);
+        List<PropiedadMecanicaM> propiedadesMecanicas = irs.obtenerPropiedadesMecanicas(conexion, especificacionTecnica);
+        List<ComposicionQuimicaM> composicionQuimica = irs.obtenerCM(conexion, especificacionTecnica);
         especificacion = irs.recuperarReferenciasEspecificacion(conexion, especificacionTecnica);
 
         // Crear y llenar modelo de tabla

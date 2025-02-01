@@ -11,14 +11,6 @@ public class ApqpM {
     private byte[] documento;
 
     public ApqpM() {
-        this.id = 0;
-        this.familia = null;
-        this.etapa = null;
-        this.actividad = null;
-        this.requerimientos = null;
-        this.factibilidad = null;
-        this.equipo = null;
-        this.documento = null;
     }
     
     public ApqpM(int id, String familia, String etapa, String actividad, String requerimientos, String factibilidad, String equipo, byte[] documento) {

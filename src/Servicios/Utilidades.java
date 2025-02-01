@@ -1,20 +1,30 @@
 package Servicios;
 
-import BotonesAccion.TableActionCellEditor;
-import BotonesAccion.TableActionCellRender;
-import BotonesAccion.TableActionEvent;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Font;
+import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import jnafilechooser.api.JnaFileChooser;
 import swing.Button;
 
 public class Utilidades {
@@ -56,10 +66,6 @@ public class Utilidades {
         JOptionPane.showMessageDialog(null, msg + ex, "ERROR", JOptionPane.ERROR_MESSAGE);
     }
 
-//    public static boolean eliminarArchivo(String ruta) {
-//        File archivo = new File(ruta);
-//        return archivo.exists() && archivo.delete();
-//    }
     public static boolean eliminarArchivo(String ruta) {
         if (ruta == null || ruta.isEmpty()) {
             System.err.println("La ruta proporcionada es nula o está vacía.");
@@ -88,22 +94,44 @@ public class Utilidades {
                 return;
             }
 
-            String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo; // Ruta de red
-            File archivo = new File(urlArchivo);
-            if (!archivo.exists()) {
-                Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);
-                return;
+            // Normalizar la ruta reemplazando \ con /
+            String rutaNormalizada = rutaArchivo.replace("\\", "/");
+
+            // Codificar cada segmento de la ruta correctamente
+            String urlArchivo = "http://" + Utilidades.SERVIDOR + "/"
+                    + Stream.of(rutaNormalizada.split("/"))
+                            .map(segmento -> {
+                                try {
+                                    return URLEncoder.encode(segmento, StandardCharsets.UTF_8.name());
+                                } catch (Exception e) {
+                                    throw new RuntimeException("Error al codificar segmento: " + segmento, e);
+                                }
+                            })
+                            .collect(Collectors.joining("/"))
+                            .replace("+", "%20"); // Reemplazar '+' por '%20' para espacios
+
+            System.out.println("URL codificada: " + urlArchivo);
+
+            // Descargar el archivo en un archivo temporal
+            Path destino = Files.createTempFile("archivo", obtenerExtension(rutaArchivo));
+            try (InputStream in = new URL(urlArchivo).openStream()) {
+                Files.copy(in, destino, StandardCopyOption.REPLACE_EXISTING);
             }
-            abrirArchivoLocal(archivo);
-        } catch (IOException ex) {
+
+            // Abrir el archivo descargado
+            File archivoDescargado = destino.toFile();
+            Desktop.getDesktop().open(archivoDescargado);
+
+        } catch (Exception ex) {
             manejarExcepcion("ERROR al abrir el archivo seleccionado: ", ex);
             Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private static void abrirArchivoLocal(File archivo) throws IOException {
-        Desktop desktop = Desktop.getDesktop();
-        desktop.open(archivo);
+// Método auxiliar para obtener la extensión del archivo
+    private static String obtenerExtension(String rutaArchivo) {
+        int index = rutaArchivo.lastIndexOf('.');
+        return (index > 0) ? rutaArchivo.substring(index) : "";
     }
 
     public static boolean camposCompletos(String... campos) {
@@ -116,5 +144,42 @@ public class Utilidades {
             }
         }
         return true;
+    }
+
+    public static Date formatearFecha(String fecha) {
+        try {
+            if (fecha == null) {
+                return null;
+            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            return dateFormat.parse(fecha);
+        } catch (ParseException ex) {
+            Utilidades.manejarExcepcion("ERROR al formatear la fecha: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+    public static String formatearFecha(Date fecha) {
+        if (fecha == null) {
+            return "";
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        return dateFormat.format(fecha);
+    }
+
+    public static File seleccionarArchivo(Component parentComponent) {
+        JnaFileChooser jfc = new JnaFileChooser();
+        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx", "doc", "docx", "png", "jpg", "jpeg", "png");
+        boolean action = jfc.showOpenDialog((Window) parentComponent);
+        if (action) {
+            return jfc.getSelectedFile();
+        }
+
+        return null;
+    }
+
+    private static String limpiarNombreArchivo(String nombreArchivo) {
+        return nombreArchivo.replaceAll("[<>:\"/\\|?*]", "_"); // Reemplaza los caracteres no válidos en el sistema de archivos
     }
 }

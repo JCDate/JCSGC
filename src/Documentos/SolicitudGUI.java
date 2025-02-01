@@ -12,7 +12,6 @@ import Servicios.Utilidades;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -225,15 +224,16 @@ public class SolicitudGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnSolicitudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitudActionPerformed
-        if (cbxAccion.getSelectedItem().toString().equals("AGREGAR")) {
-            gestionarInsercion();
+        String accion = cbxAccion.getSelectedItem().toString();
+        if (accion.equals("AGREGAR") || accion.equals("ACTUALIZAR")) {
+            gestionarDocumento(accion);
         } else {
             realizarSolicitud();
         }
     }//GEN-LAST:event_btnSolicitudActionPerformed
 
     private void btnNuevoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoArchivoActionPerformed
-        File archivoSeleccionado = cds.seleccionarArchivo(this);
+        File archivoSeleccionado = Utilidades.seleccionarArchivo(this);
         if (archivoSeleccionado != null) {
             try {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
@@ -277,8 +277,15 @@ public class SolicitudGUI extends javax.swing.JFrame {
         configurarAccionComboBox();
     }//GEN-LAST:event_cbxAccionActionPerformed
 
-    private void gestionarInsercion() {
+    private void gestionarDocumento(String accion) {
         String archivo = cbxTipoArchivo.getSelectedItem().toString();
+
+        // Si el archivo es un instructivo o formato, realiza la solicitud sin validaciones
+        if (archivo.equals("INSTRUCTIVO") || archivo.equals("FORMATO")) {
+            realizarSolicitud();
+            return;
+        }
+
         boolean existe = false;
 
         switch (archivo) {
@@ -286,24 +293,22 @@ public class SolicitudGUI extends javax.swing.JFrame {
             case "DIAGRAMA DE FLUJO":
                 existe = cds.existeDocumento(conexion, proceso.getId(), archivo);
                 break;
-
             case "DIAGRAMA DE TORTUGA":
                 existe = cds.existeDiagramaTortuga(conexion, proceso.getId());
                 break;
-
             default:
-                // Si el archivo es un instructivo o formato, lo agrega sin condición
-                if (archivo.equals("INSTRUCTIVO") || archivo.equals("FORMATO")) {
-                    realizarSolicitud(); // Realiza la solicitud directamente
-                }
-                return; // Finaliza el método
+                break;
         }
 
-        // Si el tipo de archivo requiere validación y ya existe, muestra un mensaje
-        if (existe) {
-            JOptionPane.showMessageDialog(this, "Ya existe un documento tipo " + archivo + " para el procedimiento seleccionado", "DOCUMENTO EXISTENTE", JOptionPane.WARNING_MESSAGE);
-        } else if (!archivo.equals("INSTRUCTIVO") && !archivo.equals("FORMATO")) {
-            realizarSolicitud(); // Realiza la solicitud si no existe el documento
+        boolean condicion = accion.equals("AGREGAR") ? existe : !existe;
+        String mensaje = accion.equals("AGREGAR")
+                ? "Ya existe un documento tipo " + archivo + " para el procedimiento seleccionado"
+                : "No existe un documento tipo " + archivo + " para actualizar en el procedimiento seleccionado";
+
+        if (condicion) {
+            JOptionPane.showMessageDialog(this, mensaje, "DOCUMENTO EXISTENTE", JOptionPane.WARNING_MESSAGE);
+        } else {
+            realizarSolicitud();
         }
     }
 

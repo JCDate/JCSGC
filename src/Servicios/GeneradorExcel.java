@@ -43,27 +43,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class GeneradorExcel {
 
+    // Atributos
     private Connection conexion;
     private InspeccionReciboServicio irs;
 
-    public GeneradorExcel() {
-        try {
-            this.conexion = Conexion.getInstance().conectar();
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
-            Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public GeneradorExcel(InspeccionReciboServicio irs) {
-        try {
-            this.conexion = Conexion.getInstance().conectar();
-            this.irs = irs;
-        } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
-            Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    //INSPECCIÓN RECIBO
+    private List<String> fechasRegistrosIR;
 
     String nuevaRutaArchivo = ""; // Variable para guardar la información de la ruta del archivo de hoja de Instrucción
     String nuevaRutaArchivoRD = ""; // Variable para guardar la información de la ruta del archivo de retención dimensional
@@ -84,104 +69,131 @@ public class GeneradorExcel {
 
     int columnaBase = 8; // A partir de esta fila se imprimen las variables y sus respectivos valores en el documento de Retención Dimensional
 
-    private static final int[] FILAS_INFO = {2, 40, 78, 116}; // 
-//    private static final int[] FILAS_PROCESOS = {4, 42, 80, 118}; // Celdas donde se imprimen las "x" de los procesos 
+    private static final int[] FILAS_INFO = {2, 40, 78, 116};
     private static final int[] COLUMNAS_COMPONENTE = {13, 20, 26}; // Columnas donde se imprime la información del componente
 
-    public void generarInspeccionReciboXLS() throws SQLException, ParseException {
+    public GeneradorExcel() {
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
+            Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public GeneradorExcel(InspeccionReciboServicio irs) {
+        try {
+            this.conexion = Conexion.getInstance().conectar();
+            this.irs = irs;
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al establecer la conexión: ", ex);
+            Logger.getLogger(GeneradorExcel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    // InspecciónRecibo.xlsx
+    public void generarInspeccionReciboXLSX() throws SQLException, ParseException {
+        this.fechasRegistrosIR = new ArrayList<>();
+
         XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet hojaExcel = workbook.createSheet("Inspección Recibo");
 
-        XSSFSheet hojaExcel = workbook.createSheet("Inspeccion Recibo");
+        crearTituloYEncabezados(workbook, hojaExcel);
+        List<InspeccionReciboM> registros = irs.obtenerTodasInspecciones(conexion);
 
+        generarFilasDeDatos(workbook, hojaExcel, registros);
+        agregarMeses(workbook, hojaExcel);
+
+        guardarArchivo(workbook, "archivos\\InspeccionRecibo\\InspeccionRecibo.xlsx");
+    }
+
+    private void crearTituloYEncabezados(XSSFWorkbook workbook, XSSFSheet hojaExcel) {
         XSSFCell tituloCelda = hojaExcel.createRow(0).createCell(0);
-
         tituloCelda.setCellValue("INSPECCIÓN/RECIBO");
         tituloCelda.setCellStyle(formato.estiloTitulo(workbook, "Arial", (short) 15, true));
+        hojaExcel.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
 
-        CellRangeAddress rangoCeldasCombinadas = new CellRangeAddress(0, 0, 0, 9);
-        hojaExcel.addMergedRegion(rangoCeldasCombinadas);
-
-        XSSFRow encabezados = hojaExcel.createRow(1);
         String[] titulosFilas = {"No", "FECHA DE \n FACTURA", "PROVEEDOR", "NO.\n FACTURA", "NO. DE \n PEDIDO", "CALIBRE", "PRESENTACIÓN\n DE LAMINA", "NO. ROLLO", "PZ/KG", "ESTATUS"};
+        XSSFRow encabezados = hojaExcel.createRow(1);
 
         for (int i = 0; i < titulosFilas.length; i++) {
             XSSFCell cell = encabezados.createCell(i);
             cell.setCellValue(titulosFilas[i]);
-            int columnaAncho;
-            switch (i) {
-                case 0: // columna No.
-                    columnaAncho = 4;
-                    break;
-                case 2: // columna Proveedor
-                    columnaAncho = 30;
-                    break;
-                case 6: // columna presentación lamina
-                    columnaAncho = 18;
-                    break;
-                default: // columnas restante
-                    columnaAncho = 15;
-                    break;
-            }
-            hojaExcel.setColumnWidth(i, columnaAncho * 256);
             cell.setCellStyle(formato.estiloEncabezados(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+            hojaExcel.setColumnWidth(i, obtenerAnchoColumna(i) * 256);
+        }
+    }
+
+    private int obtenerAnchoColumna(int indice) {
+        switch (indice) {
+            case 0:
+                return 4;
+            case 2:
+                return 30;
+            case 6:
+                return 18;
+            default:
+                return 15;
+        }
+    }
+
+    private void generarFilasDeDatos(XSSFWorkbook workbook, XSSFSheet hojaExcel, List<InspeccionReciboM> registros) {
+        int filaIndex = 2;
+        for (InspeccionReciboM registro : registros) {
+            XSSFRow fila = hojaExcel.createRow(filaIndex++);
+            crearCeldaConEstilo(fila, 0, registro.getNoHoja().substring(registro.getNoHoja().length() - 3), workbook);
+            crearCeldaConEstilo(fila, 1, registro.getFechaFactura(), workbook);
+            crearCeldaConEstilo(fila, 2, registro.getProveedor(), workbook);
+            crearCeldaConEstilo(fila, 3, registro.getNoFactura(), workbook);
+            crearCeldaConEstilo(fila, 4, registro.getNoPedido(), workbook);
+            crearCeldaConEstilo(fila, 5, registro.getCalibre(), workbook);
+            crearCeldaConEstilo(fila, 6, registro.getpLamina(), workbook);
+            crearCeldaConEstilo(fila, 7, registro.getNoRollo(), workbook);
+            crearCeldaConEstilo(fila, 8, registro.getPzKg(), workbook);
+            crearCeldaConEstilo(fila, 9, registro.getEstatus(), workbook);
+            fechasRegistrosIR.add(registro.getFechaFactura());
+        }
+    }
+
+    private void crearCeldaConEstilo(Row fila, int columna, String valor, XSSFWorkbook workbook) {
+        XSSFCell celda = (XSSFCell) fila.createCell(columna);
+        celda.setCellValue(valor);
+        if (columna == 9) {
+            aplicarEstiloSegunEstatus(celda, valor, workbook);
+        } else {
+            celda.setCellStyle(formato.estiloCeldas(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+        }
+    }
+
+    private void aplicarEstiloSegunEstatus(XSSFCell cell, String valor, XSSFWorkbook workbook) {
+        if (cell == null || valor == null || valor.isEmpty()) {
+            return;
         }
 
+        switch (valor) {
+            case "LIBERADA":
+                cell.setCellStyle(formato.estiloEstatus(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, new java.awt.Color(102, 204, 0)));
+                break;
+            case "POR LIBERAR":
+                cell.setCellStyle(formato.estiloEstatus(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, new java.awt.Color(255, 151, 0)));
+                break;
+            case "RECHAZADA":
+                cell.setCellStyle(formato.estiloEstatus(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, new java.awt.Color(255, 0, 0)));
+                break;
+            default:
+                cell.setCellStyle(formato.estiloCeldas(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+                break;
+        }
+    }
+
+    private void agregarMeses(XSSFWorkbook workbook, XSSFSheet hojaExcel) throws ParseException {
         int indexFila = 2;
-
-        List<InspeccionReciboM> registrosIR = irs.obtenerTodasInspecciones(conexion);
-        List<String> fechas = new ArrayList<>();
-
-        for (InspeccionReciboM registro : registrosIR) {
-
-            Row filaDatos = hojaExcel.createRow(indexFila);
-            String noHoja = registro.getNoHoja();
-
-            String numeroHojaStr = noHoja.substring(noHoja.length() - 3);
-
-            filaDatos.createCell(0).setCellValue(numeroHojaStr);
-            filaDatos.createCell(1).setCellValue(registro.getFechaFactura());
-            filaDatos.createCell(2).setCellValue(registro.getProveedor());
-            filaDatos.createCell(3).setCellValue(registro.getNoFactura());
-            filaDatos.createCell(4).setCellValue(registro.getNoPedido());
-            filaDatos.createCell(5).setCellValue(registro.getCalibre());
-            filaDatos.createCell(6).setCellValue(registro.getpLamina());
-            filaDatos.createCell(7).setCellValue(registro.getNoRollo());
-            filaDatos.createCell(8).setCellValue(registro.getPzKg());
-            filaDatos.createCell(9).setCellValue(registro.getEstatus());
-            filaDatos.createCell(10);
-            fechas.add(registro.getFechaFactura());
-
-            for (int i = 0; i < 11; i++) {
-                XSSFCell cell = (XSSFCell) filaDatos.getCell(i);
-                switch (cell.getStringCellValue()) {
-                    case "LIBERADA":
-                        cell.setCellStyle(formato.estiloEstatus(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, new java.awt.Color(102, 204, 0)));
-                        break;
-                    case "POR LIBERAR":
-                        cell.setCellStyle(formato.estiloEstatus(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, new java.awt.Color(255, 151, 0)));
-                        break;
-                    case "RECHAZADA":
-                        cell.setCellStyle(formato.estiloEstatus(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, new java.awt.Color(255, 0, 0)));
-                        break;
-                    case "CERTIFICADO INCOMPLETO":
-                        cell.setCellStyle(formato.estiloEstatus(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, new java.awt.Color(255, 255, 0)));
-                        break;
-                    default:
-                        cell.setCellStyle(formato.estiloCeldas(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
-                        break;
-                }
-            }
-            indexFila++;
-        }
-
-        Sheet hoja1 = workbook.getSheetAt(0);
 
         SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
         String mesActual = null;
         int primeraFilaMes = 2;
-        indexFila = 2;
 
-        for (String fechaString : fechas) {
+        for (String fechaString : fechasRegistrosIR) {
             Date fecha = formatoFecha.parse(fechaString);
             String mes = new SimpleDateFormat("MMMM").format(fecha).toUpperCase();
 
@@ -193,13 +205,13 @@ public class GeneradorExcel {
 
                 if (primeraFilaMes < indexFila - 1) {
                     CellRangeAddress rango = new CellRangeAddress(primeraFilaMes, indexFila - 1, 10, 10);
-                    hoja1.addMergedRegion(rango);
+                    hojaExcel.addMergedRegion(rango);
                 }
                 primeraFilaMes = indexFila;
                 mesActual = mes;
             }
 
-            Row fila2 = hoja1.getRow(indexFila) == null ? hoja1.createRow(indexFila) : hoja1.getRow(indexFila);
+            Row fila2 = hojaExcel.getRow(indexFila) == null ? hojaExcel.createRow(indexFila) : hojaExcel.getRow(indexFila);
 
             XSSFCell celdaFecha = (XSSFCell) fila2.createCell(10);
             celdaFecha.setCellValue(mes);
@@ -209,18 +221,18 @@ public class GeneradorExcel {
 
         if (primeraFilaMes < indexFila - 1) {
             CellRangeAddress rango = new CellRangeAddress(primeraFilaMes, indexFila - 1, 10, 10);
-            hoja1.addMergedRegion(rango);
+            hojaExcel.addMergedRegion(rango);
         }
+    }
 
-        String rutaArchivo = "archivos\\InspeccionRecibo\\InspeccionRecibo.xlsx";
+    private void guardarArchivo(XSSFWorkbook workbook, String ruta) {
+        String rutaCompleta = "\\\\" + Utilidades.SERVIDOR + "\\" + ruta;
 
-        File archivo = new File("\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo);
-        Utilidades.abrirDocumento(rutaArchivo);
-        try (FileOutputStream outputStream = new FileOutputStream(archivo)) {
+        try (FileOutputStream outputStream = new FileOutputStream(new File(rutaCompleta))) {
             workbook.write(outputStream);
+            Utilidades.abrirDocumento(ruta);
         } catch (IOException ex) {
-            System.err.println(ex.getMessage());
-            irs.manejarExcepcion("Error al Generar el Archivo InspeccionRecibo.xlsx", ex);
+            Utilidades.manejarExcepcion("Error al Generar el Archivo InspeccionRecibo.xlsx: ", ex);
         }
     }
 
@@ -247,40 +259,42 @@ public class GeneradorExcel {
         return celda.getStringCellValue().equalsIgnoreCase("√");
     }
 
+    // HojaInstrucción.xlsx
     public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, JTable tabla, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("jc/doctos/HojaInstruccion.xlsx");
+        final String rutaPlantilla = "jc/doctos/HojaInstruccion.xlsx";
+        final String rutaSalida = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\HojasInstruccion\\";
 
-        if (inputStream != null) {
-            XSSFWorkbook workbook = null;
-            try {
+        InputStream inputStream = null;
+        XSSFWorkbook workbook = null;
 
-                workbook = new XSSFWorkbook(inputStream);  // Crear el workbook usando el inputStream
-                procesarPaginaUnoHJ(workbook, irm, dirm, listaAL, listaRD);
-                procesarPaginaDosHJ(workbook, conexion, dirm, tabla);
-
-                String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
-                numeroStr = partes[1];
-                // Crear un nuevo archivo de Excel para guardar los cambios
-                nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(dirm.getFechaInspeccion()) + ".xlsx";  // Ruta del nuevo archivo de Excel
-
-                // Crear un nuevo archivo Excel para guardar los cambios
-                String newFilePath = "\\\\" + Utilidades.SERVIDOR + "\\" + "archivos\\InspeccionRecibo\\HojasInstruccion\\" + nuevaRutaArchivo;
-                try (FileOutputStream fos = new FileOutputStream(newFilePath)) {
-                    workbook.write(fos);  // Guardar los cambios en el nuevo archivo Excel
-                }
-            } catch (IOException e) {
-                Utilidades.manejarExcepcion("Error al procesar el archivo Excel: ", e);
-            } finally {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    Utilidades.manejarExcepcion("Error al generar el Archivo de Retención Dimensional: ", e);
-                }
+        try {
+            // Cargar la plantilla
+            inputStream = getClass().getClassLoader().getResourceAsStream(rutaPlantilla);
+            if (inputStream == null) {
+                JOptionPane.showMessageDialog(null, "No se pudo encontrar el archivo Excel.");
+                return null;
             }
-        } else {
-            JOptionPane.showMessageDialog(null, "No se pudo encontrar el archivo Excel.");
+
+            workbook = new XSSFWorkbook(inputStream);
+
+            // Procesar las hojas de trabajo
+            procesarPaginaUnoHJ(workbook, irm, dirm, listaAL, listaRD);
+            procesarPaginaDosHJ(workbook, conexion, dirm, tabla);
+
+            // Generar nombre del archivo de salida
+            String numeroHoja = extraerNumeroHoja(irm.getNoHoja());
+            String fechaFormateada = formato.eliminarSeparadores(dirm.getFechaInspeccion());
+            String rutaArchivoSalida = rutaSalida + "HI-" + numeroHoja + "-" + fechaFormateada + ".xlsx";
+
+            // Guardar el archivo generado
+            guardarArchivoExcel(workbook, rutaArchivoSalida);
+
+            return rutaArchivoSalida;
+        } finally {
+            if (inputStream != null) {
+                inputStream.close(); // Cierre manual del InputStream
+            }
         }
-        return nuevaRutaArchivo;
     }
 
     private void procesarPaginaUnoHJ(XSSFWorkbook workbook, InspeccionReciboM irm, DatosIRM dirm, List listaAL, List listaRD) {
@@ -457,11 +471,22 @@ public class GeneradorExcel {
         }
     }
 
+    private String extraerNumeroHoja(String noHoja) {
+        String[] partes = noHoja.split("/");
+        return partes.length > 1 ? partes[1] : noHoja;
+    }
+
+    private void guardarArchivoExcel(XSSFWorkbook workbook, String rutaArchivoSalida) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(rutaArchivoSalida)) {
+            workbook.write(fos);
+        }
+    }
+
     public String editarHojaInstruccion(String rutaHojaInstruccion, InspeccionReciboM irm) {
         FileInputStream fis = null;
         String nuevoArchivo = "";
         try {
-            fis = new FileInputStream("\\\\" + Utilidades.SERVIDOR + "\\" + rutaHojaInstruccion);
+            fis = new FileInputStream("\\\\" + Utilidades.SERVIDOR + "/" + rutaHojaInstruccion);
             XSSFWorkbook workbook;
             String numeroStr;
             try {
@@ -494,10 +519,10 @@ public class GeneradorExcel {
                 }
                 celda3.setCellValue(txtTexto);
 
-                nuevoArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\HojasInstruccion\\HI-" + numeroStr + "-" + formato.eliminarSeparadores(irm.getFechaFactura());
+                nuevoArchivo = "archivos\\InspeccionRecibo\\HojasInstruccion\\HI-" + numeroStr + "-" + formato.eliminarSeparadores(irm.getFechaFactura()) + ".xlsx";
 
                 // Crear un nuevo archivo con los cambios
-                try (FileOutputStream fos = new FileOutputStream(nuevoArchivo)) {
+                try (FileOutputStream fos = new FileOutputStream("\\\\" + Utilidades.SERVIDOR + "\\" + nuevoArchivo)) {
                     workbook.write(fos); // Escribir los cambios en el nuevo archivo
                 }
 
@@ -517,9 +542,7 @@ public class GeneradorExcel {
         }
         return nuevoArchivo;
     }
-    
-    
-    
+
     public String generarArchivoRetencionDimensional(Connection conexion, List<AceptacionPc3> ap3m, AceptacionPc2 apc2) throws IOException, SQLException, ClassNotFoundException {
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("jc/doctos/RETENCION-DIMENSIONAL.xlsx");
 

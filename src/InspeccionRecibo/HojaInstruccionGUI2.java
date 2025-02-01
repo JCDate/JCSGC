@@ -86,7 +86,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     public HojaInstruccionGUI2(Usuarios usuario, String rutaArchivo, InspeccionReciboM inspeccionRecibo) {
         this.usuario = usuario;
         this.inspeccionRecibo = inspeccionRecibo;
-        this.rutaArchivo = rutaArchivo;
+        this.rutaArchivo = "\\\\" + Utilidades.SERVIDOR + "/" + rutaArchivo;
         inicializarVentanaYComponentes();
     }
 
@@ -424,7 +424,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         for (int i = 0; i < 10; i++) {
             Row filaAnchoLargo = hoja1.getRow(numFila);
             Cell cellAnchoLargo = filaAnchoLargo.getCell(2);
-            tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 0); 
+            tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 0);
             tblAnchoLargo.setValueAt(cellAnchoLargo.getStringCellValue(), i, 1);
             numFila++;
         }
@@ -457,9 +457,9 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(fechaInspeccion) + ".xlsx ";
+        nuevaRutaArchivo = "HI-" + numeroStr + "-" + formato.eliminarSeparadores(fechaInspeccion) + ".xlsx";
 
-        try (FileOutputStream fos = new FileOutputStream(nuevaRutaArchivo)) {
+        try (FileOutputStream fos = new FileOutputStream("\\\\" + Utilidades.SERVIDOR + "/archivos/InspeccionRecibo/HojasInstruccion/" + nuevaRutaArchivo)) {
             workbook.write(fos);
         }
 
@@ -546,7 +546,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
         HojaInstruccionGUI2.this.dispose();
         Conexion.getInstance().desconectar(conexion);
     }
-    
+
     public String getRutaArchivo() {
         return rutaArchivo;
     }

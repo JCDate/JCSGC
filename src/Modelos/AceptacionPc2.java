@@ -13,15 +13,6 @@ public class AceptacionPc2 {
     private String disp;
 
     public AceptacionPc2() {
-        this.id = "";
-        this.componente = "";
-        this.fecha = "";
-        this.noOrden = "";
-        this.tamLote = "";
-        this.tamMta = "";
-        this.inspector = "";
-        this.turno = "";
-        this.disp = "";
     }
 
     public AceptacionPc2(String id, String componente, String fecha, String noOrden, String tamLote, String tamMta, String inspector, String turno, String disp) {

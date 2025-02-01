@@ -133,13 +133,13 @@ public class AgregarDoctoApqpGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnNuevoArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoArchivoActionPerformed
-        File archivoSeleccionado = apqps.seleccionarArchivo(this);
+        File archivoSeleccionado = Utilidades.seleccionarArchivo(this);
         if (archivoSeleccionado != null) {
             try {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
-                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\"+Utilidades.SERVIDOR+"\\archivos\\Apqp\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\Apqp\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 txtNombreArchivo.setText(nombreArchivo);
-                
+
             } catch (IOException ex) {
                 Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
                 Logger.getLogger(AgregarDoctoApqpGUI.class.getName()).log(Level.SEVERE, null, ex);

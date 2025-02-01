@@ -1,7 +1,6 @@
 package Modelos;
 
-import java.util.ArrayList;
-import java.util.List;
+
 
 public class DatosFilaRD {
 
@@ -18,17 +17,6 @@ public class DatosFilaRD {
     private String disp;
 
     public DatosFilaRD() {
-        this.id_pc1 = 0;
-        this.id_pc2 = 0;
-        this.noRollo = "";
-        this.inspVisual = "";
-        this.observaciones = "";
-        this.noOrden = "";
-        this.insp = "";
-        this.tamLote = "";
-        this.turno = "";
-        this.tamMta = "";
-        this.disp = "";
     }
 
     public DatosFilaRD(int id_pc1, int id_pc2, String noRollo, String inspVisual, String observaciones, String noOrden, String insp, String tamLote, String turno, String tamMta, String disp) {

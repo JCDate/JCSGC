@@ -149,7 +149,7 @@ public class AceptacionProductoGUI2 extends javax.swing.JFrame {
         }
 
         Date fechaSeleccionada = dchFechaLiberacion.getDate();
-        String fechaLiberacion = aps.formatearFecha(fechaSeleccionada); // Se formatea a formato: "dd/mm/aaaa" 
+        String fechaLiberacion = Utilidades.formatearFecha(fechaSeleccionada); // Se formatea a formato: "dd/mm/aaaa" 
 
         asignarValoresAceptacionProducto(fechaLiberacion);
         cerrarVentana();

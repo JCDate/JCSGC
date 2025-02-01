@@ -17,13 +17,8 @@ import Modelos.ProcesosM;
 import Modelos.RegistrosM;
 import Modelos.SolicitudesM;
 import Modelos.Usuarios;
-import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.Window;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,7 +27,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,41 +35,52 @@ import java.util.logging.Logger;
 import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import jnafilechooser.api.JnaFileChooser;
 
 public class ControlDocumentacionServicio {
 
-    final String UPDATE_REVISION_FROM_DOCPROCEDIMIENTOS = "UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?";
-    final String UPDATE_PROCEDIMIENTOS_BY_ID = "UPDATE docprocedimientos SET no = ?, codigo = ?, revision = ?, procedimiento = ?, encargado = ? WHERE id = ?";
-    final String UPDATE_MANUAL_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE tipo = 'MANUAL' AND idProcedimiento = ?";
-    final String UPDATE_DIAGRAMA_FLUJO_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE tipo = 'DIAGRAMA DE FLUJO' AND idProcedimiento = ?";
-    final String UPDATE_DIAGRAMA_TORTUGA_BY_PROCESO = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE proceso = ?";
-    final String UPDATE_FORMATO = "UPDATE formatos SET nombre = ?, rutaArchivo = ? WHERE idProcedimiento = ? AND nombre = ?";
-    final String UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS = "UPDATE documentos SET nombre = ?, rutaArchivo = ? WHERE idProcedimiento = ? AND tipo = 'INSTRUCTIVO' AND nombre = ?";
-    final String UPDATE_DIAGRAMA_TORTUGA_BY_ID = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE id = ?";
-    final String UPDATE_DOCUMENTO = "UPDATE documentos SET fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE id = ?";
-    final String INSERT_INTO_DOCUMENTOS_WITH_SUBQUERY = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, rutaArchivo) VALUES((SELECT id FROM docProcesos WHERE proceso = ?), ?, ?, ?, ?, ?, ?)";
+    final String DELETE_FROM_DOCUMENTOS = "DELETE FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
+    final String DELETE_FROM_DOCUMENTOS_WHERE_ID = "DELETE FROM documentos WHERE id = ?";
+    final String DELETE_FROM_DOCUMENTOS_WHERE_IDP = "DELETE FROM documentos WHERE idProcedimiento = ?";
+    final String DELETE_FROM_DOCPROCEDIMIENTOS_WHERE_ID = "DELETE FROM docprocedimientos WHERE id = ?";
+    final String DELETE_FROM_FORMATOS = "DELETE FROM formatos WHERE idProcedimiento = ? AND nombre = ? AND rutaArchivo = ?";
+    final String DELETE_FROM_FORMATOS_WHERE_ID = "DELETE FROM formatos WHERE id = ?";
+    final String DELETE_FROM_FORMATOS_WHERE_IDP = "DELETE FROM formatos WHERE idProcedimiento = ?";
+    final String DELETE_FROM_SOLICITUDES_CAMBIO = "DELETE FROM solicitudescambio WHERE idp = ?";
     final String INSERT_INTO_DOCUMENTOS = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, rutaArchivo) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    final String INSERT_INTO_DOCUMENTOS_WITH_SUBQUERY = "INSERT INTO documentos(idProceso, idProcedimiento, revision, fechaActualizacion, tipo, nombre, rutaArchivo) VALUES((SELECT id FROM docProcesos WHERE proceso = ?), ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_FORMATOS = "INSERT INTO formatos(idProcedimiento, nombre, rutaArchivo) VALUES(?, ?, ?)";
-    final String INSERT_INTO_SOLICITUDES_CAMBIO = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, rutaArchivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_PROCEDIMIENTOS = "INSERT INTO docprocedimientos(idp, no, codigo, revision, proceso, procedimiento, encargado) VALUES (?, ?, ?, ?, ?, ?, ?)";
     final String INSERT_INTO_REGISTROS = "INSERT INTO docregistros(idp, fechaModificacion, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombre) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    final String DELETE_FROM_DOCUMENTOS = "DELETE FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
-    final String DELETE_FROM_FORMATOS = "DELETE FROM formatos WHERE idProcedimiento = ? AND nombre = ? AND rutaArchivo = ?";
-    final String DELETE_FROM_DOCUMENTOS_BY_ID = "DELETE FROM documentos WHERE id = ?";
-    final String DELETE_FROM_FORMATOS_BY_ID = "DELETE FROM formatos WHERE id = ?";
-    final String DELETE_FROM_SOLICITUDES_CAMBIO = "DELETE FROM solicitudescambio WHERE idp = ?";
+    final String INSERT_INTO_SOLICITUDES_CAMBIO = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, rutaArchivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    final String SELECT_COUNT_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO = "SELECT COUNT(*) FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
+    final String SELECT_COUNT_FROM_DOCPROCESOS_WHERE_ID_AND_RUTA_ARCHIVO = "SELECT COUNT(*) FROM docprocesos WHERE id = ? AND rutaArchivo != ''";
+    final String SELECT_CONTENIDO_NOMBRE_FROM_DOCUMENTOS = "SELECT contenido, nombre FROM documentos WHERE tipo = ? AND idProcedimiento = ?";
     final String SELECT_CONTENIDO_NOMBRE_FROM_FORMATOS = "SELECT contenido, nombre FROM formatos WHERE nombre = ?";
-    final String SELECT_NOMBRE_ARCHIVO_FROM_SOLICITUDES_CAMBIO = "SELECT nombre, archivo, SUBSTRING_INDEX(nombre, '.', -1) AS extension FROM solicitudescambio WHERE codigo = ?";
     final String SELECT_DIAGRAMA_TORTUGA = "SELECT diagramaTortuga FROM docprocesos WHERE id = ?";
     final String SELECT_FROM_DOCUMENTOS = "SELECT * FROM documentos WHERE idProcedimiento = ?";
-    final String SELECT_FROM_SOLICITUDES_CAMBIO = "SELECT * FROM solicitudescambio";
-    final String SELECT_CONTENIDO_NOMBRE_FROM_DOCUMENTOS = "SELECT contenido, nombre FROM documentos WHERE tipo = ? AND idProcedimiento = ?";
+    final String SELECT_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO = "SELECT * FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
     final String SELECT_FROM_FORMATOS = "SELECT * FROM formatos WHERE idProcedimiento = ?";
-    final String SELECT_FROM_PROCEDIMIENTOS_BY_IDP = "SELECT * FROM docprocedimientos WHERE idp = ?";
+    final String SELECT_FROM_PROCEDIMIENTOS_WHERE_IDP = "SELECT * FROM docprocedimientos WHERE idp = ?";
     final String SELECT_FROM_PROCESOS = "SELECT * FROM docProcesos WHERE id = ?";
-    final String SELECT_FROM_REGISTROS_BY_IDP = "SELECT * FROM docregistros WHERE idp = ?";
     final String SELECT_FROM_REGISTROS = "SELECT * FROM docregistros WHERE idp = ? AND tipoArchivo IN ('MANUAL', 'DIAGRAMA DE FLUJO', 'INSTRUCTIVO', 'FORMATO', 'DIAGRAMA DE TORTUGA') ORDER BY DATE(fechaModificacion) DESC LIMIT 1";
+    final String SELECT_FROM_REGISTROS_WHERE_IDP = "SELECT * FROM docregistros WHERE idp = ?";
+    final String SELECT_FROM_SOLICITUDES_CAMBIO = "SELECT * FROM solicitudescambio";
+    final String SELECT_NOMBRE_ARCHIVO_FROM_SOLICITUDES_CAMBIO = "SELECT nombre, archivo, SUBSTRING_INDEX(nombre, '.', -1) AS extension FROM solicitudescambio WHERE codigo = ?";
+    final String SELECT_NOMBRE_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO = "SELECT nombre FROM documentos WHERE idProceso = ? AND tipo = ?";
+    final String SELECT_NOMBREDT_FROM_DOCPROCESOS_WHERE_ID = "SELECT nombreDt FROM docprocesos WHERE id = ?";
+    final String SELECT_RUTA_ARCHIVO_FROM_DOCUMENTOS = "SELECT rutaArchivo FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
+    final String SELECT_RUTA_ARCHIVO_FROM_DOCPROCESOS = "SELECT rutaArchivo FROM docprocesos WHERE proceso = ?";
+    final String SELECT_RUTA_ARCHIVO_FROM_FORMATOS = "SELECT rutaArchivo FROM formatos WHERE idProcedimiento = ? AND nombre = ?";
+    final String UPDATE_REVISION_FROM_DOCPROCEDIMIENTOS = "UPDATE docprocedimientos SET revision = ? WHERE procedimiento = ?";
+    final String UPDATE_PROCEDIMIENTOS_WHERE_ID = "UPDATE docprocedimientos SET no = ?, codigo = ?, revision = ?, procedimiento = ?, encargado = ? WHERE id = ?";
+    final String UPDATE_MANUAL_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE tipo = 'MANUAL' AND idProcedimiento = ?";
+    final String UPDATE_DIAGRAMA_FLUJO_FROM_DOCUMENTOS = "UPDATE documentos SET revision = ?, fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE tipo = 'DIAGRAMA DE FLUJO' AND idProcedimiento = ?";
+    final String UPDATE_DIAGRAMA_TORTUGA = "UPDATE docprocesos SET nombreDt = '', rutaArchivo = '' WHERE proceso = ?";
+    final String UPDATE_DIAGRAMA_TORTUGA_WHERE_PROCESO = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE proceso = ?";
+    final String UPDATE_FORMATO = "UPDATE formatos SET nombre = ?, rutaArchivo = ? WHERE idProcedimiento = ? AND nombre = ?";
+    final String UPDATE_INSTRUCTIVO_FROM_DOCUMENTOS = "UPDATE documentos SET nombre = ?, rutaArchivo = ? WHERE idProcedimiento = ? AND tipo = 'INSTRUCTIVO' AND nombre = ?";
+    final String UPDATE_DIAGRAMA_TORTUGA_WHERE_ID = "UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE id = ?";
+    final String UPDATE_DOCUMENTO = "UPDATE documentos SET fechaActualizacion = ?, nombre = ?, rutaArchivo = ? WHERE id = ?";
 
     public void abrirAgregarDocumentosGUI(Usuarios usuario, ProcedimientosM procedimiento) {
         AgregarDocumentosGUI formatos = new AgregarDocumentosGUI(usuario, procedimiento);
@@ -184,7 +189,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("DIAGRAMA DE TORTUGA")) {
-                    PreparedStatement ps1 = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA_BY_PROCESO);
+                    PreparedStatement ps1 = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA_WHERE_PROCESO);
                     eliminarDiagramaTortugaAnterior(conexion, solicitud.getProceso());
                     solicitud.setRutaArchivo(actualizarRutaDocumento(solicitud.getRutaArchivo(), "DiagramasTortuga"));
                     ps1.setString(1, solicitud.getNombre());
@@ -241,7 +246,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("DIAGRAMA DE TORTUGA")) {
-                    PreparedStatement ps = conexion.prepareStatement("UPDATE docprocesos SET nombreDt = ?, rutaArchivo = ? WHERE proceso = ?");
+                    PreparedStatement ps = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA_WHERE_PROCESO);
                     solicitud.setRutaArchivo(actualizarRutaDocumento(solicitud.getRutaArchivo(), "DiagramasTortuga"));
                     ps.setString(1, solicitud.getNombre());
                     ps.setString(2, solicitud.getRutaArchivo());
@@ -260,7 +265,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("FORMATO")) {
-                    PreparedStatement ps = conexion.prepareStatement("DELETE FROM formatos WHERE idProcedimiento = ? AND nombre = ? AND rutaArchivo = ?");
+                    PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_FORMATOS);
                     eliminarFormatoAnterior(conexion, solicitud.getId(), solicitud.getNombreD());
                     ps.setInt(1, solicitud.getId());
                     ps.setString(2, solicitud.getNombreD());
@@ -274,7 +279,7 @@ public class ControlDocumentacionServicio {
                 }
 
                 if (solicitud.getTipoArchivo().equals("DIAGRAMA DE TORTUGA")) {
-                    PreparedStatement ps = conexion.prepareStatement("UPDATE docprocesos SET nombreDt = '', rutaArchivo = '' WHERE proceso = ?");
+                    PreparedStatement ps = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA);
                     solicitud.setRutaArchivo(actualizarRutaDocumento(solicitud.getRutaArchivo(), "DiagramasTortuga"));
                     eliminarDiagramaTortugaAnterior(conexion, solicitud.getProceso());
                     ps.setString(1, solicitud.getProceso());
@@ -324,7 +329,7 @@ public class ControlDocumentacionServicio {
 
     public void actualizarDiagramaTortuga(Connection conexion, ProcesosM proceso) {
         try {
-            PreparedStatement ps = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA_BY_ID);
+            PreparedStatement ps = conexion.prepareStatement(UPDATE_DIAGRAMA_TORTUGA_WHERE_ID);
             ps.setString(1, proceso.getNombreDT());
             ps.setString(2, proceso.getRutaArchivo());
             ps.setInt(3, proceso.getId());
@@ -339,7 +344,7 @@ public class ControlDocumentacionServicio {
         Date fechaActual = new Date();
         try {
             PreparedStatement ps = conexion.prepareStatement(UPDATE_DOCUMENTO);
-            ps.setString(1, formatearFecha(fechaActual));
+            ps.setString(1, Utilidades.formatearFecha(fechaActual));
             ps.setString(2, documento.getNombre());
             ps.setString(3, documento.getRutaArchivo());
             ps.setInt(4, documento.getId());
@@ -356,12 +361,13 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setInt(1, documento.getIdProceso());
             pstmtSelect.setInt(2, documento.getIdProcedimiento());
             pstmtSelect.setString(3, documento.getRevision());
-            pstmtSelect.setString(4, formatearFecha(fechaActual));
+            pstmtSelect.setString(4, Utilidades.formatearFecha(fechaActual));
             pstmtSelect.setString(5, documento.getTipo());
             pstmtSelect.setString(6, documento.getNombre());
             pstmtSelect.setString(7, documento.getRutaArchivo());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al actualizar el documento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -373,7 +379,7 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setString(3, formato.getRutaArchivo());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al agregar el formato", ex);
+            Utilidades.manejarExcepcion("ERROR al agregar el formato: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -389,6 +395,7 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setString(7, procedimiento.getEncargado());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al insertar la información del procedimiento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -409,13 +416,14 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setString(12, solicitud.getRutaArchivo());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al insertar el registro de solicitud de cambio: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void eliminarDocumento(Connection conexion, DocumentosM documento) {
         try {
-            PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_DOCUMENTOS_BY_ID);
+            PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_DOCUMENTOS_WHERE_ID);
             ps.setInt(1, documento.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -425,7 +433,7 @@ public class ControlDocumentacionServicio {
     }
 
     public void eliminarDocumentoAnterior(Connection conexion, int id, String tipoArchivo) {
-        try (PreparedStatement consulta = conexion.prepareStatement("SELECT rutaArchivo FROM documentos WHERE idProcedimiento = ? AND tipo = ?")) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_RUTA_ARCHIVO_FROM_DOCUMENTOS)) {
             consulta.setInt(1, id);
             consulta.setString(2, tipoArchivo);
 
@@ -436,12 +444,13 @@ public class ControlDocumentacionServicio {
                 }
             }
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al eliminar el documento anterior: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void eliminarFormatoAnterior(Connection conexion, int id, String nombre) {
-        try (PreparedStatement consulta = conexion.prepareStatement("SELECT rutaArchivo FROM formatos WHERE idProcedimiento = ? AND nombre = ?")) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_RUTA_ARCHIVO_FROM_FORMATOS)) {
             consulta.setInt(1, id);
             consulta.setString(2, nombre);
 
@@ -452,12 +461,13 @@ public class ControlDocumentacionServicio {
                 }
             }
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la ruta del archivo: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void eliminarDiagramaTortugaAnterior(Connection conexion, String proceso) {
-        try (PreparedStatement consulta = conexion.prepareStatement("SELECT rutaArchivo FROM docprocesos WHERE proceso = ?")) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_RUTA_ARCHIVO_FROM_DOCPROCESOS)) {
             consulta.setString(1, proceso);
 
             try (ResultSet resultado = consulta.executeQuery()) {
@@ -467,13 +477,14 @@ public class ControlDocumentacionServicio {
                 }
             }
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información del archivo: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void eliminarFormato(Connection conexion, FormatosM formato) {
         try {
-            PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_FORMATOS_BY_ID);
+            PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_FORMATOS_WHERE_ID);
             ps.setInt(1, formato.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
@@ -492,31 +503,9 @@ public class ControlDocumentacionServicio {
         return usuario.getId() == 12 || usuario.getId() == 8 || usuario.getId() == 15 || usuario.getId() == 17;
     }
 
-    public Date formatearFecha(String fecha) {
-        try {
-            if (fecha == null) {
-                return null;
-            }
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            return dateFormat.parse(fecha);
-        } catch (ParseException ex) {
-            Utilidades.manejarExcepcion("Error al formatear la fecha: ", ex);
-            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-    }
-
-    public String formatearFecha(Date fecha) {
-        if (fecha == null) {
-            return "";
-        }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        return dateFormat.format(fecha);
-    }
-
     public void guardarCambiosProcedimiento(Connection conexion, ProcedimientosM procedimiento) {
         try {
-            PreparedStatement ps1 = conexion.prepareStatement(UPDATE_PROCEDIMIENTOS_BY_ID);
+            PreparedStatement ps1 = conexion.prepareStatement(UPDATE_PROCEDIMIENTOS_WHERE_ID);
             ps1.setString(1, procedimiento.getNo());
             ps1.setString(2, procedimiento.getCodigo());
             ps1.setString(3, procedimiento.getRevision());
@@ -545,20 +534,9 @@ public class ControlDocumentacionServicio {
             pstmtSelect.setString(11, solicitud.getNombre());
             pstmtSelect.executeUpdate();
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("ERROR al registrar la solicitud", ex);
+            Utilidades.manejarExcepcion("ERROR al registrar la solicitud: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-
-    public byte[] leerArchivo(String rutaArchivo) throws IOException {
-        File archivo = new File(rutaArchivo);
-        byte[] pdf = new byte[(int) archivo.length()];
-        if (archivo.exists()) {
-            try (InputStream input = new FileInputStream(archivo)) {
-                input.read(pdf);
-            }
-        }
-        return pdf;
     }
 
     public void mostrarVentana(JFrame frame) {
@@ -584,13 +562,16 @@ public class ControlDocumentacionServicio {
                 );
                 documentos.add(documento);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de los documentos: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return documentos;
     }
 
     public List<DocumentosM> obtenerInstructivos(Connection conexion, int id, String tipoArchivo) throws SQLException {
         List<DocumentosM> documentos = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM documentos WHERE idProcedimiento = ? AND tipo = ?")) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO)) {
             consulta.setInt(1, id);
             consulta.setString(2, tipoArchivo);
             ResultSet resultado = consulta.executeQuery();
@@ -607,6 +588,9 @@ public class ControlDocumentacionServicio {
                 );
                 documentos.add(documento);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de la tabla documentos por idp: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return documentos;
     }
@@ -633,6 +617,9 @@ public class ControlDocumentacionServicio {
                 );
                 listaSolicitudes.add(ap1);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de las solicitudes de cambio: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return listaSolicitudes;
     }
@@ -651,13 +638,16 @@ public class ControlDocumentacionServicio {
                 );
                 formatos.add(formato);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar información de los formatos: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return formatos;
     }
 
     public List<ProcedimientosM> recuperarProcedimientos(Connection conexion, int idp) throws SQLException {
         List<ProcedimientosM> procedimientos = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_FROM_PROCEDIMIENTOS_BY_IDP)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_FROM_PROCEDIMIENTOS_WHERE_IDP)) {
             consulta.setInt(1, idp);
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
@@ -673,6 +663,9 @@ public class ControlDocumentacionServicio {
                 );
                 procedimientos.add(procedimiento);
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de los procedimientos por idp: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return procedimientos;
     }
@@ -695,6 +688,9 @@ public class ControlDocumentacionServicio {
                         resultado.getString("rutaArchivo")
                 );
             }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al consultar la información de los procesos: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return proceso;
     }
@@ -702,7 +698,7 @@ public class ControlDocumentacionServicio {
     public List<RegistrosM> recuperarRegistros(Connection conexion, int id, Usuarios usr) throws SQLException {
         List<RegistrosM> registros = new ArrayList<>();
         if (usr.getId() == 12 || usr.getId() == 8) {
-            try (PreparedStatement consulta = conexion.prepareStatement(SELECT_FROM_REGISTROS_BY_IDP)) {
+            try (PreparedStatement consulta = conexion.prepareStatement(SELECT_FROM_REGISTROS_WHERE_IDP)) {
                 consulta.setInt(1, id);
                 ResultSet resultado = consulta.executeQuery();
                 while (resultado.next()) {
@@ -722,6 +718,9 @@ public class ControlDocumentacionServicio {
                     );
                     registros.add(registro);
                 }
+            } catch (SQLException ex) {
+                Utilidades.manejarExcepcion("ERROR al consultar la información de los registros por idp: ", ex);
+                Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
             try (PreparedStatement consulta = conexion.prepareStatement(SELECT_FROM_REGISTROS)) {
@@ -744,65 +743,13 @@ public class ControlDocumentacionServicio {
                     );
                     registros.add(registro);
                 }
+            } catch (SQLException ex) {
+                Utilidades.manejarExcepcion("ERROR al consultar la información de los registros: ", ex);
+                Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
         return registros;
     }
-
-    public File seleccionarArchivo(Component parentComponent) {
-        JnaFileChooser jfc = new JnaFileChooser();
-        jfc.addFilter("pdf", "xlsx", "xls", "pdf", "PDF", "ppt", "pptx", "doc", "docx", "png", "jpg", "jpeg", "png");
-        boolean action = jfc.showOpenDialog((Window) parentComponent);
-        if (action) {
-            return jfc.getSelectedFile();
-        }
-
-        return null;
-    }
-
-    private String limpiarNombreArchivo(String nombreArchivo) {
-        // Reemplaza los caracteres no válidos en el sistema de archivos
-        return nombreArchivo.replaceAll("[<>:\"/\\|?*]", "_");
-    }
-
-    public void abrirDocumento(String rutaArchivo) {
-        if (rutaArchivo == null || rutaArchivo.isEmpty()) {
-
-            Utilidades.manejarExcepcion("La ruta del archivo no es válida.", null);
-            return;
-        }
-
-        String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo; // Ruta de red
-
-        try {
-            File archivo = new File(urlArchivo);
-            if (!archivo.exists()) {
-                Utilidades.manejarExcepcion("El archivo no existe en la ruta especificada.", null);
-                return;
-            }
-
-            abrirArchivoLocal(archivo);
-        } catch (IOException ex) {
-            Utilidades.manejarExcepcion("Error al abrir el archivo local: ", ex);
-        }
-    }
-
-    private void abrirArchivoLocal(File archivo) throws IOException {
-        Desktop desktop = Desktop.getDesktop();
-        desktop.open(archivo);
-    }
-//
-//    public void eliminarDiagramaAnterior(Connection conexion, ProcesosM proceso) {
-//        try {
-//            PreparedStatement ps = conexion.prepareStatement("DELETE nombreDt, rutaArchivo FROM docProcesos WHERE id = ?");
-//            ps.setInt(1, proceso.getId());
-//            ps.executeUpdate();
-//        } catch (SQLException ex) {
-//            Utilidades.manejarExcepcion("ERROR al eliminar el documento seleccionado: ", ex);
-//            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//    }
 
     public void eliminarDocumentoAnterior(String rutaArchivo) {
         String urlArchivo = "\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivo.replace("/", "\\"); // Ruta de red
@@ -836,123 +783,88 @@ public class ControlDocumentacionServicio {
         }
     }
 
-    public void migrarArchivos(Connection conexion) {
-        String carpetaDestino = "C:/xampp/htdocs/archivos/InspeccionRecibo/HojasInstruccion/";
-        File carpeta = new File(carpetaDestino);
-        if (!carpeta.exists()) {
-            carpeta.mkdirs();
-        }
-
-        try {
-            PreparedStatement ps = conexion.prepareStatement("SELECT id, nombreHJ, hojaInstruccion FROM inspeccionrecibo WHERE hojaInstruccion IS NOT NULL AND hojaInstruccion != '' ");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                int idp = rs.getInt("id");
-                byte[] documento = rs.getBytes("hojaInstruccion");
-
-                // Guarda el archivo en el sistema de archivos
-                String nombreArchivo = rs.getString("nombreHJ"); // Usa un formato adecuado
-                nombreArchivo = limpiarNombreArchivo(nombreArchivo);
-                File archivoDestino = new File(carpetaDestino + nombreArchivo);
-                Files.write(archivoDestino.toPath(), documento);
-
-                // Actualiza la ruta en la base de datos
-                PreparedStatement psUpdate = conexion.prepareStatement("UPDATE inspeccionrecibo SET rutaHojaInstruccion = ? WHERE id = ?");
-                psUpdate.setString(1, "archivos/InspeccionRecibo/HojasInstruccion/" + nombreArchivo);
-                psUpdate.setInt(2, idp);
-                psUpdate.executeUpdate();
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } catch (IOException ex) {
-            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public void eliminarProcedimiento(Connection conexion, ProcedimientosM procedimiento) {
         try {
-            PreparedStatement ps = conexion.prepareStatement("DELETE FROM docprocedimientos WHERE id = ?");
+            PreparedStatement ps = conexion.prepareStatement(DELETE_FROM_DOCPROCEDIMIENTOS_WHERE_ID);
             ps.setInt(1, procedimiento.getId());
             ps.executeUpdate();
 
-            ps = conexion.prepareStatement("DELETE FROM documentos WHERE idProcedimiento = ?");
+            ps = conexion.prepareStatement(DELETE_FROM_DOCUMENTOS_WHERE_IDP);
             ps.setInt(1, procedimiento.getId());
             ps.executeUpdate();
 
-            ps = conexion.prepareStatement("DELETE FROM formatos WHERE idProcedimiento = ?");
+            ps = conexion.prepareStatement(DELETE_FROM_FORMATOS_WHERE_IDP);
             ps.setInt(1, procedimiento.getId());
             ps.executeUpdate();
         } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al eliminar el procedimiento: ", ex);
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
     public boolean existeDocumento(Connection conexion, int id, String tipo) {
-        String sql = "SELECT COUNT(*) FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
-        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COUNT_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO)) {
             consulta.setInt(1, id);
             consulta.setString(2, tipo);
 
             try (ResultSet resultado = consulta.executeQuery()) {
                 if (resultado.next()) {
-                    return resultado.getInt(1) > 0; // Verifica si el conteo es mayor a 0
+                    return resultado.getInt(1) > 0;
                 }
             }
         } catch (SQLException ex) {
-            Utilidades.manejarExcepcion("Error al verificar la existencia del manual: ", ex);
+            Utilidades.manejarExcepcion("ERROR al verificar la existencia del manual: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return false; // Retorna false si ocurre un error o no se encuentra el manual
+        return false;
     }
 
     public boolean existeDiagramaTortuga(Connection conexion, int id) {
-        String sql = "SELECT COUNT(*) FROM docprocesos WHERE id = ? AND rutaArchivo != ''";
-        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COUNT_FROM_DOCPROCESOS_WHERE_ID_AND_RUTA_ARCHIVO)) {
             consulta.setInt(1, id);
 
             try (ResultSet resultado = consulta.executeQuery()) {
                 if (resultado.next()) {
-                    return resultado.getInt(1) > 0; // Verifica si el conteo es mayor a 0
+                    return resultado.getInt(1) > 0;
                 }
             }
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al verificar la existencia del diagrama de tortuga: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return false; // Retorna false si ocurre un error o no se encuentra el manual
+        return false;
     }
 
     public String obtenerNombreDocumento(Connection conexion, int id, String tipo) {
-        String sql = "SELECT nombre FROM documentos WHERE idProceso = ? AND tipo = ?";
-        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_NOMBRE_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO)) {
             consulta.setInt(1, id);
             consulta.setString(2, tipo);
 
             try (ResultSet resultado = consulta.executeQuery()) {
                 if (resultado.next()) {
-                    return resultado.getString("nombre"); // Usa el nombre de la columna para mayor claridad
+                    return resultado.getString("nombre");
                 }
             }
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al obtener el nombre del documento: ", ex);
-            throw new RuntimeException("Error al acceder a la base de datos", ex); // Propaga el error
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null; // Devuelve null si no se encuentra el documento
+        return null;
     }
 
     public String obtenerNombreDiagramaTortuga(Connection conexion, int id) {
-        String sql = "SELECT nombreDt FROM docprocesos WHERE id = ?";
-        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_NOMBREDT_FROM_DOCPROCESOS_WHERE_ID)) {
             consulta.setInt(1, id);
 
             try (ResultSet resultado = consulta.executeQuery()) {
                 if (resultado.next()) {
-                    return resultado.getString("nombreDt"); // Usa el nombre de la columna para mayor claridad
+                    return resultado.getString("nombreDt");
                 }
             }
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al obtener el nombre del documento: ", ex);
-            throw new RuntimeException("Error al acceder a la base de datos", ex); // Propaga el error
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null; // Devuelve null si no se encuentra el documento
+        return null;
     }
 }

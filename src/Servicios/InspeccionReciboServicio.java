@@ -8,23 +8,16 @@ import InspeccionRecibo.HojaInstruccionGUI2;
 import InspeccionRecibo.InspeccionReciboGUI;
 import InspeccionRecibo.ModificarIrGUI;
 import Modelos.CalibreIRM;
+import Modelos.ComposicionQuimicaM;
 import Modelos.DatosIRM;
 import Modelos.EspecificacionM;
 import Modelos.InspeccionReciboM;
+import Modelos.PropiedadMecanicaM;
 import Modelos.Usuarios;
 import java.awt.Component;
-import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Window;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,11 +37,8 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 import jnafilechooser.api.JnaFileChooser;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import swing.Button;
 
 public class InspeccionReciboServicio {
@@ -138,6 +128,7 @@ public class InspeccionReciboServicio {
         try (PreparedStatement consulta = conexion.prepareStatement(SELECT_HOJA_INSTRUCCION_BY_NO_ROLLO)) {
             consulta.setString(1, irm.getNoRollo());
             try (ResultSet rs = consulta.executeQuery()) {
+
                 String nuevaRutaHJ = null;
 
                 if (rs.next()) { // Obtiene la hoja de instrucción si existe
@@ -146,7 +137,6 @@ public class InspeccionReciboServicio {
                         nuevaRutaHJ = excel.editarHojaInstruccion(hojaInstruccion, irm);
                     }
                 }
-
                 insertarInspeccion(conexion, irm, nuevaRutaHJ); // Inserta el nuevo registro
             }
         } catch (SQLException ex) {
@@ -498,7 +488,6 @@ public class InspeccionReciboServicio {
 
     public String abrirHojaInstruccionGUI2(Usuarios usr, String rutaArchivo, InspeccionReciboM irm) {
         String rutaArchivo2 = null;
-
         HojaInstruccionGUI2 hjGUI = new HojaInstruccionGUI2(usr, rutaArchivo, irm);
         mostrarVentana(hjGUI);
         rutaArchivo2 = hjGUI.getRutaArchivo();
@@ -513,8 +502,6 @@ public class InspeccionReciboServicio {
         frame.setVisible(true);
         frame.setLocationRelativeTo(null);
     }
-
-    
 
     public String obtenerValorComboBox(JComboBox<String> comboBox) {
         return comboBox.getSelectedItem() != null ? comboBox.getSelectedItem().toString() : "";
@@ -700,8 +687,6 @@ public class InspeccionReciboServicio {
         return Calendar.getInstance().get(Calendar.YEAR);
     }
 
-    
-
     public int contarRegistros(Connection conexion, String filtro) {
         String sql;
         boolean filtrar = filtro != null && !filtro.trim().isEmpty();
@@ -732,5 +717,61 @@ public class InspeccionReciboServicio {
             Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 0;
+    }
+
+    final String SQL_INSERCION_DATOS_IR = "INSERT INTO datosir(fechaInspeccion, idAnchoLargo, observaciones, obsMP, noHoja, idIR) VALUES (?, ?, ?, ?, ?, ?)";
+    final String SQL_CONSULTA_PROPIEDADES_MC = "SELECT pm, valor FROM propiedadesmc WHERE especificacionTecnica = ?";
+    final String SQL_CONSULTA_COMPOSICION_QM = "SELECT cq, valor FROM composicionquimica WHERE especificacionTecnica = ?";
+
+    public void agregarDatosIR(Connection conexion, DatosIRM dirm, int id) throws SQLException {
+        try (PreparedStatement sqlInsert = conexion.prepareStatement(SQL_INSERCION_DATOS_IR)) {
+            sqlInsert.setString(1, dirm.getFechaInspeccion());
+            sqlInsert.setInt(2, dirm.getAnchoLargo());
+            sqlInsert.setString(3, dirm.getObsMP());
+            sqlInsert.setString(4, dirm.getObservacionesRD());
+            sqlInsert.setString(5, dirm.getNoHoja());
+            sqlInsert.setInt(6, id);
+            sqlInsert.executeUpdate();
+        } catch (SQLException ex) {
+            throw new SQLException("Error al ejecutar la consulta SQL de inserción: " + ex.getMessage(), ex);
+        }
+    }
+
+    public List<PropiedadMecanicaM> obtenerPropiedadesMecanicas(Connection conexion, String espeTecnica) throws SQLException {
+        List<PropiedadMecanicaM> listaIr = new ArrayList<>(); // Se crea una nueva lista 
+        PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_PROPIEDADES_MC);
+        consulta.setString(1, espeTecnica);
+        ResultSet resultado = consulta.executeQuery();
+        while (resultado.next()) {
+            String pm = resultado.getString("pm");
+            String valor = resultado.getString("valor");
+            PropiedadMecanicaM propiedadMecanica = new PropiedadMecanicaM(espeTecnica, pm, valor);
+            listaIr.add(propiedadMecanica);
+        }
+        return listaIr;
+    }
+
+    public List<ComposicionQuimicaM> obtenerCM(Connection conexion, String espeTecnica) throws SQLException {
+        List<ComposicionQuimicaM> listaIr = new ArrayList<>(); // Se crea una nueva lista 
+        PreparedStatement consulta = conexion.prepareStatement(SQL_CONSULTA_COMPOSICION_QM);
+        consulta.setString(1, espeTecnica);
+        ResultSet resultado = consulta.executeQuery();
+        while (resultado.next()) { // Se almacena la información encontrada
+            String cq = resultado.getString("cq");
+            String valor = resultado.getString("valor");
+            ComposicionQuimicaM composicionQuimica = new ComposicionQuimicaM(espeTecnica, cq, valor);
+            listaIr.add(composicionQuimica);
+        }
+        return listaIr;
+    }
+
+    public void agregarFilasTabla(DefaultTableModel tableModel, int size) {
+        int numCeldas = size;
+        int numFilas = tableModel.getRowCount();
+        if (numFilas < numCeldas) {
+            for (int i = numFilas; i < numCeldas; i++) {
+                tableModel.addRow(new Object[tableModel.getColumnCount()]);
+            }
+        }
     }
 }

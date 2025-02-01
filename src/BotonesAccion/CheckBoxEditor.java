@@ -1,4 +1,4 @@
-package Servicios;
+package BotonesAccion;
 
 import java.awt.Component;
 import javax.swing.DefaultCellEditor;

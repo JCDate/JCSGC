@@ -1,6 +1,6 @@
 package componente;
 
-import Modelos.Hash;
+import Servicios.Hash;
 import Modelos.Usuarios;
 import Servicios.SqlUsuarios;
 import swing.Button;

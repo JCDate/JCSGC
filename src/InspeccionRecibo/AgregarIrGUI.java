@@ -338,7 +338,9 @@ public class AgregarIrGUI extends javax.swing.JFrame {
 
     private void procesarArchivoExcel(String noHoja) {
         try {
-            File archivoSeleccionado = new File(rutaArchivoHojaInstruccion);
+            
+            File archivoSeleccionado = new File("\\\\" + Utilidades.SERVIDOR + "/archivos/inspeccionrecibo/hojasinstruccion/" + txtNombreHojaInstruccion.getText());
+
             XSSFWorkbook workbook;
             try (FileInputStream fis = new FileInputStream(archivoSeleccionado)) {
                 workbook = new XSSFWorkbook(fis); // Leer el archivo de excel
@@ -354,7 +356,6 @@ public class AgregarIrGUI extends javax.swing.JFrame {
             if (irs.existeNoRollo(conexion, txtNoRollo.getText())) {
                 JOptionPane.showMessageDialog(this, "Rollo registrado previamente");
             }
-
             guardarDatos();
 
         } catch (IOException e) {
@@ -428,7 +429,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
                 Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 textField.setText(nombreArchivo);
-                rutaArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
+                rutaArchivo = "archivos\\InspeccionRecibo\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
             } catch (IOException ex) {
                 Utilidades.manejarExcepcion("ERROR al guardar el archivo: ", ex);
                 Logger.getLogger(AgregarIrGUI.class.getName()).log(Level.SEVERE, null, ex);

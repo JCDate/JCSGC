@@ -3,7 +3,6 @@ package Documentos;
 import BotonesAccion.TableActionCellEditor;
 import BotonesAccion.TableActionCellRender;
 import BotonesAccion.TableActionEvent;
-import Modelos.Iconos;
 import Modelos.SolicitudesM;
 import Modelos.Usuarios;
 import Servicios.Conexion;
@@ -18,11 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import swing.Button;
 
 public class SolicitudesGUI extends javax.swing.JFrame {
 
@@ -36,13 +33,13 @@ public class SolicitudesGUI extends javax.swing.JFrame {
     public SolicitudesGUI() {
         initComponents();
     }
-    
+
     public SolicitudesGUI(Usuarios usuario) {
         this.usuario = usuario;
         this.listaSolicitudes = new ArrayList<>();
         inicializarVentanaYComponentes();
     }
-    
+
     @Override
     public Image getIconImage() { // Método para cambiar el icono en la barra del titulo
         Image retValue = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("jc/img/jc.png"));
@@ -120,12 +117,12 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         cerrarVentana();
         cds.abrirControlDocumentosGUI(usuario);
     }//GEN-LAST:event_btnCerrarActionPerformed
-    
+
     public void cerrarVentana() {
         SolicitudesGUI.this.dispose();
         Conexion.getInstance().desconectar(conexion);
     }
-    
+
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
@@ -136,20 +133,20 @@ public class SolicitudesGUI extends javax.swing.JFrame {
             Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void configurarVentana() {
         initComponents();
         this.setResizable(false);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
-    
+
     private void inicializarAtributos() throws SQLException {
         this.conexion = Conexion.getInstance().conectar();
         this.cds = new ControlDocumentacionServicio();
         this.modeloTabla = (DefaultTableModel) tblSolicitudes.getModel();
     }
-    
+
     private void inicializarTabla() {
         try {
             listaSolicitudes = cds.obtenerSolicitudes(conexion);
@@ -160,35 +157,35 @@ public class SolicitudesGUI extends javax.swing.JFrame {
             Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void configurarAccionesTabla(boolean btnEditar, boolean btnEliminar, boolean btnVer, boolean btnRegistro, boolean btnAceptar, boolean btnRechazar) {
         TableActionEvent event = crearTableActionEvent();
         tblSolicitudes.getColumnModel().getColumn(9).setCellRenderer(new TableActionCellRender(btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRechazar));
         tblSolicitudes.getColumnModel().getColumn(9).setCellEditor(new TableActionCellEditor(event, btnEditar, btnEliminar, btnVer, btnRegistro, btnAceptar, btnRechazar));
     }
-    
+
     private TableActionEvent crearTableActionEvent() {
         return new TableActionEvent() {
             @Override
             public void onEdit(int row) {
                 // Nada ...
             }
-            
+
             @Override
             public void onDelete(int row) {
                 // Nada ...
             }
-            
+
             @Override
             public void onView(int row) {
-                cds.abrirDocumento(listaSolicitudes.get(row).getRutaArchivo());
+                Utilidades.abrirDocumento(listaSolicitudes.get(row).getRutaArchivo());
             }
-            
+
             @Override
             public void onOpenRecords(int row) {
                 // Nada ...
             }
-            
+
             @Override
             public void onAccept(int row) {
                 try {
@@ -198,7 +195,7 @@ public class SolicitudesGUI extends javax.swing.JFrame {
                     Logger.getLogger(SolicitudesGUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            
+
             @Override
             public void onReject(int row) {
                 try {
@@ -210,16 +207,16 @@ public class SolicitudesGUI extends javax.swing.JFrame {
             }
         };
     }
-    
+
     public void mostrarDatosTabla() {
         limpiarTabla();
         llenarTabla();
     }
-    
+
     private void limpiarTabla() {
         modeloTabla.setRowCount(0);
     }
-    
+
     private void llenarTabla() {
         if (listaSolicitudes != null && !listaSolicitudes.isEmpty()) {
             listaSolicitudes.forEach(solicitud -> {
@@ -228,12 +225,8 @@ public class SolicitudesGUI extends javax.swing.JFrame {
             });
         }
     }
-    
+
     private Object[] crearFila(SolicitudesM solicitud) {
-        Button btnAceptar = new Button();
-        Button btnRechazar = new Button();
-        btnAceptar.setIcon(Iconos.ICONO_ACEPTAR);
-        btnRechazar.setIcon(Iconos.ICONO_RECHAZAR);
         Object fila[] = new Object[12];
         fila[0] = solicitud.getCodigo();
         fila[1] = solicitud.getProceso();
@@ -247,12 +240,12 @@ public class SolicitudesGUI extends javax.swing.JFrame {
         fila[9] = "OPERACIONES";
         return fila;
     }
-    
+
     private void aprobarSolicitud(int filaSeleccionada) throws SQLException, ClassNotFoundException {
         int respuestaA = JOptionPane.showConfirmDialog(this,
                 "LA ACTUALIZACIÓN DE DOCUMENTOS SERÁ IRREVERSIBLE, ¿ESTÁS DE ACUERDO?",
                 "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-        
+
         if (respuestaA == JOptionPane.YES_OPTION) {
             cds.aceptarSolicitud(conexion, listaSolicitudes.get(filaSeleccionada));
             JOptionPane.showMessageDialog(null, "LA SOLICITUD DE CAMBIO FUE APROBADA");
@@ -260,12 +253,12 @@ public class SolicitudesGUI extends javax.swing.JFrame {
             cds.abrirSolicitudCambioGUI(usuario);
         }
     }
-    
+
     private void eliminarSolicitud(int id) throws SQLException {
         int respuestaE = JOptionPane.showConfirmDialog(this,
                 "LA INFORMACIÓN DE LA SOLICITUD DE CAMBIO SERÁ ELIMINADA, ¿ESTÁS DE ACUERDO?",
                 "ALERTA", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-        
+
         if (respuestaE == JOptionPane.YES_OPTION) {
             try {
                 cds.eliminarSolicitud(conexion, id);

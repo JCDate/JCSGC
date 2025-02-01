@@ -144,12 +144,12 @@ public class AgregarDocumentosGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSeleccionarArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSeleccionarArchivoActionPerformed
-        File archivoSeleccionado = cds.seleccionarArchivo(this);
+        File archivoSeleccionado = Utilidades.seleccionarArchivo(this);
         if (archivoSeleccionado != null) {
             try {
                 String nombreArchivo = archivoSeleccionado.getName(); // Obtener el nombre del archivo
                 String tipoArchivo = cbxTipoArchivo.getSelectedItem().toString();
-                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\"+Utilidades.SERVIDOR+"\\archivos\\ControlDocumentos\\documentos\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
+                Files.copy(archivoSeleccionado.toPath(), Paths.get("\\\\" + Utilidades.SERVIDOR + "\\archivos\\ControlDocumentos\\documentos\\" + archivoSeleccionado.getName()), StandardCopyOption.REPLACE_EXISTING); // Copiar el archivo al servidor
                 txtNombreArchivo.setText(nombreArchivo);
                 rutaArchivo = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\ControlDocumentos\\" + tipoArchivo + "\\" + archivoSeleccionado.getName();
             } catch (IOException ex) {

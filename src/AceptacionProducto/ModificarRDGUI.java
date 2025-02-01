@@ -189,7 +189,7 @@ public class ModificarRDGUI extends javax.swing.JFrame {
     }
 
     private void definirValoresPredeterminados() {
-        Date fecha = aps.formatearFecha(aceptacionPc3.getFecha());
+        Date fecha = Utilidades.formatearFecha(aceptacionPc3.getFecha());
         dchFecha.setDate(fecha);
 
         txtValor.setText(aceptacionPc3.getValor());
@@ -214,7 +214,7 @@ public class ModificarRDGUI extends javax.swing.JFrame {
 
     private void actualizarDatos() {
         Date fechaSeleccionada = dchFecha.getDate();
-        String fecha = aps.formatearFecha(fechaSeleccionada);
+        String fecha = Utilidades.formatearFecha(fechaSeleccionada);
 
         String valor = txtValor.getText();
         String noOp = txtNoOperacion.getText();

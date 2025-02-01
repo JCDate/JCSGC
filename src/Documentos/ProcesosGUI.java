@@ -176,7 +176,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
         if (proceso.getRutaArchivo().isEmpty() || proceso.getRutaArchivo() == null) {
             JOptionPane.showMessageDialog(this, "NO SE ENCONTRÓ EL ARCHIVO BUSCADO");
         } else {
-            cds.abrirDocumento(proceso.getRutaArchivo());
+            Utilidades.abrirDocumento(proceso.getRutaArchivo());
         }
     }//GEN-LAST:event_btnDiagramaTortugaActionPerformed
 
@@ -186,9 +186,8 @@ public class ProcesosGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSolicitudCambioActionPerformed
 
     private void btnNuevoProcesosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoProcesosActionPerformed
-//        cerrarVentana();
-//        cds.abrirModificarInfoGUI(usuario, proceso);
-        cds.migrarArchivos(conexion);
+        cerrarVentana();
+        cds.abrirModificarInfoGUI(usuario, proceso);
     }//GEN-LAST:event_btnNuevoProcesosActionPerformed
 
     private void btnModificarDTActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarDTActionPerformed
