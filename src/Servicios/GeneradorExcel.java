@@ -32,12 +32,17 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -155,7 +160,7 @@ public class GeneradorExcel {
         }
     }
 
-    private void crearCeldaConEstilo(Row fila, int columna, String valor, XSSFWorkbook workbook) {
+    private void crearCeldaConEstilo(XSSFRow fila, int columna, String valor, XSSFWorkbook workbook) {
         XSSFCell celda = (XSSFCell) fila.createCell(columna);
         celda.setCellValue(valor);
         if (columna == 9) {
@@ -211,7 +216,7 @@ public class GeneradorExcel {
                 mesActual = mes;
             }
 
-            Row fila2 = hojaExcel.getRow(indexFila) == null ? hojaExcel.createRow(indexFila) : hojaExcel.getRow(indexFila);
+            XSSFRow fila2 = hojaExcel.getRow(indexFila) == null ? hojaExcel.createRow(indexFila) : hojaExcel.getRow(indexFila);
 
             XSSFCell celdaFecha = (XSSFCell) fila2.createCell(10);
             celdaFecha.setCellValue(mes);
@@ -236,33 +241,33 @@ public class GeneradorExcel {
         }
     }
 
-    public String getDatosCeldas(Sheet hoja, int fila, int columna) {
-        Cell celda = hoja.getRow(fila).getCell(columna);
+    public String getDatosCeldas(XSSFSheet hoja, int fila, int columna) {
+        XSSFCell celda = hoja.getRow(fila).getCell(columna);
         return celda.getStringCellValue();
     }
 
-    public void setDatosCeldas(Sheet hoja, int row, int columna, String contenido) {
-        Row fila = hoja.getRow(row);
+    public void setDatosCeldas(XSSFSheet hoja, int row, int columna, String contenido) {
+        XSSFRow fila = hoja.getRow(row);
         if (fila == null) {
             fila = hoja.createRow(row);
         }
-        Cell celda = fila.getCell(columna);
+        XSSFCell celda = fila.getCell(columna);
         if (celda == null) {
             celda = fila.createCell(columna);
         }
         celda.setCellValue(contenido);
     }
 
-    public boolean isAceptacion(Sheet hoja1, int row, int column) {
-        Row fila = hoja1.getRow(row);
-        Cell celda = fila.getCell(column);
+    public boolean isAceptacion(XSSFSheet hoja1, int row, int column) {
+        XSSFRow fila = hoja1.getRow(row);
+        XSSFCell celda = fila.getCell(column);
         return celda.getStringCellValue().equalsIgnoreCase("√");
     }
 
     // HojaInstrucción.xlsx
     public String generarHojaInstruccion(Connection conexion, DatosIRM dirm, InspeccionReciboM irm, JTable tblAL, JTable tabla, List listaAL, List listaRD) throws IOException, SQLException, ClassNotFoundException {
         final String rutaPlantilla = "jc/doctos/HojaInstruccion.xlsx";
-        final String rutaSalida = "\\\\" + Utilidades.SERVIDOR + "\\archivos\\InspeccionRecibo\\HojasInstruccion\\";
+        final String rutaSalida = "archivos\\InspeccionRecibo\\HojasInstruccion\\";
 
         InputStream inputStream = null;
         XSSFWorkbook workbook = null;
@@ -284,10 +289,10 @@ public class GeneradorExcel {
             // Generar nombre del archivo de salida
             String numeroHoja = extraerNumeroHoja(irm.getNoHoja());
             String fechaFormateada = formato.eliminarSeparadores(dirm.getFechaInspeccion());
-            String rutaArchivoSalida = rutaSalida + "HI-" + numeroHoja + "-" + fechaFormateada + ".xlsx";
+            String rutaArchivoSalida =  "HI-" + numeroHoja + "-" + fechaFormateada + ".xlsx";
 
             // Guardar el archivo generado
-            guardarArchivoExcel(workbook, rutaArchivoSalida);
+            guardarArchivoExcel(workbook, rutaSalida + rutaArchivoSalida);
 
             return rutaArchivoSalida;
         } finally {
@@ -298,7 +303,7 @@ public class GeneradorExcel {
     }
 
     private void procesarPaginaUnoHJ(XSSFWorkbook workbook, InspeccionReciboM irm, DatosIRM dirm, List listaAL, List listaRD) {
-        Sheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro
+        XSSFSheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro
 
         String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
         numeroStr = partes[1];
@@ -325,15 +330,15 @@ public class GeneradorExcel {
 
         for (int i = 0; i < listaAL.size(); i++) { // Se imprimen los valores de ancho y largo del componente
             AnchoLargoM medida = (AnchoLargoM) listaAL.get(i);
-            Row row = sheet.getRow(numeroFila);
+            XSSFRow row = sheet.getRow(numeroFila);
             if (row == null) {
                 row = sheet.createRow(numeroFila);
             }
 
-            Cell cellAncho = row.createCell(1); // Celda para el ancho
+            XSSFCell cellAncho = row.createCell(1); // Celda para el ancho
             cellAncho.setCellValue(medida.getAncho());
 
-            Cell cellLargo = row.createCell(2); // Celda para el largo
+            XSSFCell cellLargo = row.createCell(2); // Celda para el largo
             cellLargo.setCellValue(medida.getLargo());
 
             numeroFila++;
@@ -346,40 +351,81 @@ public class GeneradorExcel {
         int numColumna = 2;
         for (int i = 0; i < listaRD.size(); i++) {
             RugosidadDurezaM medida = (RugosidadDurezaM) listaRD.get(i);
-            Row row = sheet.getRow(43);
+            XSSFRow row = sheet.getRow(43);
             if (row == null) {
                 row = sheet.createRow(43);
             }
 
-            Row row2 = sheet.getRow(44);
-            if (row == null) {
+            XSSFRow row2 = sheet.getRow(44);
+            if (row2 == null) {
                 row2 = sheet.createRow(44);
             }
 
-            Cell cellAncho = row.createCell(numColumna);
+            XSSFCell cellAncho = row.createCell(numColumna);
             cellAncho.setCellValue(medida.getRugosidad());
 
-            Cell cellLargo = row2.createCell(numColumna);
+            XSSFCell cellLargo = row2.createCell(numColumna);
             cellLargo.setCellValue(medida.getDureza());
 
-            numColumna++;
+            // Definir colores usando new XSSFColor(color, null)
+            XSSFColor colorRojo = new XSSFColor(new java.awt.Color(255, 207, 207), null);
+            XSSFColor colorVerde = new XSSFColor(new java.awt.Color(142, 255, 131), null);
 
-            cellAncho.setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
-            cellLargo.setCellStyle(formato.estiloTblAnchoLargo(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER));
+            // Crear un estilo para rugosidad
+            XSSFCellStyle estiloRugosidad = workbook.createCellStyle();
+            estiloRugosidad.setAlignment(HorizontalAlignment.CENTER);
+            estiloRugosidad.setVerticalAlignment(VerticalAlignment.CENTER);
+            estiloRugosidad.setBorderLeft(BorderStyle.THIN);
+            estiloRugosidad.setBorderBottom(BorderStyle.THIN);
+            estiloRugosidad.setBorderRight(BorderStyle.THIN);
+            estiloRugosidad.setBorderTop(BorderStyle.THIN);
+            estiloRugosidad.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Aplicar color basado en la condición de rugosidad
+            if (Double.parseDouble(medida.getRugosidad().trim()) > 58) {
+                System.out.println("Aplicando rojo a Rugosidad: " + medida.getRugosidad());
+                estiloRugosidad.setFillForegroundColor(colorRojo);
+            } else {
+                System.out.println("Aplicando verde a Rugosidad: " + medida.getRugosidad());
+                estiloRugosidad.setFillForegroundColor(colorVerde);
+            }
+            cellAncho.setCellStyle(estiloRugosidad);
+
+            // Crear un estilo independiente para dureza
+            XSSFCellStyle estiloDureza = workbook.createCellStyle();
+            estiloDureza.setAlignment(HorizontalAlignment.CENTER);
+            estiloDureza.setVerticalAlignment(VerticalAlignment.CENTER);
+            estiloDureza.setBorderLeft(BorderStyle.THIN);
+            estiloDureza.setBorderBottom(BorderStyle.THIN);
+            estiloDureza.setBorderRight(BorderStyle.THIN);
+            estiloDureza.setBorderTop(BorderStyle.THIN);
+            estiloDureza.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Aplicar color basado en la condición de dureza
+            if (Double.parseDouble(medida.getDureza()) < 35 || Double.parseDouble(medida.getDureza()) > 60) {
+                System.out.println("Aplicando rojo a Dureza: " + medida.getDureza());
+                estiloDureza.setFillForegroundColor(colorRojo);
+            } else {
+                System.out.println("Aplicando verde a Dureza: " + medida.getDureza());
+                estiloDureza.setFillForegroundColor(colorVerde);
+            }
+            cellLargo.setCellStyle(estiloDureza);
+
+            numColumna++;
         }
 
         // Aceptación/Rechazo
         int numCellAR = (dirm.getAceptacion() == 1) ? 2 : 7;
-        Row rowAR = sheet.getRow(39);
-        Cell celdaAR = rowAR.getCell(numCellAR);
+        XSSFRow rowAR = sheet.getRow(39);
+        XSSFCell celdaAR = rowAR.getCell(numCellAR);
 
-        Row row = sheet.getRow(39);
-        Cell celdaAR2 = (numCellAR == 2) ? row.getCell(7) : row.getCell(2);
+        XSSFRow row = sheet.getRow(39);
+        XSSFCell celdaAR2 = (numCellAR == 2) ? row.getCell(7) : row.getCell(2);
         celdaAR2.setCellValue("");
         celdaAR.setCellValue("√");
 
         XSSFFont fuente = formato.crearFuente(workbook, "Calibri", (short) 10, false);
-        CellStyle estilo = formato.bordeGrueso(workbook);
+        XSSFCellStyle estilo = formato.bordeGrueso(workbook);
         estilo.setFont(fuente);
 
         celdaAR2.setCellStyle(estilo);
@@ -390,7 +436,7 @@ public class GeneradorExcel {
     }
 
     private void procesarPaginaDosHJ(XSSFWorkbook workbook, Connection conexion, DatosIRM dirm, JTable tabla) throws SQLException {
-        Sheet sheet2 = workbook.getSheetAt(1);
+        XSSFSheet sheet2 = workbook.getSheetAt(1);
         workbook.setSheetName(workbook.getSheetIndex(sheet2), formato.eliminarSeparadores(dirm.getFechaInspeccion()));
 
         List<DatosFila> datosFilas = new ArrayList<>();
@@ -413,12 +459,12 @@ public class GeneradorExcel {
         String especificacionAnterior = "";
 
         XSSFFont fuente2 = formato.crearFuente(workbook, "Calibri", (short) 10, false);
-        CellStyle estilo2 = formato.bordeGrueso(workbook);
+        XSSFCellStyle estilo2 = formato.bordeGrueso(workbook);
         estilo2.setFont(fuente2);
 
-        CellStyle estilo3 = workbook.createCellStyle();
+        XSSFCellStyle estilo3 = workbook.createCellStyle();
         XSSFFont fuente3 = formato.crearFuente(workbook, "Arial", (short) 6, false);
-        estilo3.setBorderTop(HSSFCellStyle.BORDER_MEDIUM);
+        estilo3.setBorderTop(BorderStyle.MEDIUM);
         estilo3.setFont(fuente3);
 
         boolean primeraEspecificacion = true;
@@ -430,17 +476,17 @@ public class GeneradorExcel {
                 primeraEspecificacion = true;
             }
 
-            Row row2 = sheet2.getRow(numeroFilaEspecificacion);
+            XSSFRow row2 = sheet2.getRow(numeroFilaEspecificacion);
             if (row2 == null) {
                 row2 = sheet2.createRow(numeroFilaEspecificacion);
             }
 
-            CellStyle estiloCheckbox = workbook.createCellStyle();
+            XSSFCellStyle estiloCheckbox = workbook.createCellStyle();
             estiloCheckbox.setLocked(true);
 
             if (primeraEspecificacion) {
-                Cell chkCalibre = row2.createCell(4);
-                Cell cellCalibre = row2.createCell(5);
+                XSSFCell chkCalibre = row2.createCell(4);
+                XSSFCell cellCalibre = row2.createCell(5);
                 cellCalibre.setCellValue(datosFila.getCalibre().toString());
                 cellCalibre.setCellStyle(estilo3);
                 chkCalibre.setCellValue("R");
@@ -448,7 +494,7 @@ public class GeneradorExcel {
                 primeraEspecificacion = false;
             }
 
-            Cell cellCumplePropiedad = row2.createCell(10);
+            XSSFCell cellCumplePropiedad = row2.createCell(10);
             if (datosFila.getPropiedad() == null || datosFila.getPropiedad().equals("")) {
                 cellCumplePropiedad.setCellValue("");
             } else {
@@ -457,7 +503,7 @@ public class GeneradorExcel {
             }
             cellCumplePropiedad.setCellStyle(estilo2);
 
-            Cell cellCumpleComposicion = row2.createCell(13);
+            XSSFCell cellCumpleComposicion = row2.createCell(13);
             if (datosFila.getComposicion() == null || datosFila.getComposicion().equals("")) {
                 cellCumpleComposicion.setCellValue("");
             } else {
@@ -477,7 +523,7 @@ public class GeneradorExcel {
     }
 
     private void guardarArchivoExcel(XSSFWorkbook workbook, String rutaArchivoSalida) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(rutaArchivoSalida)) {
+        try (FileOutputStream fos = new FileOutputStream("\\\\" + Utilidades.SERVIDOR + "\\" + rutaArchivoSalida)) {
             workbook.write(fos);
         }
     }
@@ -491,7 +537,7 @@ public class GeneradorExcel {
             String numeroStr;
             try {
                 workbook = new XSSFWorkbook(fis);
-                Sheet hoja1 = workbook.getSheetAt(0);
+                XSSFSheet hoja1 = workbook.getSheetAt(0);
 
                 // Número de Hoja
                 String[] partes = irm.getNoHoja().split("/"); // Se divide el valor de NoHoja para solo obtener el número
@@ -509,8 +555,8 @@ public class GeneradorExcel {
                 setDatosCeldas(hoja1, 13, 7, irm.getPzKg()); // Pz/Kg
 
                 // Descripción
-                Row fila3 = hoja1.getRow(9); // Obtén la fila
-                Cell celda3 = fila3.getCell(1); // Obtén la celda en la fila
+                XSSFRow fila3 = hoja1.getRow(9); // Obtén la fila
+                XSSFCell celda3 = fila3.getCell(1); // Obtén la celda en la fila
                 String txtTexto = celda3.getStringCellValue();
                 if (txtTexto.contains("HOJA") && irm.getpLamina().equals("CINTA")) {
                     txtTexto = txtTexto.replace("HOJA", "CINTA");
@@ -591,7 +637,7 @@ public class GeneradorExcel {
         Set<String> valoresUnicos = new HashSet<>(); // Mapa para guardar datos únicos 
 
         for (int i = 0; i < ap1m.size(); i++) {
-            Sheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro
+            XSSFSheet sheet = workbook.getSheetAt(0); // Obtén la primera hoja del libro
             AceptacionPc1 aceptacionPc1 = ap1m.get(i);
 
             // Verifica si los valores ya han sido impresos
@@ -720,7 +766,7 @@ public class GeneradorExcel {
         getProceso(mapVariablesNoOp5, columnaBase, listVariables5, filaBaseNoOp5, hoja2, fila5, workbook, 119);
     }
 
-    private void getProceso(TreeMap<String, TreeMap<String, Map<String, String>>> map, int columnaBase, List<String> listVariables, int fila, Sheet sheet2, int rows, XSSFWorkbook workbook, int filaD) {
+    private void getProceso(TreeMap<String, TreeMap<String, Map<String, String>>> map, int columnaBase, List<String> listVariables, int fila, XSSFSheet sheet2, int rows, XSSFWorkbook workbook, int filaD) {
         int tamanoEntrada2 = calcularTamanoEntrada(map); // Calcula el tamaño del mapa
         int filasNecesarias = Math.max(0, tamanoEntrada2 - 28); // Calcula si se deben agregar más filas al documento
 
@@ -729,13 +775,13 @@ public class GeneradorExcel {
         for (Map.Entry<String, TreeMap<String, Map<String, String>>> entrada1 : map.entrySet()) {
             for (Map.Entry<String, Map<String, String>> entrada2 : entrada1.getValue().entrySet()) {
                 String noOp = entrada2.getKey(); // Convertir noOp a entero
-                Row row = sheet2.getRow(fila);
+                XSSFRow row = sheet2.getRow(fila);
                 fila++; // Incrementar la fila para el próximo valor con noOp igual a 1
                 if (row != null) {
-                    Cell cellNoOp = validarCeldas(row, 0, noOp); // Número de Operación
-                    Cell cellFecha = validarCeldas(row, 1, entrada1.getKey()); // Fecha
+                    XSSFCell cellNoOp = validarCeldas(row, 0, noOp); // Número de Operación
+                    XSSFCell cellFecha = validarCeldas(row, 1, entrada1.getKey()); // Fecha
 
-                    Row variableRow = sheet2.getRow(rows);
+                    XSSFRow variableRow = sheet2.getRow(rows);
                     if (variableRow == null) {
                         variableRow = sheet2.createRow(rows);
                     }
@@ -745,7 +791,7 @@ public class GeneradorExcel {
                     int celdaVar = 9; // Se comienzan a imprimir los valores de las variables
 
                     for (String variable : listVariables) {
-                        Cell variableCelda = variableRow.getCell(variableColumna);
+                        XSSFCell variableCelda = variableRow.getCell(variableColumna);
                         if (variableCelda == null) { // Si la celda es nula...
                             variableCelda = variableRow.createCell(variableColumna); // Si la celda es nula, crea una nueva celda en su lugar
 
@@ -755,22 +801,22 @@ public class GeneradorExcel {
                             sheet2.setColumnWidth(celdaVar, 1450); // Establece el ancho de la columna 0
 
                             // Crear filas y celdas
-                            Row celdaOrigen = sheet2.getRow(filaD);
-                            Cell sourceCell = celdaOrigen.getCell(10);
+                            XSSFRow celdaOrigen = sheet2.getRow(filaD);
+                            XSSFCell sourceCell = celdaOrigen.getCell(10);
 
-                            Row targetRow = sheet2.getRow(filaD);
-                            Cell targetCell = targetRow.createCell(celdaBarra);
+                            XSSFRow targetRow = sheet2.getRow(filaD);
+                            XSSFCell targetCell = targetRow.createCell(celdaBarra);
 
                             // Crear filas y celdas
-                            Row sourceRow2 = sheet2.getRow(filaD);
-                            Cell sourceCell2 = sourceRow2.getCell(9);
+                            XSSFRow sourceRow2 = sheet2.getRow(filaD);
+                            XSSFCell sourceCell2 = sourceRow2.getCell(9);
 
-                            Row targetRow2 = sheet2.getRow(filaD);
-                            Cell targetCell2 = targetRow2.createCell(celdaVar);
+                            XSSFRow targetRow2 = sheet2.getRow(filaD);
+                            XSSFCell targetCell2 = targetRow2.createCell(celdaVar);
 
                             // Crear un estilo de celda
-                            CellStyle cellStyle4 = workbook.createCellStyle();
-                            CellStyle cellStyle5 = workbook.createCellStyle();
+                            XSSFCellStyle cellStyle4 = workbook.createCellStyle();
+                            XSSFCellStyle cellStyle5 = workbook.createCellStyle();
 
                             cellStyle4.cloneStyleFrom(sourceCell.getCellStyle()); // Copia el estilo de la celda de origen
                             cellStyle5.cloneStyleFrom(sourceCell2.getCellStyle()); // Copia el estilo de la celda de origen
@@ -793,14 +839,14 @@ public class GeneradorExcel {
                     int columna = columnaBase; // Inicializar la columna en función de columnaBase
 
                     // Crear el estilo de celda fuera del bucle
-                    CellStyle cellStyle = workbook.createCellStyle();
-                    Row sourceRow = sheet2.getRow(9);
-                    Cell sourceCell = sourceRow.getCell(columnaBase);
+                    XSSFCellStyle cellStyle = workbook.createCellStyle();
+                    XSSFRow sourceRow = sheet2.getRow(9);
+                    XSSFCell sourceCell = sourceRow.getCell(columnaBase);
                     cellStyle.cloneStyleFrom(sourceCell.getCellStyle()); // Clonar el estilo de celda de origen
 
                     for (String variable : listVariables) {
-                        Cell cellVariable = row.getCell(columna);
-                        Cell cellVariable2 = row.getCell(columna + 1);
+                        XSSFCell cellVariable = row.getCell(columna);
+                        XSSFCell cellVariable2 = row.getCell(columna + 1);
 
                         // Si la celda es nula, crea una nueva celda en su lugar
                         if (cellVariable == null) {
@@ -900,12 +946,12 @@ public class GeneradorExcel {
                     String dispConcatenado = String.join("\n", valoresUnicosDisp);
 
                     // Obtener el valor actual en la celda 
-                    Cell cellNoOrden = validarCeldas(row, 2, "");
-                    Cell cellTamLote = validarCeldas(row, 3, "");
-                    Cell cellTamMta = validarCeldas(row, 4, "");
-                    Cell cellInsp = validarCeldas(row, 5, "");
-                    Cell cellTurno = validarCeldas(row, 6, "");
-                    Cell cellDisp = validarCeldas(row, 7, "");
+                    XSSFCell cellNoOrden = validarCeldas(row, 2, "");
+                    XSSFCell cellTamLote = validarCeldas(row, 3, "");
+                    XSSFCell cellTamMta = validarCeldas(row, 4, "");
+                    XSSFCell cellInsp = validarCeldas(row, 5, "");
+                    XSSFCell cellTurno = validarCeldas(row, 6, "");
+                    XSSFCell cellDisp = validarCeldas(row, 7, "");
 
                     String valorActual = cellNoOrden.getStringCellValue();
                     String valorActual2 = cellTamLote.getStringCellValue();
@@ -961,20 +1007,20 @@ public class GeneradorExcel {
         }
     }
 
-    private void agregarFilaInformacion(Sheet sheet, int fila, int columna, String valor) {
-        Row row = sheet.getRow(fila); // Obtén la fila
+    private void agregarFilaInformacion(XSSFSheet sheet, int fila, int columna, String valor) {
+        XSSFRow row = sheet.getRow(fila); // Obtén la fila
         if (row == null) {
             row = sheet.createRow(fila); // Crea la fila si no existe
         }
-        Cell cell = row.getCell(columna);
+        XSSFCell cell = row.getCell(columna);
         if (cell == null) {
             cell = row.createCell(columna); // Crea la celda si no existe
         }
         cell.setCellValue(valor); // Modifica el valor de la celda
     }
 
-    private Cell validarCeldas(Row row, int fila, String valor) {
-        Cell celda = row.getCell(fila);
+    private XSSFCell validarCeldas(XSSFRow row, int fila, String valor) {
+        XSSFCell celda = row.getCell(fila);
         if (celda == null) {
             celda = row.createCell(fila);
         }
@@ -987,8 +1033,8 @@ public class GeneradorExcel {
 
         for (int i = 1; i <= 5; i++) {
 
-            Row rowNoOps;
-            Cell cellNoOps;
+            XSSFRow rowNoOps;
+            XSSFCell cellNoOps;
 
             if (noOps.equalsIgnoreCase("IF")) {
                 rowNoOps = sheet.getRow(118);
@@ -1068,8 +1114,8 @@ public class GeneradorExcel {
     private void mostrarComponentes(XSSFSheet sheet, List<AceptacionPc1> ap1m, List<AceptacionPc3> ap3m) {
         for (int filaInfo : FILAS_INFO) {
             for (int indexColumna : COLUMNAS_COMPONENTE) {
-                Row rowComponente = sheet.getRow(filaInfo);
-                Cell cell = rowComponente.getCell(indexColumna);
+                XSSFRow rowComponente = sheet.getRow(filaInfo);
+                XSSFCell cell = rowComponente.getCell(indexColumna);
                 switch (indexColumna) {
                     case 13:
                         cell.setCellValue(ap1m.get(0).getComponente());
@@ -1116,7 +1162,7 @@ public class GeneradorExcel {
         return map.values().stream().mapToInt(TreeMap::size).sum();
     }
 
-    private void ajustarFilasNecesarias(Sheet sheet2, int fila, int filasNecesarias, int columnaBase, List<String> listVariables, int filaD, int tamanoEntrada2) {
+    private void ajustarFilasNecesarias(XSSFSheet sheet2, int fila, int filasNecesarias, int columnaBase, List<String> listVariables, int filaD, int tamanoEntrada2) {
         if (filasNecesarias > 0) { // Inserta las filas necesarias en la hoja
 
             sheet2.shiftRows(fila + 1, sheet2.getLastRowNum() + 1, filasNecesarias, true, false);
@@ -1132,11 +1178,11 @@ public class GeneradorExcel {
             fila4 += filasNecesarias;
             fila5 += filasNecesarias;
 
-            Row filaACopiar = sheet2.getRow(fila); // Obtener la fila que deseas copiar
+            XSSFRow filaACopiar = sheet2.getRow(fila); // Obtener la fila que deseas copiar
 
             for (int i = 0; i < filasNecesarias; i++) {
                 int filaNecesaria = fila + i + 1; // Fila actual
-                Row nuevaFila = sheet2.createRow(filaNecesaria);
+                XSSFRow nuevaFila = sheet2.createRow(filaNecesaria);
 
                 copiarFilaConCombinacion(sheet2, filaACopiar, nuevaFila, columnaBase, listVariables); // Copia la fila deseada con combinación
 
@@ -1145,12 +1191,12 @@ public class GeneradorExcel {
         }
     }
 
-    private void copiarFilaConCombinacion(Sheet sheet2, Row filaOrigen, Row filaNueva, int columnaBase, List<String> listVariables) {
+    private void copiarFilaConCombinacion(XSSFSheet sheet2, XSSFRow filaOrigen, XSSFRow filaNueva, int columnaBase, List<String> listVariables) {
         filaNueva.setHeight(filaOrigen.getHeight());
 
         for (Cell viejaCelda : filaOrigen) {
             int columnIndex = viejaCelda.getColumnIndex();
-            Cell nuevaCelda = filaNueva.createCell(columnIndex);
+            XSSFCell nuevaCelda = filaNueva.createCell(columnIndex);
             nuevaCelda.setCellStyle(viejaCelda.getCellStyle());
 
             if (columnIndex >= columnaBase && (columnIndex - columnaBase) % 2 == 0) {
@@ -1161,9 +1207,9 @@ public class GeneradorExcel {
         }
     }
 
-    private void setValorCeldasHojaInstruccion(Sheet sheet, int pocisionFila, int pocisionCelda, String valor) {
-        Row fila = sheet.getRow(pocisionFila);
-        Cell celda = fila.getCell(pocisionCelda);
+    private void setValorCeldasHojaInstruccion(XSSFSheet sheet, int pocisionFila, int pocisionCelda, String valor) {
+        XSSFRow fila = sheet.getRow(pocisionFila);
+        XSSFCell celda = fila.getCell(pocisionCelda);
         celda.setCellValue(valor);
     }
 }

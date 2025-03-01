@@ -1,5 +1,6 @@
 package InspeccionRecibo;
 
+import BotonesAccion.ValidatingCellEditor;
 import Modelos.AnchoLargoM;
 import Modelos.DatosIRM;
 import Modelos.InspeccionReciboM;
@@ -19,6 +20,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 
 public class HojaInstruccionGUI extends javax.swing.JFrame {
@@ -34,6 +38,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     private List<String> listaMedidas; // Lista de los diferentes medidas del calibre
     private List<RugosidadDurezaM> listaRugosidadDureza; // Lista de valores de la tabla rugosidad/dureza
     private InspeccionReciboServicio irs; // Servicios y Utilidades
+    private static boolean validando = false; // Bandera para evitar recursión
 
     public HojaInstruccionGUI() {
         initComponents();
@@ -299,6 +304,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
             configurarVentana();
             inicializarConexion();
             inicializarServicios();
+            inicializarListener();
             obtenerDatosDeArchivoXLSX();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir HojaInstruccionGUI: ", ex);
@@ -321,6 +327,74 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         this.irs = new InspeccionReciboServicio();
     }
 
+    private void inicializarListener() {
+        // Agregar un TableModelListener para validar los valores
+        tblAnchoLargo.getModel().addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if (validando) return; // Evitar recursión
+
+                int row = e.getFirstRow();
+                int column = e.getColumn();
+
+                // Validar ambas columnas (0: Ancho, 1: Largo)
+                if (column == 0 || column == 1) {
+                    try {
+                        // Obtener el valor ingresado
+                        String valorIngresadoStr = tblAnchoLargo.getModel().getValueAt(row, column).toString();
+                        valorIngresadoStr = valorIngresadoStr.replace(",", "."); // Reemplazar comas por puntos
+                        double valorIngresado = Double.parseDouble(valorIngresadoStr);
+
+                        // Obtener el rango del JComboBox
+                        String rango = (String) cbxLamina.getSelectedItem();
+                        rango = rango.replace("\"", ""); // Eliminar comillas
+                        rango = rango.replace(",", "."); // Reemplazar comas por puntos
+                        String[] partes = rango.split("±");
+                        double valorMaximo = Double.parseDouble(partes[0].trim()); // 0.0359
+                        double valorMinimo = Double.parseDouble(partes[1].trim()); // 0.0015
+
+                        // Validar el valor
+                        if (valorIngresado < valorMinimo || valorIngresado > valorMaximo) {
+                            validando = true; // Activar bandera para evitar recursión
+
+                            // Mostrar mensaje de error
+                            JOptionPane.showMessageDialog(
+                                    null,
+                                    "El valor está fuera del rango permitido (" + valorMinimo + " a " + valorMaximo + ").",
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+
+                            // Permitir al usuario seguir editando
+                            tblAnchoLargo.editCellAt(row, column);
+                            tblAnchoLargo.getSelectionModel().setSelectionInterval(row, row);
+                            tblAnchoLargo.getColumnModel().getSelectionModel().setSelectionInterval(column, column);
+
+                            validando = false; // Desactivar bandera
+                        }
+                    } catch (NumberFormatException ex) {
+                        validando = true; // Activar bandera para evitar recursión
+
+                        // Mostrar mensaje de error
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "El valor ingresado no es un número válido.",
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+
+                        // Permitir al usuario seguir editando
+                        tblAnchoLargo.editCellAt(row, column);
+                        tblAnchoLargo.getSelectionModel().setSelectionInterval(row, row);
+                        tblAnchoLargo.getColumnModel().getSelectionModel().setSelectionInterval(column, column);
+
+                        validando = false; // Desactivar bandera
+                    }
+                }
+            }
+        });
+    }
+
     private void obtenerDatosDeArchivoXLSX() {
         txtHojaInstrucciones.setText(String.valueOf(inspeccionRecibo.getNoHoja()));
         listaInspectores = irs.recuperarInspectores(conexion);
@@ -328,11 +402,11 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     }
 
     private void definirDescripcionesYMedidas() {
-        establecerFechaActual();
+        estblAnchoLargocerFechaActual();
         configurarDescripcionesYMedidas();
     }
 
-    private void establecerFechaActual() {
+    private void estblAnchoLargocerFechaActual() {
         Date fechaActual = Calendar.getInstance().getTime(); // Obtener la fecha actual
         dchFechaInspeccion.setDate(fechaActual);
     }
@@ -371,24 +445,24 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
     private void actualizarTablaAnchoLargo() {
         DefaultTableModel modeloTblAnchoLargo = (DefaultTableModel) tblAnchoLargo.getModel();
         modeloTblAnchoLargo.setRowCount(0); // Limpiar el modelo de tabla
-        
+
         listaAnchoLargo.forEach(medida -> { // Agregar filas desde las listas
             modeloTblAnchoLargo.addRow(new Object[]{medida.getAncho(), medida.getLargo()});
         });
-        
+
         modeloTblAnchoLargo.fireTableDataChanged(); // Asegurarse de que las tablas se actualicen visualmente
     }
-    
+
     private void actualizarTablaRugosidadDureza() {
         DefaultTableModel modeloTblRugosidadDureza = (DefaultTableModel) tblRugosidadDureza.getModel();
-        
+
         // Limpiar el modelo de tabla
         modeloTblRugosidadDureza.setRowCount(0);
-        
+
         listaRugosidadDureza.forEach(rd -> { // Agregar filas desde las listas
             modeloTblRugosidadDureza.addRow(new Object[]{rd.getRugosidad(), rd.getDureza()});
         });
-        
+
         modeloTblRugosidadDureza.fireTableDataChanged(); // Asegurarse de que las tablas se actualicen visualmente
     }
 
@@ -401,7 +475,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
         obtenerFecha();
         configurarDatos();
     }
-    
+
     private void obtenerFecha() {
         if (dchFechaInspeccion.getDate() != null) {
             Date fechaSeleccionada = dchFechaInspeccion.getDate();
@@ -409,7 +483,7 @@ public class HojaInstruccionGUI extends javax.swing.JFrame {
             dirm.setFechaInspeccion(fechaFormateada);
         }
     }
-    
+
     private void configurarDatos() {
         dirm.setObsMP(cbxObservacionesMP.getSelectedItem().toString());
         dirm.setObservacionesRD(txtObservacionesRD.getText());

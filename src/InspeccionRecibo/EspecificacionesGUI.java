@@ -216,9 +216,9 @@ public class EspecificacionesGUI extends JFrame {
             List rdd = rds.recuperarTodas(inspeccionRecibo.getId(), datosIR.getAnchoLargo());
 
             String HojaIns = xls.generarHojaInstruccion(conexion, datosIR, inspeccionRecibo, tblAnchoLargo, tablaEspecificacion, ald, rdd);
-            inspeccionRecibo.setNombreHojaInstruccion(HojaIns);
+            inspeccionRecibo.setNombreHojaInstruccion(HojaIns); 
             inspeccionRecibo.setRutaHojaInstruccion("archivos\\InspeccionRecibo\\HojasInstruccion\\" + HojaIns);
-            
+
             irs.subirHI(conexion, inspeccionRecibo);
             cerrarVentana();
             irs.abrirInspeccionReciboGUI(usuario);

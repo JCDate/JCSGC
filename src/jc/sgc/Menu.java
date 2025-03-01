@@ -3,7 +3,8 @@ package jc.sgc;
 import APQP.ApqpGUI;
 import AceptacionProducto.AceptacionProductoGUI;
 import Documentos.ControlDocumentosGUI;
-import InspeccionRecibo.InspeccionReciboGUI;
+import Documentos.RechazoGUI;
+import InspeccionRecibo.InspeccionReciboGUI22;
 import Modelos.Usuarios;
 import java.awt.Color;
 import java.awt.Image;
@@ -215,13 +216,16 @@ public class Menu extends javax.swing.JFrame {
     }//GEN-LAST:event_btnAceptacionProductoActionPerformed
 
     private void btnInspeccionReciboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInspeccionReciboActionPerformed
-        InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usuario);
+//        InspeccionReciboGUI22 irGUI = new InspeccionReciboGUI22(usuario);
+        InspeccionReciboGUI irGUI = new InspeccionReciboGUI(conexion, usuario);
         irGUI.setVisible(true);
     }//GEN-LAST:event_btnInspeccionReciboActionPerformed
 
     private void btnCtrlDocumentosYRegistrosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCtrlDocumentosYRegistrosActionPerformed
-        ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usuario);
-        docGUI.setVisible(true);
+//        ControlDocumentosGUI docGUI = new ControlDocumentosGUI(usuario);
+//        docGUI.setVisible(true);
+        RechazoGUI recGUI = new RechazoGUI();
+        recGUI.setVisible(true);
     }//GEN-LAST:event_btnCtrlDocumentosYRegistrosActionPerformed
 
     private void btnAPQPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAPQPActionPerformed

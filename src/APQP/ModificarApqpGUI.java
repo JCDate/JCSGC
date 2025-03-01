@@ -104,28 +104,28 @@ public class ModificarApqpGUI extends javax.swing.JFrame {
         lblTitulo.setToolTipText("");
         jPanel1.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 60, -1, -1));
 
-        lblEtapa.setFont(new java.awt.Font("Tahoma", 1, 15)); // NOI18N
-        lblEtapa.setForeground(new java.awt.Color(76, 109, 255));
+        lblEtapa.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblEtapa.setForeground(new java.awt.Color(10, 110, 255));
         lblEtapa.setText("ETAPA:");
         jPanel1.add(lblEtapa, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 130, -1, -1));
 
-        lblNO.setFont(new java.awt.Font("Tahoma", 1, 15)); // NOI18N
-        lblNO.setForeground(new java.awt.Color(76, 109, 255));
+        lblNO.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblNO.setForeground(new java.awt.Color(10, 110, 255));
         lblNO.setText("NO:");
         jPanel1.add(lblNO, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 180, -1, -1));
 
-        lblPuntosYRequerimientos.setFont(new java.awt.Font("Tahoma", 1, 15)); // NOI18N
-        lblPuntosYRequerimientos.setForeground(new java.awt.Color(76, 109, 255));
+        lblPuntosYRequerimientos.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblPuntosYRequerimientos.setForeground(new java.awt.Color(10, 110, 255));
         lblPuntosYRequerimientos.setText("PUNTOS Y REQUERIMIENTOS:");
         jPanel1.add(lblPuntosYRequerimientos, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 240, -1, -1));
 
-        lblAnalisisFactibilidad.setFont(new java.awt.Font("Tahoma", 1, 15)); // NOI18N
-        lblAnalisisFactibilidad.setForeground(new java.awt.Color(76, 109, 255));
+        lblAnalisisFactibilidad.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblAnalisisFactibilidad.setForeground(new java.awt.Color(10, 110, 255));
         lblAnalisisFactibilidad.setText("ANÁLISIS DE FACTIBILIDAD:");
         jPanel1.add(lblAnalisisFactibilidad, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 300, -1, -1));
 
-        lblEquipoGerencial.setFont(new java.awt.Font("Tahoma", 1, 15)); // NOI18N
-        lblEquipoGerencial.setForeground(new java.awt.Color(76, 109, 255));
+        lblEquipoGerencial.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblEquipoGerencial.setForeground(new java.awt.Color(10, 110, 255));
         lblEquipoGerencial.setText("EQUIPO GERENCIAL:");
         jPanel1.add(lblEquipoGerencial, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 360, -1, -1));
         jPanel1.add(txtEtapa, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 120, 350, -1));

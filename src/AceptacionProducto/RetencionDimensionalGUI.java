@@ -177,7 +177,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnPlanControlActionPerformed(evt);
             }
         });
-        jPanel1.add(btnPlanControl, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 610, 200, 40));
+        jPanel1.add(btnPlanControl, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 600, 200, 40));
 
         tblRetencionDimensional.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -352,7 +352,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnEliminarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 610, 80, 40));
+        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(1070, 600, 80, 40));
 
         btnActualizar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/actualizar.png"))); // NOI18N
         btnActualizar.addActionListener(new java.awt.event.ActionListener() {
@@ -360,7 +360,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnActualizarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnActualizar, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 610, 80, 40));
+        jPanel1.add(btnActualizar, new org.netbeans.lib.awtextra.AbsoluteConstraints(990, 600, 80, 40));
 
         btnModificar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/modificar.png"))); // NOI18N
         btnModificar.setToolTipText("");
@@ -369,7 +369,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnModificarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 610, 80, 40));
+        jPanel1.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 600, 80, 40));
 
         btnArchivoExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/excelC.png"))); // NOI18N
         btnArchivoExcel.addActionListener(new java.awt.event.ActionListener() {
@@ -377,7 +377,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
                 btnArchivoExcelActionPerformed(evt);
             }
         });
-        jPanel1.add(btnArchivoExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 610, 80, 40));
+        jPanel1.add(btnArchivoExcel, new org.netbeans.lib.awtextra.AbsoluteConstraints(1150, 600, 80, 40));
 
         jPanel2.setBackground(new java.awt.Color(32, 163, 211));
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -385,7 +385,7 @@ public class RetencionDimensionalGUI extends javax.swing.JFrame {
         paginacion1.setOpaque(false);
         jPanel2.add(paginacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 10, -1, -1));
 
-        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 560, 830, 50));
+        jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 550, 830, 50));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1250, 700));
 

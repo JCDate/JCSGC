@@ -6,6 +6,7 @@ import BotonesAccion.TableActionEvent;
 import Modelos.DocumentosM;
 import Modelos.ProcedimientosM;
 import Modelos.Usuarios;
+import Paginacion.estilo.PaginationItemRenderStyle1;
 import Servicios.Conexion;
 import Servicios.ControlDocumentacionServicio;
 import Servicios.Utilidades;
@@ -17,9 +18,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 public class ProcedimientosGUI extends javax.swing.JFrame {
 
@@ -30,6 +34,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private DefaultTableModel modeloTabla; // Definición de la estructura de la tabla
     private ControlDocumentacionServicio cds; // Listas de información de control de documentación
     private List<DocumentosM> listaDocumentos; // Listas para el control del formato
+    private TableRowSorter<DefaultTableModel> filtroTabla; // Permite filtraer y ordenar la tabla de acuerdo a los criterios definidos
 
     public ProcedimientosGUI() {
         initComponents();
@@ -67,15 +72,16 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         btnFormatos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnAgregarDocumentos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         jPanel2 = new javax.swing.JPanel();
+        paginacion1 = new Paginacion.Pagination();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         txtBuscador.setPrefixIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/find.png"))); // NOI18N
-        txtBuscador.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtBuscadorKeyTyped(evt);
+        txtBuscador.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtBuscadorActionPerformed(evt);
             }
         });
         getContentPane().add(txtBuscador, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 70, 260, 40));
@@ -144,6 +150,12 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
             }
         });
         jPanel1.add(btnAgregarDocumentos, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, 190, 50));
+
+        jPanel2.setBackground(new java.awt.Color(32, 163, 211));
+
+        paginacion1.setOpaque(false);
+        jPanel2.add(paginacion1);
+
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 420, 940, 50));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1190, 500));
@@ -166,16 +178,18 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         cds.abrirAgregarDocumentosGUI(usuario, procedimiento);
     }//GEN-LAST:event_btnAgregarDocumentosActionPerformed
 
-    private void txtBuscadorKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscadorKeyTyped
-
-    }//GEN-LAST:event_txtBuscadorKeyTyped
+    private void txtBuscadorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscadorActionPerformed
+        filtrarBusqueda();
+    }//GEN-LAST:event_txtBuscadorActionPerformed
 
     private void inicializarVentanaYComponentes() {
         try {
             configurarVentana();
             lblProcedimiento.setText("<html>PROCEDIMIENTO: <br>" + procedimiento.getProcedimiento() + "</html>");
+            configurarBuscador();
             inicializarAtributos();
-            inicializarTabla();
+            inicializarTabla(1);
+            configurarPaginacion();
         } catch (SQLException ex) {
             Utilidades.manejarExcepcion("Error al abrir ProcedimientosGUI: ", ex);
             Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -189,25 +203,35 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
+    private void configurarBuscador() {
+        txtBuscador.setPrefixIcon(new ImageIcon(getClass().getResource("/icon/find.png")));
+        txtBuscador.setHint("Buscar...");
+    }
+
     private void inicializarAtributos() throws SQLException {
         this.conexion = Conexion.getInstance().conectar();
         this.cds = new ControlDocumentacionServicio();
-        this.modeloTabla = (DefaultTableModel) tblDocumentos.getModel();
     }
 
-    private void inicializarTabla() {
+    private void inicializarTabla(int page) {
         try {
-            cargarDatosTabla();
-            configurarAccionesTabla(false, false, true, false, false, false);
-            mostrarDatosTabla();
-        } catch (SQLException ex) {
+            configurarModeloYFiltro();
+            mostrarDatosTabla(page);
+            configurarAccionesTabla(true, true, true, false, false, false);
+        } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
-            Logger.getLogger(FormatosGUI.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ProcedimientosGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void cargarDatosTabla() throws SQLException {
-        this.listaDocumentos = cds.obtenerDocumentos(conexion, procedimiento.getId());
+    private void configurarModeloYFiltro() {
+        this.modeloTabla = (DefaultTableModel) tblDocumentos.getModel();
+        this.filtroTabla = new TableRowSorter(tblDocumentos.getModel());
+        tblDocumentos.setRowSorter(filtroTabla);
+    }
+
+    private void cargarDatosTabla(int pagina, int limiteFilas, String filtro) throws SQLException {
+        this.listaDocumentos = cds.obtenerDocumentos(conexion, pagina, limiteFilas, procedimiento.getId(), filtro);
     }
 
     private void configurarAccionesTabla(boolean btnEditar, boolean btnEliminar, boolean btnVer, boolean btnRegistro, boolean btnAceptar, boolean btnRegistrar) {
@@ -253,9 +277,32 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
         };
     }
 
-    public void mostrarDatosTabla() {
+    private void filtrarBusqueda() {
+        String textoBusqueda = txtBuscador.getText();
+
+        if (textoBusqueda == null || textoBusqueda.trim().isEmpty()) {
+            filtroTabla.setRowFilter(null);
+            return;
+        }
+
+        RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter("(?i)" + textoBusqueda, 0, 2);
+        filtroTabla.setRowFilter(rowFilter);
+    }
+
+    public void mostrarDatosTabla(int pagina) throws SQLException, ClassNotFoundException {
         limpiarTabla();
+        String filtro = txtBuscador.getText();
+        int limiteFilas = 7; // Cantidad de Filas por página
+        int cantidad = cds.contarDocumentos(conexion, procedimiento.getIdp(), filtro); // Obtener la cantidad total de registros
+        int paginasTotales = (int) Math.ceil((double) cantidad / limiteFilas);
+        cargarDatosTabla(pagina, limiteFilas, filtro);
         llenarTabla();
+        paginacion1.setPagegination(pagina, paginasTotales);
+    }
+
+    private void configurarPaginacion() {
+        paginacion1.addEventPagination(pagina -> inicializarTabla(pagina));
+        paginacion1.setPaginationItemRender(new PaginationItemRenderStyle1());
     }
 
     private void limpiarTabla() {
@@ -335,6 +382,7 @@ public class ProcedimientosGUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblJCIcono;
     private javax.swing.JLabel lblProcedimiento;
+    private Paginacion.Pagination paginacion1;
     private javax.swing.JTable tblDocumentos;
     private swing.TextField txtBuscador;
     // End of variables declaration//GEN-END:variables

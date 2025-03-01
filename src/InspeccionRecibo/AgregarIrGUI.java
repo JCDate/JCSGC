@@ -27,11 +27,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class AgregarIrGUI extends javax.swing.JFrame {
-
+    
     // Atributos
     private Usuarios usuario; // Usuario autenticado en la aplicación
     private Connection conexion; // Conexión a la Base de Datos
@@ -344,7 +344,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
             XSSFWorkbook workbook;
             try (FileInputStream fis = new FileInputStream(archivoSeleccionado)) {
                 workbook = new XSSFWorkbook(fis); // Leer el archivo de excel
-                Sheet hoja1 = workbook.getSheetAt(0); // Se obtiene la primera hoja del archivo
+                XSSFSheet hoja1 = workbook.getSheetAt(0); // Se obtiene la primera hoja del archivo
                 excel.setDatosCeldas(hoja1, 5, 2, noHoja); // Se modifica 
                 cargarDatosDesdeExcel(hoja1);
             }
@@ -366,7 +366,7 @@ public class AgregarIrGUI extends javax.swing.JFrame {
         }
     }
 
-    private void cargarDatosDesdeExcel(Sheet hoja1) {
+    private void cargarDatosDesdeExcel(XSSFSheet hoja1) {
         DataFormatter formatter = new DataFormatter();
         Cell celdaFechaFactura = hoja1.getRow(9).getCell(8);
         String formatoFecha = formatter.formatCellValue(celdaFechaFactura);

@@ -70,7 +70,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         lblJCIcono = new javax.swing.JLabel();
-        lblTitulo = new javax.swing.JLabel();
+        lblProceso = new javax.swing.JLabel();
         btnCerrar = new swing.Button(new Color(255, 76, 76),new Color(255, 50, 50));
         jScrollPane1 = new javax.swing.JScrollPane();
         tblProcedimientos = new javax.swing.JTable();
@@ -78,6 +78,16 @@ public class ProcesosGUI extends javax.swing.JFrame {
         btnSolicitudCambio = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnNuevoProcesos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
         btnModificarDT = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
+        lblNo = new javax.swing.JLabel();
+        lblEncargado = new javax.swing.JLabel();
+        lblRevision = new javax.swing.JLabel();
+        lblCodigo = new javax.swing.JLabel();
+        lblNoProceso = new javax.swing.JLabel();
+        lblEncargadoProceso = new javax.swing.JLabel();
+        lblRevisionProceso = new javax.swing.JLabel();
+        lblCodigoProceso = new javax.swing.JLabel();
+        lblNombreProceso = new javax.swing.JLabel();
+        btnEditarDatos = new swing.Button(new Color(255, 214, 125),new Color(255, 200, 81));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImage(getIconImage());
@@ -91,10 +101,10 @@ public class ProcesosGUI extends javax.swing.JFrame {
         lblJCIcono.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/jcLogo.png"))); // NOI18N
         jPanel1.add(lblJCIcono, new org.netbeans.lib.awtextra.AbsoluteConstraints(5, 5, -1, -1));
 
-        lblTitulo.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
-        lblTitulo.setForeground(new java.awt.Color(10, 110, 255));
-        lblTitulo.setText("PROCESO: ");
-        jPanel1.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 60, -1, -1));
+        lblProceso.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
+        lblProceso.setForeground(new java.awt.Color(2, 75, 181));
+        lblProceso.setText("PROCESO: ");
+        jPanel1.add(lblProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 20, -1, -1));
 
         btnCerrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCerrar.setForeground(new java.awt.Color(255, 255, 255));
@@ -112,7 +122,7 @@ public class ProcesosGUI extends javax.swing.JFrame {
 
             },
             new String [] {
-                "NO", "CÓDIGO", "REVISIÓN", "PROCESO", "DUEÑO(A) DE PROCESO", "OPERACIONES"
+                "NO", "CÓDIGO", "REVISIÓN", "PROCESO", "DUEÑO(A) DE PROCEDIMIENTO", "OPERACIONES"
             }
         ));
         tblProcedimientos.setRowHeight(50);
@@ -162,6 +172,62 @@ public class ProcesosGUI extends javax.swing.JFrame {
         });
         jPanel1.add(btnModificarDT, new org.netbeans.lib.awtextra.AbsoluteConstraints(990, 100, 250, -1));
 
+        lblNo.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
+        lblNo.setForeground(new java.awt.Color(2, 75, 181));
+        lblNo.setText("NO.");
+        jPanel1.add(lblNo, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 20, -1, -1));
+
+        lblEncargado.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
+        lblEncargado.setForeground(new java.awt.Color(2, 75, 181));
+        lblEncargado.setText("DUEÑO(A) DE PROCESO:");
+        jPanel1.add(lblEncargado, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 110, -1, 20));
+
+        lblRevision.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
+        lblRevision.setForeground(new java.awt.Color(2, 75, 181));
+        lblRevision.setText("REVISIÓN:");
+        jPanel1.add(lblRevision, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 50, -1, -1));
+
+        lblCodigo.setFont(new java.awt.Font("Wide Latin", 1, 14)); // NOI18N
+        lblCodigo.setForeground(new java.awt.Color(2, 75, 181));
+        lblCodigo.setText("CÓDIGO:");
+        jPanel1.add(lblCodigo, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 80, -1, -1));
+
+        lblNoProceso.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblNoProceso.setForeground(new java.awt.Color(10, 110, 255));
+        lblNoProceso.setText("1");
+        jPanel1.add(lblNoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 18, -1, -1));
+
+        lblEncargadoProceso.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblEncargadoProceso.setForeground(new java.awt.Color(10, 110, 255));
+        lblEncargadoProceso.setText("ENCARGADO(A)");
+        jPanel1.add(lblEncargadoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 110, -1, -1));
+
+        lblRevisionProceso.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblRevisionProceso.setForeground(new java.awt.Color(10, 110, 255));
+        lblRevisionProceso.setText("Rev. Proceso");
+        jPanel1.add(lblRevisionProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 48, -1, -1));
+
+        lblCodigoProceso.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblCodigoProceso.setForeground(new java.awt.Color(10, 110, 255));
+        lblCodigoProceso.setText("MT-00");
+        lblCodigoProceso.setToolTipText("");
+        jPanel1.add(lblCodigoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 78, -1, -1));
+
+        lblNombreProceso.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lblNombreProceso.setForeground(new java.awt.Color(10, 110, 255));
+        lblNombreProceso.setText("NombreProceso");
+        jPanel1.add(lblNombreProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 18, -1, -1));
+
+        btnEditarDatos.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        btnEditarDatos.setForeground(new java.awt.Color(255, 255, 255));
+        btnEditarDatos.setText("EDITAR DATOS");
+        btnEditarDatos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditarDatosActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnEditarDatos, new org.netbeans.lib.awtextra.AbsoluteConstraints(810, 108, 160, -1));
+
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1260, 570));
 
         pack();
@@ -195,11 +261,16 @@ public class ProcesosGUI extends javax.swing.JFrame {
         cds.abrirModificarArchivosGUI(usuario, proceso);
     }//GEN-LAST:event_btnModificarDTActionPerformed
 
+    private void btnEditarDatosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarDatosActionPerformed
+        cerrarVentana();
+        cds.abrirEditarDatosGUI(usuario, proceso);
+    }//GEN-LAST:event_btnEditarDatosActionPerformed
+
     private void inicializarVentanaYComponentes() {
         configurarVentana();
         inicializarAtributos();
         configurarVisibilidadBoton();
-        lblTitulo.setText("PROCESO: " + proceso.getProceso());
+        cargarDatosProceso();
         inicializarTabla();
     }
 
@@ -221,6 +292,25 @@ public class ProcesosGUI extends javax.swing.JFrame {
         } else {
             btnSolicitudCambio.setVisible(false);
         }
+
+        if (cds.esUsuarioAutorizado(usuario)) {
+            btnModificarDT.setVisible(true);
+            btnEditarDatos.setVisible(true);
+            btnNuevoProcesos.setVisible(true);
+        } else {
+            btnModificarDT.setVisible(false);
+            btnEditarDatos.setVisible(false);
+            btnNuevoProcesos.setVisible(false);
+        }
+
+    }
+
+    private void cargarDatosProceso() {
+        lblNoProceso.setText(proceso.getNo());
+        lblNombreProceso.setText(proceso.getProceso());
+        lblRevisionProceso.setText(proceso.getRevision());
+        lblCodigoProceso.setText(proceso.getCodigo());
+        lblEncargadoProceso.setText(proceso.getEncargado());
     }
 
     private void inicializarTabla() {
@@ -354,13 +444,23 @@ public class ProcesosGUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnDiagramaTortuga;
+    private javax.swing.JButton btnEditarDatos;
     private javax.swing.JButton btnModificarDT;
     private javax.swing.JButton btnNuevoProcesos;
     private javax.swing.JButton btnSolicitudCambio;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblCodigo;
+    private javax.swing.JLabel lblCodigoProceso;
+    private javax.swing.JLabel lblEncargado;
+    private javax.swing.JLabel lblEncargadoProceso;
     private javax.swing.JLabel lblJCIcono;
-    private javax.swing.JLabel lblTitulo;
+    private javax.swing.JLabel lblNo;
+    private javax.swing.JLabel lblNoProceso;
+    private javax.swing.JLabel lblNombreProceso;
+    private javax.swing.JLabel lblProceso;
+    private javax.swing.JLabel lblRevision;
+    private javax.swing.JLabel lblRevisionProceso;
     private javax.swing.JTable tblProcedimientos;
     // End of variables declaration//GEN-END:variables
 }

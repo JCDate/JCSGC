@@ -3,7 +3,7 @@ package AceptacionProducto;
 import BotonesAccion.TableActionCellEditor;
 import BotonesAccion.TableActionCellRender;
 import BotonesAccion.TableActionEvent;
-import InspeccionRecibo.InspeccionReciboGUI;
+import InspeccionRecibo.InspeccionReciboGUI22;
 import Modelos.AceptacionProductoM;
 import Modelos.Usuarios;
 import Paginacion.estilo.PaginationItemRenderStyle1;
@@ -212,7 +212,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
             configurarAccionesTabla();
         } catch (SQLException | ClassNotFoundException ex) {
             Utilidades.manejarExcepcion("Error al inicializar la tabla: ", ex);
-            Logger.getLogger(InspeccionReciboGUI.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(InspeccionReciboGUI22.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -314,7 +314,7 @@ public class AceptacionProductoGUI extends javax.swing.JFrame {
             return;
         }
 
-        RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(textoBusqueda, 0);
+        RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter(textoBusqueda, 0, 2);
         filtroTabla.setRowFilter(rowFilter);
     }
 

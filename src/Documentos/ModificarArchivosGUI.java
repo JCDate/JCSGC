@@ -43,6 +43,8 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
     public ModificarArchivosGUI(Usuarios usuario, DocumentosM documento, String carpeta) {
         this.usuario = usuario;
         this.documento = documento;
+        System.out.println("documento: "+documento.getIdProcedimiento());
+        System.out.println("documento proceso: "+documento.getIdProceso());
         this.carpeta = carpeta;
         this.tipoOperacion = "documento";
         inicializarVentanaYComponentes();
@@ -157,7 +159,7 @@ public class ModificarArchivosGUI extends javax.swing.JFrame {
         } else if (proceso != null) {
             idProceso = proceso.getId();
         } else {
-            idProceso = documento.getIdProceso();
+            idProceso = documento.getIdProcedimiento();
         }
 
         cerrarVentana();

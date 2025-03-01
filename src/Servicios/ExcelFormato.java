@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
@@ -36,20 +36,20 @@ public class ExcelFormato {
     public XSSFCellStyle bordeSencillo(XSSFWorkbook workbook) {
         XSSFCellStyle estiloborde = workbook.createCellStyle();
         estiloborde.cloneStyleFrom(alinearContenido(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Copia las propiedades de estilo del método alinear
-        estiloborde.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        estiloborde.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        estiloborde.setBorderLeft(HSSFCellStyle.BORDER_THIN);
-        estiloborde.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        estiloborde.setBorderTop(BorderStyle.THIN);
+        estiloborde.setBorderBottom(BorderStyle.THIN);
+        estiloborde.setBorderLeft(BorderStyle.THIN);
+        estiloborde.setBorderRight(BorderStyle.THIN);
         return estiloborde;
     }
 
     public XSSFCellStyle bordeGrueso(XSSFWorkbook workbook) {
         XSSFCellStyle estiloBordeGrueso = workbook.createCellStyle();
         estiloBordeGrueso.cloneStyleFrom(alinearContenido(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Copia las propiedades de estilo del método alinear
-        estiloBordeGrueso.setBorderTop(HSSFCellStyle.BORDER_MEDIUM);
-        estiloBordeGrueso.setBorderBottom(HSSFCellStyle.BORDER_MEDIUM);
-        estiloBordeGrueso.setBorderLeft(HSSFCellStyle.BORDER_MEDIUM);
-        estiloBordeGrueso.setBorderRight(HSSFCellStyle.BORDER_MEDIUM);
+        estiloBordeGrueso.setBorderTop(BorderStyle.MEDIUM);
+        estiloBordeGrueso.setBorderBottom(BorderStyle.MEDIUM);
+        estiloBordeGrueso.setBorderLeft(BorderStyle.MEDIUM);
+        estiloBordeGrueso.setBorderRight(BorderStyle.MEDIUM);
         return estiloBordeGrueso;
     }
 
@@ -67,10 +67,11 @@ public class ExcelFormato {
     public XSSFCellStyle estiloCeldas(XSSFWorkbook workbook, HorizontalAlignment alineacionHorizontal, VerticalAlignment alineacionVertical) {
         // Se crea un nuevo estilo para los encabezados
         XSSFCellStyle estiloCelda = workbook.createCellStyle();
-        XSSFColor greyColor = new XSSFColor(new java.awt.Color(242, 243, 244));
+        XSSFColor colorGris = new XSSFColor();
+        colorGris.setRGB(new byte[]{(byte) 242, (byte) 243, (byte) 244}); 
         estiloCelda.cloneStyleFrom(alinearContenido(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Copia las propiedades de estilo del método alinear
         estiloCelda.cloneStyleFrom(bordeSencillo(workbook));
-        estiloCelda.setFillForegroundColor(greyColor);
+        estiloCelda.setFillForegroundColor(colorGris);
         estiloCelda.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         return estiloCelda;
     }
@@ -78,7 +79,8 @@ public class ExcelFormato {
     public XSSFCellStyle estiloEstatus(XSSFWorkbook workbook, HorizontalAlignment alineacionHorizontal, VerticalAlignment alineacionVertical, Color color) {
         // Se crea un estilo para la celda de Estatus
         XSSFCellStyle estiloCeldaEstatus = workbook.createCellStyle();
-        XSSFColor xssfColor = new XSSFColor(color);
+        XSSFColor xssfColor = new XSSFColor();
+        xssfColor.setRGB(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()}); 
         estiloCeldaEstatus.cloneStyleFrom(alinearContenido(workbook, HorizontalAlignment.CENTER, VerticalAlignment.CENTER)); // Copia las propiedades de estilo del método alinear
         estiloCeldaEstatus.cloneStyleFrom(bordeSencillo(workbook));
         estiloCeldaEstatus.setFillForegroundColor(xssfColor);
@@ -111,9 +113,9 @@ public class ExcelFormato {
         cellStyle.setWrapText(saltoLinea); // Permite saltos de línea
 
         // Crear un margen en la parte superior
-        cellStyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        cellStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
-        cellStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
+        cellStyle.setBorderTop(BorderStyle.THIN);
+        cellStyle.setAlignment(HorizontalAlignment.CENTER);
+        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
         cellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
     }
 
@@ -124,8 +126,8 @@ public class ExcelFormato {
         estiloCheckmark.setFont(font);
         estiloCheckmark.setAlignment(HorizontalAlignment.CENTER); // Establecer la alineación horizontal
         estiloCheckmark.setVerticalAlignment(VerticalAlignment.CENTER); // Establecer la alineación vertical
-        estiloCheckmark.setBorderTop(HSSFCellStyle.BORDER_MEDIUM);
-        estiloCheckmark.setBorderLeft(HSSFCellStyle.BORDER_MEDIUM);
+        estiloCheckmark.setBorderTop(BorderStyle.MEDIUM);
+        estiloCheckmark.setBorderLeft(BorderStyle.MEDIUM);
 
         return estiloCheckmark;
     }
@@ -165,12 +167,12 @@ public class ExcelFormato {
         font.setFontHeightInPoints((short) 6);
         estilo.setFont(font);
 
-        estilo.setBorderTop(HSSFCellStyle.BORDER_THIN);
-        estilo.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-        estilo.setBorderLeft(HSSFCellStyle.BORDER_THIN);
-        estilo.setBorderRight(HSSFCellStyle.BORDER_THIN);
-        estilo.setAlignment(HSSFCellStyle.ALIGN_CENTER);
-        estilo.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
+        estilo.setBorderTop(BorderStyle.THIN);
+        estilo.setBorderBottom(BorderStyle.THIN);
+        estilo.setBorderLeft(BorderStyle.THIN);
+        estilo.setBorderRight(BorderStyle.THIN);
+        estilo.setAlignment(HorizontalAlignment.CENTER);
+        estilo.setVerticalAlignment(VerticalAlignment.CENTER);
 
         return estilo;
     }

@@ -2,6 +2,7 @@ package Servicios;
 
 import Documentos.AgregarDocumentosGUI;
 import Documentos.ControlDocumentosGUI;
+import Documentos.EditarDatosGUI;
 import Documentos.ProcesosGUI;
 import Documentos.FormatosGUI;
 import Documentos.ModificarArchivosGUI;
@@ -54,12 +55,20 @@ public class ControlDocumentacionServicio {
     final String INSERT_INTO_SOLICITUDES_CAMBIO = "INSERT INTO solicitudescambio(idp, codigo, proceso, procedimiento, revAnterior, revNueva, encargado, accion, tipoArchivo, nombrePrev, nombre, rutaArchivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String SELECT_COUNT_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO = "SELECT COUNT(*) FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
     final String SELECT_COUNT_FROM_DOCPROCESOS_WHERE_ID_AND_RUTA_ARCHIVO = "SELECT COUNT(*) FROM docprocesos WHERE id = ? AND rutaArchivo != ''";
+    final String SELECT_COUNT_FROM_DOCUMENTOS = "SELECT COUNT(*) FROM documentos WHERE idProcedimiento = ?";
+    final String SELECT_COUNT_FROM_DOCUMENTOS_BY_NOMBRE = "SELECT COUNT(*) FROM documentos WHERE idProcedimiento = ? AND nombre = ?";
+    final String SELECT_COUNT_FROM_FORMATOS = "SELECT COUNT(*) FROM formatos WHERE idProcedimiento = ?";
+    final String SELECT_COUNT_FROM_FORMATOS_BY_NOMBRE = "SELECT COUNT(*) FROM formatos WHERE idProcedimiento = ? AND nombre = ?";
     final String SELECT_CONTENIDO_NOMBRE_FROM_DOCUMENTOS = "SELECT contenido, nombre FROM documentos WHERE tipo = ? AND idProcedimiento = ?";
     final String SELECT_CONTENIDO_NOMBRE_FROM_FORMATOS = "SELECT contenido, nombre FROM formatos WHERE nombre = ?";
     final String SELECT_DIAGRAMA_TORTUGA = "SELECT diagramaTortuga FROM docprocesos WHERE id = ?";
+    final String SELECT_FROM_DOCUMENTOS_LIMIT = "SELECT * FROM documentos WHERE idProcedimiento = ? ORDER BY nombre LIMIT ?, ?";
+    final String SELECT_FROM_DOCUMENTOS_WHERE_NOMBRE_LIMIT = "SELECT * FROM documentos WHERE idProcedimiento = ? AND nombre = ? ORDER BY nombre LIMIT ?, ?";
     final String SELECT_FROM_DOCUMENTOS = "SELECT * FROM documentos WHERE idProcedimiento = ?";
     final String SELECT_FROM_DOCUMENTOS_WHERE_IDP_AND_TIPO = "SELECT * FROM documentos WHERE idProcedimiento = ? AND tipo = ?";
     final String SELECT_FROM_FORMATOS = "SELECT * FROM formatos WHERE idProcedimiento = ?";
+    final String SELECT_FROM_FORMATOS_LIMIT = "SELECT * FROM formatos WHERE idProcedimiento = ? ORDER BY nombre LIMIT ?, ?";
+    final String SELECT_FROM_FORMATOS_WHERE_NOMBRE_LIMIT = "SELECT * FROM formatos WHERE idProcedimiento = ? AND nombre = ? ORDER BY nombre LIMIT ?, ?";
     final String SELECT_FROM_PROCEDIMIENTOS_WHERE_IDP = "SELECT * FROM docprocedimientos WHERE idp = ?";
     final String SELECT_FROM_PROCESOS = "SELECT * FROM docProcesos WHERE id = ?";
     final String SELECT_FROM_REGISTROS = "SELECT * FROM docregistros WHERE idp = ? AND tipoArchivo IN ('MANUAL', 'DIAGRAMA DE FLUJO', 'INSTRUCTIVO', 'FORMATO', 'DIAGRAMA DE TORTUGA') ORDER BY DATE(fechaModificacion) DESC LIMIT 1";
@@ -95,6 +104,11 @@ public class ControlDocumentacionServicio {
     public void abrirDocumentacionGUI(Usuarios usr, int idProceso) {
         ProcesosGUI doc = new ProcesosGUI(usr, idProceso);
         mostrarVentana(doc);
+    }
+
+    public void abrirEditarDatosGUI(Usuarios usr, ProcesosM proceso) {
+        EditarDatosGUI frame = new EditarDatosGUI(usr, proceso);
+        mostrarVentana(frame);
     }
 
     public void abrirFormatosGUI(Usuarios usr, ProcedimientosM procedimiento) {
@@ -866,5 +880,175 @@ public class ControlDocumentacionServicio {
             Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
+    }
+
+    public int contarDocumentos(Connection conexion, int idp, String filtro) {
+        String sql;
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+        if (filtrar) {
+            sql = SELECT_COUNT_FROM_DOCUMENTOS_BY_NOMBRE;
+        } else {
+            sql = SELECT_COUNT_FROM_DOCUMENTOS;
+        }
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setInt(1, idp); // Para número de hoja
+            if (filtrar) {
+                String filtroLike = "%" + filtro + "%";
+                consulta.setString(2, filtroLike); // Para número de hoja
+            }
+
+            // Ejecutar la consulta y obtener el resultado
+            try (ResultSet resultado = consulta.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
+                }
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
+    public List<DocumentosM> obtenerDocumentos(Connection conexion, int page, int limit, int idp, String filtro) {
+        String sql;
+        List<DocumentosM> lista = new ArrayList<>();
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+
+        if (filtrar) {
+            sql = SELECT_FROM_DOCUMENTOS_WHERE_NOMBRE_LIMIT;
+        } else {
+            sql = SELECT_FROM_DOCUMENTOS_LIMIT;
+        }
+
+        int limite = (page - 1) * limit;
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+
+            if (filtrar) {
+                consulta.setInt(1, idp);
+                consulta.setString(2, "%" + filtro + "%");
+                consulta.setInt(3, limite);
+                consulta.setInt(4, limit);
+            } else {
+                consulta.setInt(1, idp);
+                consulta.setInt(2, limite);
+                consulta.setInt(3, limit);
+            }
+
+            ResultSet resultado = consulta.executeQuery();
+            while (resultado.next()) {
+                DocumentosM ir = new DocumentosM(
+                        resultado.getInt("id"),
+                        resultado.getInt("idProceso"),
+                        resultado.getInt("idProcedimiento"),
+                        resultado.getString("revision"),
+                        resultado.getString("fechaActualizacion"),
+                        resultado.getString("tipo"),
+                        resultado.getString("nombre"),
+                        resultado.getString("rutaArchivo")
+                );
+                lista.add(ir);
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al recuperar la información: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return lista;
+    }
+
+    public int contarFormatos(Connection conexion, int idp, String filtro) {
+        String sql;
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+        if (filtrar) {
+            sql = SELECT_COUNT_FROM_FORMATOS_BY_NOMBRE;
+        } else {
+            sql = SELECT_COUNT_FROM_FORMATOS;
+        }
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setInt(1, idp); // Para número de hoja
+            if (filtrar) {
+                String filtroLike = "%" + filtro + "%";
+                consulta.setString(2, filtroLike); // Para número de hoja
+            }
+
+            // Ejecutar la consulta y obtener el resultado
+            try (ResultSet resultado = consulta.executeQuery()) {
+                if (resultado.first()) {
+                    return resultado.getInt(1); // Retorna la cantidad de registros
+                }
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al ejecutar la consulta SQL: ", ex);
+            Logger.getLogger(InspeccionReciboServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
+    public List<FormatosM> obtenerFormatos(Connection conexion, int page, int limit, int idp, String filtro) {
+        String sql;
+        List<FormatosM> lista = new ArrayList<>();
+        boolean filtrar = filtro != null && !filtro.trim().isEmpty();
+
+        if (filtrar) {
+            sql = SELECT_FROM_FORMATOS_WHERE_NOMBRE_LIMIT;
+        } else {
+            sql = SELECT_FROM_FORMATOS_LIMIT;
+        }
+
+        int limite = (page - 1) * limit;
+        try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+
+            if (filtrar) {
+                consulta.setInt(1, idp);
+                consulta.setString(2, "%" + filtro + "%");
+                consulta.setInt(3, limite);
+                consulta.setInt(4, limit);
+            } else {
+                consulta.setInt(1, idp);
+                consulta.setInt(2, limite);
+                consulta.setInt(3, limit);
+            }
+
+            ResultSet resultado = consulta.executeQuery();
+            while (resultado.next()) {
+                FormatosM formato = new FormatosM(
+                        resultado.getInt("id"),
+                        resultado.getInt("idProcedimiento"),
+                        resultado.getString("nombre"),
+                        resultado.getString("rutaArchivo")
+                );
+                lista.add(formato);
+            }
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("ERROR al recuperar la información: ", ex);
+            Logger.getLogger(AceptacionProductoServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return lista;
+    }
+
+    public void editarProceso(Connection conexion, ProcesosM proceso) {
+        try {
+            PreparedStatement ps = conexion.prepareStatement("UPDATE docprocesos SET no = ?, codigo = ?, revision = ?, proceso = ?, encargado = ? WHERE id = ?");
+            ps.setInt(1, Integer.parseInt(proceso.getNo()));
+            ps.setString(2, proceso.getCodigo());
+            ps.setString(3, proceso.getRevision());
+            ps.setString(4, proceso.getProceso());
+            ps.setString(5, proceso.getEncargado());
+            ps.setInt(6, proceso.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Errror al Actualizar el nombre del proceso en docprocesos: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            PreparedStatement ps = conexion.prepareStatement("UPDATE docprocedimientos SET proceso = ? WHERE idp = ?");
+            ps.setString(1, proceso.getProceso());
+            ps.setInt(2, proceso.getId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            Utilidades.manejarExcepcion("Errror al Actualizar el nombre del proceso en docprocesos: ", ex);
+            Logger.getLogger(ControlDocumentacionServicio.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

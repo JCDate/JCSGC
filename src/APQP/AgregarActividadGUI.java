@@ -18,7 +18,7 @@ import javax.swing.JOptionPane;
 public class AgregarActividadGUI extends javax.swing.JFrame {
 
     // Atributos
-    private Usuarios usuario; // Usuario autenticado en la aplicación
+    private Usuarios usuario; // Usuario autenticado en la aplicación.
     private Connection conexion; // Conexión a la Base de Datos
     private ApqpServicio apqps; // Servicio para manejar el control de documentos
 
@@ -141,14 +141,17 @@ public class AgregarActividadGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCerrarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        int cantidadFamilias = apqps.obtenerFamilias(conexion);
+        if (validarCampos()) {
+            int cantidadFamilias = apqps.obtenerFamilias(conexion);
+            for (int i = 1; i < cantidadFamilias; i++) {
+                ApqpM actividad = crearActividad(i);
+                apqps.guardarActividad(conexion, actividad);
+            }
 
-        for (int i = 1; i < cantidadFamilias; i++) {
-            ApqpM actividad = crearActividad(i);
-            apqps.guardarActividad(conexion, actividad);
+            notificarActualizacion();
+        } else {
+
         }
-
-        notificarActualizacion();
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void inicializarVentanaYComponentes() {
@@ -186,9 +189,16 @@ public class AgregarActividadGUI extends javax.swing.JFrame {
 
     private void notificarActualizacion() {
         cerrarVentana();
-        System.out.println("pene");
         JOptionPane.showMessageDialog(this, "ARCHIVO ACTUALIZADO EXITOSAMENTE");
         apqps.abrirApqpGUI(usuario);
+    }
+
+    private boolean validarCampos() {
+        return !txtEtapa.getText().trim().isEmpty()
+                && !txtNo.getText().trim().isEmpty()
+                && !txtPuntosYRequerimientos.getText().trim().isEmpty()
+                && !txtAnalisisFactibilidad.getText().trim().isEmpty()
+                && !txtEquipoGerencial.getText().trim().isEmpty();
     }
 
     private void cerrarVentana() {

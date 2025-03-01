@@ -5,17 +5,19 @@
             <url>src/InspeccionRecibo/HojaInstruccionGUI2.java</url>
             <bookmark id="1">
                 <name/>
-                <line>422</line>
+                <line>428</line>
                 <key/>
             </bookmark>
         </file>
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Documentos/SolicitudGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Documentos/ProcedimientosGUI.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/Utilidades.java</file>
-            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/InspeccionRecibo/AgregarIrGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/jc/sgc/Menu.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/InspeccionRecibo/InspeccionReciboGUI22.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/InspeccionRecibo/InspeccionReciboGUI.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/Servicios/SqlUsuarios.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/jc/sgc/Login.java</file>
+            <file>file:/C:/Users/JC/AppData/Local/Programs/Python/Python310/JC-SGC/src/componente/PanelLoginAndRegister.java</file>
         </group>
     </open-files>
 </project-private>

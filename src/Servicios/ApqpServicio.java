@@ -144,6 +144,7 @@ public class ApqpServicio {
     }
 
     public void guardarActividad(Connection conexion, ApqpM actividad) {
+
         try {
             PreparedStatement ps = conexion.prepareStatement(INSERT_INTO_APQP);
             ps.setString(1, actividad.getFamilia());
@@ -190,7 +191,9 @@ public class ApqpServicio {
     public int obtenerFamilias(Connection conexion) {
         int cantidad = 0;
 
-        try (PreparedStatement consulta = conexion.prepareStatement(SELECT_COUNT_FAMILIAS_FROM_ANTECEDENTES_FAMILIAS);
+        try (PreparedStatement consulta = conexion.prepareStatement("SELECT COUNT(DISTINCT SUBSTRING_INDEX(familia, ' ', 2)) AS total_familias \n"
+                + "FROM apqp \n"
+                + "WHERE familia LIKE 'FAM%'");
                 ResultSet resultado = consulta.executeQuery()) {
 
             if (resultado.next()) {

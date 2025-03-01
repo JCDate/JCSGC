@@ -5,7 +5,7 @@ import InspeccionRecibo.AgregarIrGUI;
 import InspeccionRecibo.EspecificacionesGUI;
 import InspeccionRecibo.HojaInstruccionGUI;
 import InspeccionRecibo.HojaInstruccionGUI2;
-import InspeccionRecibo.InspeccionReciboGUI;
+import InspeccionRecibo.InspeccionReciboGUI22;
 import InspeccionRecibo.ModificarIrGUI;
 import Modelos.CalibreIRM;
 import Modelos.ComposicionQuimicaM;
@@ -54,7 +54,10 @@ public class InspeccionReciboServicio {
     final String SELECT_ID_INSPECCION_RECIBO_SQL = "SELECT id FROM inspeccionrecibo WHERE calibre=? AND fechaFactura=? AND noRollo=? AND pzKg=?";
     final String SELECT_CERTIFICADO_SQL = "SELECT pdfCertificado, nombreCert FROM inspeccionrecibo WHERE noHoja = ?";
     final String SELECT_FACTURA_SQL = "SELECT pdfFactura, nombreFact FROM inspeccionrecibo WHERE noHoja = ?";
-    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo WHERE noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ? LIMIT ?, ?";
+    final String SELECT_INSPECCION_RECIBO_SQL = "SELECT * FROM inspeccionrecibo WHERE noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ? ORDER BY \n" +
+"    SUBSTRING_INDEX(noHoja, '/', 1) DESC, \n" +
+"    CAST(SUBSTRING_INDEX(noHoja, '/', -1) AS UNSIGNED) DESC \n" +
+" LIMIT ?, ?";
     final String INSERT_INTO_INSPECCION_RECIBO = "INSERT INTO inspeccionrecibo(fechaFactura, proveedor, noFactura, noPedido, calibre, pLamina, noRollo, pzKg, estatus, noHoja, nombreHJ, nombreFact, NombreCert, rutaFactura, rutaCertificado, rutaHojaInstruccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     final String DELETE_INSPECCION_RECIBO_SQL = "DELETE FROM inspeccionrecibo WHERE id = ?";
     final String SELECT_COUNT_INSPECCION_RECIBO = "SELECT COUNT(*) FROM inspeccionrecibo WHERE noHoja LIKE ? OR proveedor LIKE ? OR noFactura LIKE ? OR calibre LIKE ? OR noRollo LIKE ?";
@@ -220,7 +223,10 @@ public class InspeccionReciboServicio {
         if (filtrar) {
             sql = SELECT_INSPECCION_RECIBO_SQL;
         } else {
-            sql = "SELECT * FROM inspeccionrecibo LIMIT ?, ?";
+            sql = "SELECT * FROM inspeccionrecibo ORDER BY \n" +
+"    SUBSTRING_INDEX(noHoja, '/', 1) DESC, \n" +
+"    CAST(SUBSTRING_INDEX(noHoja, '/', -1) AS UNSIGNED) DESC \n" +
+" LIMIT ?, ? ";
         }
 
         int limite = (page - 1) * limit;
@@ -268,7 +274,10 @@ public class InspeccionReciboServicio {
 
     public List<InspeccionReciboM> obtenerTodasInspecciones(Connection conexion) throws SQLException {
         List<InspeccionReciboM> listaIr = new ArrayList<>();
-        try (PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM inspeccionrecibo")) {
+        try (PreparedStatement consulta = conexion.prepareStatement("SELECT * FROM inspeccionrecibo \n"
+                + "ORDER BY \n"
+                + "    SUBSTRING_INDEX(`NO HOJA`, '/', 1) DESC, \n"
+                + "    CAST(SUBSTRING_INDEX(`NO HOJA`, '/', -1) AS UNSIGNED) DESC")) {
             ResultSet resultado = consulta.executeQuery();
             while (resultado.next()) {
                 InspeccionReciboM ir = new InspeccionReciboM(
@@ -450,7 +459,7 @@ public class InspeccionReciboServicio {
     }
 
     public void abrirInspeccionReciboGUI(Usuarios usuario) {
-        InspeccionReciboGUI irGUI = new InspeccionReciboGUI(usuario);
+        InspeccionReciboGUI22 irGUI = new InspeccionReciboGUI22(usuario);
         irGUI.setVisible(true);
         irGUI.setLocationRelativeTo(null);
     }

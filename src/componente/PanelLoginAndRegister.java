@@ -265,7 +265,7 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
                         JFrame frame = (JFrame) parent;
                         frame.dispose();
                     }
-                    Menu menuGUI = new Menu(mod); 
+                    Menu menuGUI = new Menu(conexion, mod); 
                     menuGUI.setVisible(true); 
                 } else {
                     JOptionPane.showMessageDialog(this, "Datos incorrectos");

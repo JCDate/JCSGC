@@ -261,7 +261,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/jc/img/calidad.png"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="&lt;html&gt;PROCESO DE SATISFACCI&#xd3;N Y &lt;br&gt;COMUNICACI&#xd3;N CON EL CLIENTE&lt;/html&gt;"/>
+            <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;center&gt;SATISFACCI&#xd3;N Y &lt;br&gt;COMUNICACI&#xd3;N CON EL CLIENTE&lt;/center&gt;&lt;/html&gt;"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnDocSatisfaccionClienteActionPerformed"/>

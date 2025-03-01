@@ -161,7 +161,7 @@ public class ControlDocumentosGUI extends javax.swing.JFrame {
         btnDocSatisfaccionCliente.setFont(new java.awt.Font("Tahoma", 1, 10)); // NOI18N
         btnDocSatisfaccionCliente.setForeground(new java.awt.Color(255, 255, 255));
         btnDocSatisfaccionCliente.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jc/img/calidad.png"))); // NOI18N
-        btnDocSatisfaccionCliente.setText("<html>PROCESO DE SATISFACCIÓN Y <br>COMUNICACIÓN CON EL CLIENTE</html>");
+        btnDocSatisfaccionCliente.setText("<html><center>SATISFACCIÓN Y <br>COMUNICACIÓN CON EL CLIENTE</center></html>");
         btnDocSatisfaccionCliente.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDocSatisfaccionClienteActionPerformed(evt);

@@ -33,9 +33,13 @@ import Servicios.RugosidadDurezaServicio;
 import Servicios.Utilidades;
 import java.util.List;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
@@ -54,6 +58,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
     private AnchoLargoServicio als;
     private GeneradorExcel excel;
     private ExcelFormato formato;
+    private static boolean validando = false; // Bandera para evitar recursión
 
     // Objetos para la manipulación de los datos
     private InspeccionReciboM inspeccionRecibo;
@@ -61,7 +66,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
 
     // Objetos para editar el archivo Excel
     private XSSFWorkbook workbook;
-    private Sheet hoja1;
+    private XSSFSheet hoja1;
 
     // Objetos para guardar la ruta del archivo Excel
     private String rutaArchivo;
@@ -339,6 +344,7 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
             inicializarComboBoxInspectores();
             definirTablas();
             leerDatosExcel();
+            inicializarListener();
         } catch (IOException | SQLException ex) {
             Utilidades.manejarExcepcion("ERROR al Abrir HojaInstruccionGUI2: ", ex);
             Logger.getLogger(HojaInstruccionGUI2.class.getName()).log(Level.SEVERE, null, ex);
@@ -439,6 +445,74 @@ public class HojaInstruccionGUI2 extends javax.swing.JFrame {
             tblRugosidadDureza.setValueAt(fila43.getCell(numColExcel + i).getStringCellValue(), i, 0);
             tblRugosidadDureza.setValueAt(fila44.getCell(numColExcel + i).getStringCellValue(), i, 1);
         }
+    }
+    
+    private void inicializarListener() {
+        // Agregar un TableModelListener para validar los valores
+        tblAnchoLargo.getModel().addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if (validando) return; // Evitar recursión
+
+                int row = e.getFirstRow();
+                int column = e.getColumn();
+
+                // Validar ambas columnas (0: Ancho, 1: Largo)
+                if (column == 0 || column == 1) {
+                    try {
+                        // Obtener el valor ingresado
+                        String valorIngresadoStr = tblAnchoLargo.getModel().getValueAt(row, column).toString();
+                        valorIngresadoStr = valorIngresadoStr.replace(",", "."); // Reemplazar comas por puntos
+                        double valorIngresado = Double.parseDouble(valorIngresadoStr);
+
+                        // Obtener el rango del JComboBox
+                        String rango = (String) txtToleranciaLamina.getText();
+                        rango = rango.replace("\"", ""); // Eliminar comillas
+                        rango = rango.replace(",", "."); // Reemplazar comas por puntos
+                        String[] partes = rango.split("±");
+                        double valorMaximo = Double.parseDouble(partes[0].trim()); // 0.0359
+                        double valorMinimo = Double.parseDouble(partes[1].trim()); // 0.0015
+
+                        // Validar el valor
+                        if (valorIngresado < valorMinimo || valorIngresado > valorMaximo) {
+                            validando = true; // Activar bandera para evitar recursión
+
+                            // Mostrar mensaje de error
+                            JOptionPane.showMessageDialog(
+                                    null,
+                                    "El valor está fuera del rango permitido (" + valorMinimo + " a " + valorMaximo + ").",
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+
+                            // Permitir al usuario seguir editando
+                            tblAnchoLargo.editCellAt(row, column);
+                            tblAnchoLargo.getSelectionModel().setSelectionInterval(row, row);
+                            tblAnchoLargo.getColumnModel().getSelectionModel().setSelectionInterval(column, column);
+
+                            validando = false; // Desactivar bandera
+                        }
+                    } catch (NumberFormatException ex) {
+                        validando = true; // Activar bandera para evitar recursión
+
+                        // Mostrar mensaje de error
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "El valor ingresado no es un número válido.",
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+
+                        // Permitir al usuario seguir editando
+                        tblAnchoLargo.editCellAt(row, column);
+                        tblAnchoLargo.getSelectionModel().setSelectionInterval(row, row);
+                        tblAnchoLargo.getColumnModel().getSelectionModel().setSelectionInterval(column, column);
+
+                        validando = false; // Desactivar bandera
+                    }
+                }
+            }
+        });
     }
 
     private String guardarCambios(String nuevaRutaArchivo) throws FileNotFoundException, IOException, ParseException {
