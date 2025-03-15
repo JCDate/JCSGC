@@ -7,11 +7,11 @@ import org.apache.commons.dbcp2.BasicDataSource;
 
 public class Conexion {
 
-    private static final String SERVIDOR = "192.168.1.75";
-    private static final String BASE_DE_DATOS = "jc_mysql2";
+    private static final String SERVIDOR = "xxx.xxx.xxx.xxx";
+    private static final String BASE_DE_DATOS = "xxx";
     private static final String URL = "jdbc:mysql://" + SERVIDOR + ":3306/" + BASE_DE_DATOS + "?useUnicode=yes&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true";
-    private static final String USUARIO = "root";
-    private static final String PASSWORD = "";
+    private static final String USUARIO = "xxx";
+    private static final String PASSWORD = "xxx";
     private static Conexion instancia;
     private static BasicDataSource datos;
 
